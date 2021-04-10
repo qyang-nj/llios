@@ -1,4 +1,7 @@
 # Build iOS app without Xcode
+This demonstrates how to build static library, dynamic library, exectuable and app bundle without Xcode. To build and launch the app, run `make launch_app`.
+
+## Notes
 
 ### -wmo (-whole-module-optimization)
 Here is the [Apple's words for WMO]( https://github.com/apple/swift/blob/master/docs/OptimizationTips.rst#whole-module-optimizations-wmo).
@@ -42,7 +45,6 @@ swiftc -frontend -merge-modules -emit-module Build/bar.swiftmodule Build/foo.swi
 ### -parse-as-library
 Parse the input file(s) as libraries, not scripts. Without this, swiftc will include main, which causes duplicate symbols.
 
-## Dynamic Library
 ### Install Name
 Install name, which is unique on Darwin platform, provides a dylib search path. It's set by passing `-install_name` to the linker (ld) when building a dylib (not an executable). In other words, install name is an attribute of a dylib itself.
 When `-install_name path/to/DynamicLib.dylib` is given, it ends up to a load command (`LC_ID_DYLIB`) in the dylib's macho-o load section.
