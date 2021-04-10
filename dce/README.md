@@ -1,9 +1,9 @@
 # Dead Code Elimination
 
-## Swift public symbols are always no_dead_strip
-https://forums.swift.org/t/why-public-symbols-are-always-no-dead-strip/47264
+⚠️ [Swift public symbols are always `no_dead_strip`.](https://forums.swift.org/t/why-public-symbols-are-always-no-dead-strip/47264)
 
-## .no_dead_strip directive
+## Notes
+### .no_dead_strip directive
 The assembler directive *.no_dead_strip* symbol_name can be used to specify that a symbol is not to be dead stripped. For example:
 ```
 .no_dead_strip _my_version_string
