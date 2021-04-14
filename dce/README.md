@@ -36,3 +36,11 @@ When linking static libraries (.a):
     If some symbols are used, the .o files (inside .a) which contain of those symbols will be linked, while other .o will be ignored.
 
 Please note this behavior is different than DCE, which can strip unused methods from a linked object file. In other words, DCE can strip code at function level.
+
+### -ObjC
+From `man ld`,
+> -ObjC: Loads all members of static archive libraries that implement an Objective-C class or category.
+
+[Building Objective-C static libraries with categories](https://developer.apple.com/library/archive/qa/qa1490/_index.html)
+
+From the [source code](https://github.com/apple-opensource/ld64/blob/e28c028b20af187a16a7161d89e91868a450cadc/src/ld/parsers/macho_relocatable_file.cpp#L1520~L1525), `-ObjC` will actually load all Swift static libraries. This behavior can be confirmed by a sample code.
