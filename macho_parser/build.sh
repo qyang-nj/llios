@@ -1,3 +1,4 @@
 #!/bin/bash
+set -e
 
-clang main.c
+clang -o parser main.c

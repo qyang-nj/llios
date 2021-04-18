@@ -6,6 +6,11 @@ This parser actually turns out to be a super light version of the combination of
 ## Notes
 ### __mod_init_func
 `(__DATA,__mod_init_func)` or `(__DATA_CONST,__mod_init_func)`
-Type: S_MOD_INIT_FUNC_POINTERS
 
-This is the section that contains of a list of function pointers, which will be executed by `dyld` before `main`. Those are functions with `__attribute__((constructor))` or Objective-C's `+load` method. Functions here will affect the app launch time.
+This is the section that contains of a list of function pointers, which will be executed by `dyld` before `main`. Those are functions with `__attribute__((constructor))` and they will affect the app launch time.
+
+Once we have the function pointer address, we can use `atos` to query the function name.
+```
+> xcrun atos -o sample/sample 0x100003f20
+c_constructor_function (in sample) + 0
+```

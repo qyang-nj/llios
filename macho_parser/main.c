@@ -74,11 +74,13 @@ void parse_sections(FILE *fptr, struct segment_command_64 *seg_cmd)
 
         const uint8_t type = sect.flags & SECTION_TYPE;
 
+        // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
         if (type == S_CSTRING_LITERALS) // __cstring
         {
             parse_cstring_section(fptr, &sect);
         }
-        else if (type == S_MOD_INIT_FUNC_POINTERS) // __mod_init_func
+        // (__DATA_CONST,__mod_init_func)
+        else if (type == S_MOD_INIT_FUNC_POINTERS)
         {
             parse_mod_init_func_section(fptr, &sect);
         }
