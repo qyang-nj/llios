@@ -7,7 +7,9 @@
 void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds);
 void parse_sections(FILE *fptr, struct segment_command_64 *seg_cmd);
 void parse_cstring_section(FILE *fptr, struct section_64 *cstring_sect);
+void parse_mod_init_func_section(FILE *fptr, struct section_64 *sect);
 void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd);
+void format_string(char *str, char *formatted);
 
 
 void *load_bytes(FILE *fptr, int offset, int size) {
@@ -68,12 +70,17 @@ void parse_sections(FILE *fptr, struct segment_command_64 *seg_cmd)
     for (int i = 0; i < seg_cmd->nsects; ++i)
     {
         struct section_64 sect = sections[i];
-        printf("    (%s,%s) (%lld)\n", sect.segname, sect.sectname, sect.size);
+        printf("    (%s,%s) [size: %lld]\n", sect.segname, sect.sectname, sect.size);
 
-        if (strcmp(sect.segname, SEG_TEXT) == 0 && strcmp(sect.sectname, "__cstring") == 0)
-        // if (sect.flags & S_CSTRING_LITERALS)
+        const uint8_t type = sect.flags & SECTION_TYPE;
+
+        if (type == S_CSTRING_LITERALS) // __cstring
         {
             parse_cstring_section(fptr, &sect);
+        }
+        else if (type == S_MOD_INIT_FUNC_POINTERS) // __mod_init_func
+        {
+            parse_mod_init_func_section(fptr, &sect);
         }
     }
 }
@@ -82,13 +89,27 @@ void parse_cstring_section(FILE *fptr, struct section_64 *cstring_sect)
 {
     void *section = load_bytes(fptr, cstring_sect->offset, cstring_sect->size);
 
+    char formatted[256];
     for (char *ptr = section; ptr < (char *)(section + cstring_sect->size);)
     {
         if (strlen(ptr) > 0) {
-            printf("        %s\n", ptr);
+            format_string(ptr, formatted);
+            printf("        \"%s\"\n", formatted);
             ptr += strlen(ptr);
         }
         ptr += 1;
+    }
+
+    free(section);
+}
+
+void parse_mod_init_func_section(FILE *fptr, struct section_64 *sect)
+{
+    void *section = load_bytes(fptr, sect->offset, sect->size);
+
+    const size_t count = sect->size / sizeof(uintptr_t);
+    for (int i = 0; i < count; ++i) {
+        printf("        0x%lx\n", *((uintptr_t *)section + i));
     }
 
     free(section);
@@ -106,10 +127,30 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd)
         char *no_dead_strip = (nlist->n_desc & N_NO_DEAD_STRIP) ? " [no dead strip]" : "";
 
         if (strlen(symbol) > 0) {
-            printf("        %s%s\n", symbol, no_dead_strip);
+            printf("        0x%016llx  %s%s\n", nlist->n_value, symbol, no_dead_strip);
         }
     }
 
     free(sym_table);
     free(str_table);
+}
+
+// If the string contains '\n', replace with literal "\n".s
+void format_string(char *str, char *formatted)
+{
+    int j = 0;
+    for (int i = 0; str[i] != '\0'; ++i)
+    {
+        switch(str[i])
+        {
+            case '\n':
+                formatted[j++] = '\\';
+                formatted[j++] = 'n';
+                break;
+            default:
+                formatted[j++] = str[i];
+                break;
+        }
+    }
+    formatted[j] = '\0';
 }
