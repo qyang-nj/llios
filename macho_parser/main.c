@@ -9,6 +9,7 @@ void parse_sections(FILE *fptr, struct segment_command_64 *seg_cmd);
 void parse_cstring_section(FILE *fptr, struct section_64 *cstring_sect);
 void parse_mod_init_func_section(FILE *fptr, struct section_64 *sect);
 void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd);
+void format_n_desc(uint16_t n_desc, char *formatted);
 void format_string(char *str, char *formatted);
 
 
@@ -122,19 +123,47 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd)
     void *sym_table = load_bytes(fptr, sym_cmd->symoff, sym_cmd->nsyms * sizeof(struct nlist_64));
     void *str_table = load_bytes(fptr, sym_cmd->stroff, sym_cmd->strsize);
 
+    char formatted_n_desc[256];
+
     for (int i = 0; i < sym_cmd->nsyms; ++i)
     {
         struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * i;
         char *symbol = str_table + nlist->n_un.n_strx;
         char *no_dead_strip = (nlist->n_desc & N_NO_DEAD_STRIP) ? " [no dead strip]" : "";
 
+        format_n_desc(nlist->n_desc, formatted_n_desc);
+
         if (strlen(symbol) > 0) {
-            printf("        0x%016llx  %s%s\n", nlist->n_value, symbol, no_dead_strip);
+            printf("        0x%016llx  %s", nlist->n_value, symbol);
+            if (strlen(formatted_n_desc) > 0) {
+                printf("  [n_desc:%s]\n", formatted_n_desc);
+            } else {
+                printf("\n");
+            }
         }
     }
 
     free(sym_table);
     free(str_table);
+}
+
+void format_n_desc(uint16_t n_desc, char *formatted) {
+    strcpy(formatted, "");
+
+    if (n_desc & N_NO_DEAD_STRIP) {
+        strcat(formatted, " N_NO_DEAD_STRIP");
+    }
+    if (n_desc & N_WEAK_REF) {
+        strcat(formatted, " N_WEAK_REF");
+    }
+    if (n_desc & N_WEAK_DEF) {
+        strcat(formatted, " N_WEAK_DEF");
+    }
+
+    int library_ordinal = GET_LIBRARY_ORDINAL(n_desc);
+    if (library_ordinal > 0) {
+        sprintf(formatted + strlen(formatted), " LIBRARY_ORDINAL(%d)", library_ordinal);
+    }
 }
 
 // If the string contains '\n', replace with literal "\n".s

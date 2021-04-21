@@ -1,2 +1,4 @@
-a.out
+.DS_Store
 *.o
+a.out
+build/
