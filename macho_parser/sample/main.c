@@ -10,7 +10,7 @@ __attribute__((constructor)) void c_constructor_function() {}
 __attribute__((used)) void c_used_function() {}
 
 // Weak symbols will be marked as N_WEAK_REF and DYNAMIC_LOOKUP_ORDINAL in n_desc.
-__attribute__((weak)) extern void c_extern_weak_function();
+__attribute__((weak_import)) extern void c_extern_weak_function();
 
 //
 __attribute__((weak_import)) void c_weak_import_function() {}
