@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 1999-2003 Apple Computer, Inc.  All Rights Reserved.
- * 
+ *
  * @APPLE_LICENSE_HEADER_START@
- * 
+ *
  * This file contains Original Code and/or Modifications of Original Code
  * as defined in and that are subject to the Apple Public Source License
  * Version 2.0 (the 'License'). You may not use this file except in
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -17,7 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  */
 #ifndef _MACHO_NLIST_H_
@@ -78,7 +78,7 @@ struct nlist {
 #ifndef __LP64__
 		char *n_name;	/* for use when in-core */
 #endif
-		int32_t n_strx;	/* index into the string table */
+		uint32_t n_strx;	/* index into the string table */
 	} n_un;
 	uint8_t n_type;		/* type flag, see below */
 	uint8_t n_sect;		/* section number or NO_SECT */
@@ -135,7 +135,7 @@ struct nlist_64 {
 #define	N_PBUD	0xc		/* prebound undefined (defined in a dylib) */
 #define N_INDR	0xa		/* indirect */
 
-/* 
+/*
  * If the type is N_INDR then the symbol is defined to be the same as another
  * symbol.  In this case the n_value field is an index into the string table
  * of the other symbol's name.  When the other symbol is defined then they both
@@ -144,14 +144,14 @@ struct nlist_64 {
 
 /*
  * If the type is N_SECT then the n_sect field contains an ordinal of the
- * section the symbol is defined in.  The sections are numbered from 1 and 
+ * section the symbol is defined in.  The sections are numbered from 1 and
  * refer to sections in order they appear in the load commands for the file
  * they are in.  This means the same ordinal may very well refer to different
  * sections in different files.
  *
  * The n_value field for all symbol table entries (including N_STAB's) gets
  * updated by the link editor based on the value of it's n_sect field and where
- * the section n_sect references gets relocated.  If the value of the n_sect 
+ * the section n_sect references gets relocated.  If the value of the n_sect
  * field is NO_SECT then it's n_value field is not changed by the link editor.
  */
 #define	NO_SECT		0	/* symbol is not in any section */
@@ -225,14 +225,14 @@ struct nlist_64 {
  * SELF_LIBRARY_ORDINAL.  The EXECUTABLE_ORDINAL refers to the executable
  * image for references from plugins that refer to the executable that loads
  * them.
- * 
+ *
  * The DYNAMIC_LOOKUP_ORDINAL is for undefined symbols in a two-level namespace
  * image that are looked up by the dynamic linker with flat namespace semantics.
  * This ordinal was added as a feature in Mac OS X 10.3 by reducing the
  * value of MAX_LIBRARY_ORDINAL by one.  So it is legal for existing binaries
  * or binaries built with older tools to have 0xfe (254) dynamic libraries.  In
  * this case the ordinal value 0xfe (254) must be treated as a library ordinal
- * for compatibility. 
+ * for compatibility.
  */
 #define GET_LIBRARY_ORDINAL(n_desc) (((n_desc) >> 8) & 0xff)
 #define SET_LIBRARY_ORDINAL(n_desc,ordinal) \
@@ -248,7 +248,7 @@ struct nlist_64 {
  */
 
 /*
- * The N_NO_DEAD_STRIP bit of the n_desc field only ever appears in a 
+ * The N_NO_DEAD_STRIP bit of the n_desc field only ever appears in a
  * relocatable .o file (MH_OBJECT filetype). And is used to indicate to the
  * static link editor it is never to dead strip the symbol.
  */
@@ -294,17 +294,23 @@ struct nlist_64 {
  * be called to get the address of the real function to use.
  * This bit is only available in .o files (MH_OBJECT filetype)
  */
-#define N_SYMBOL_RESOLVER  0x0100 
+#define N_SYMBOL_RESOLVER  0x0100
+
+/*
+ * The N_ALT_ENTRY bit of the n_desc field indicates that the
+ * symbol is pinned to the previous content.
+ */
+#define N_ALT_ENTRY 0x0200
 
 #ifndef __STRICT_BSD__
-#if __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 /*
  * The function nlist(3) from the C library.
  */
 extern int nlist (const char *filename, struct nlist *list);
-#if __cplusplus
+#ifdef __cplusplus
 }
 #endif /* __cplusplus */
 #endif /* __STRICT_BSD__ */
