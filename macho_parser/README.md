@@ -48,6 +48,38 @@ Enabled by `__attribute__((constructor))`. It tells the linker (`ld`) to keep th
 #### N_WEAK_REF
 Enabled by `__attribute__((weak))`. It tells dynamic loader (`dyld`) if the symbol cannot be found at runtime, set NULL to its address.
 
+### LC_DYSYMTAB
+This load command is used to support dynamic linking.
+```
+struct dysymtab_command { ... }
+```
+
+#### Indirect symbol table
+```
+struct dysymtab_command {
+    // ...
+    uint32_t indirectsymoff; /* file offset to the indirect symbol table */
+    uint32_t nindirectsyms;  /* number of indirect symbol table entries */
+    // ...
+};
+```
+The indirect symbol is an array of 32-bit values. Each value is an index to symbols in `SYMTAB`. It's used to record the symbol associated to the pointer in the `__stubs`,`__got`, add `__la_symbol_ptr` sections. These sections uses `reserved1` and `reserved2` to indicate the start position and length in the indirect table.
+```
+struct section_64
+    // ...
+	uint32_t	reserved1;	/* reserved (for offset or index) */
+	uint32_t	reserved2;	/* reserved (for count or sizeof) */
+    // ...
+};
+```
+
+For example, the symbol of the 3rd pointer in `__got` is (in pseudocode):
+```
+symbol_table[indirect_symbol_table[__got.section_64.reserved + (3 - 1)]]
+```
+
+
+We can use `otool -I` to dump the indirect symbol table.
 
 ### Other
 #### `+load` in ObjC

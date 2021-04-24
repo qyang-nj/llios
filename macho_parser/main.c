@@ -5,10 +5,12 @@
 #include <mach-o/nlist.h>
 
 void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds);
-void parse_sections(FILE *fptr, struct segment_command_64 *seg_cmd);
+void parse_segments(FILE *fptr, struct segment_command_64 *seg_cmd);
 void parse_cstring_section(FILE *fptr, struct section_64 *cstring_sect);
-void parse_mod_init_func_section(FILE *fptr, struct section_64 *sect);
+void parse_pointer_section(FILE *fptr, struct section_64 *sect);
 void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd);
+void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd);
+void format_section_type(uint8_t type, char *out);
 void format_n_desc(uint16_t n_desc, char *formatted);
 void format_string(char *str, char *formatted);
 
@@ -41,15 +43,18 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
 
         if (lcmd->cmd == LC_SEGMENT_64) {
             struct segment_command_64 *seg_cmd = load_bytes(fptr, offset, lcmd->cmdsize);
-            printf("LC_SEGMENT_64: %s (%lld)\n", seg_cmd->segname, seg_cmd->filesize);
-            parse_sections(fptr, seg_cmd);
+            parse_segments(fptr, seg_cmd);
             free(seg_cmd);
-        }
-        else if (lcmd->cmd == LC_SYMTAB) {
+        } else if (lcmd->cmd == LC_SYMTAB) {
             struct symtab_command *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
-            printf("LC_SYMTAB (symtab: %lu, strtab: %u)\n", cmd->nsyms * sizeof(struct nlist_64), cmd->strsize);
             parse_symbol_table(fptr, cmd);
             free(cmd);
+        } else if (lcmd->cmd == LC_DYSYMTAB) {
+            struct dysymtab_command *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
+            parse_dynamic_symbol_table(fptr, cmd);
+            free(cmd);
+        } else {
+            // printf("Load command: %d\n", lcmd->cmd);
         }
 
         offset += lcmd->cmdsize;
@@ -57,23 +62,32 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
     }
 }
 
-void parse_sections(FILE *fptr, struct segment_command_64 *seg_cmd) {
+void parse_segments(FILE *fptr, struct segment_command_64 *seg_cmd) {
+    printf("LC_SEGMENT_64: %s (%lld)\n", seg_cmd->segname, seg_cmd->filesize);
+
     // section_64 is immediately after segment_command_64.
     struct section_64 *sections = (void *)seg_cmd + sizeof(struct segment_command_64);
 
+    char formatted_type[32];
+    char formatted_seg_sec[64];
+
     for (int i = 0; i < seg_cmd->nsects; ++i) {
         struct section_64 sect = sections[i];
-        printf("    (%s,%s) [size: %lld]\n", sect.segname, sect.sectname, sect.size);
-
         const uint8_t type = sect.flags & SECTION_TYPE;
+
+        format_section_type(type, formatted_type);
+        sprintf(formatted_seg_sec, "(%s,%s)", sect.segname, sect.sectname);
+        printf("    %-32s [size: %4lld] [type: %-32s]\n", formatted_seg_sec, sect.size, formatted_type);
 
         // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
         if (type == S_CSTRING_LITERALS) {
             parse_cstring_section(fptr, &sect);
         }
         // (__DATA_CONST,__mod_init_func)
-        else if (type == S_MOD_INIT_FUNC_POINTERS) {
-            parse_mod_init_func_section(fptr, &sect);
+        else if (type == S_MOD_INIT_FUNC_POINTERS
+            || type == S_NON_LAZY_SYMBOL_POINTERS
+            || type == S_LAZY_SYMBOL_POINTERS) {
+            parse_pointer_section(fptr, &sect);
         }
     }
 }
@@ -94,7 +108,7 @@ void parse_cstring_section(FILE *fptr, struct section_64 *cstring_sect) {
     free(section);
 }
 
-void parse_mod_init_func_section(FILE *fptr, struct section_64 *sect) {
+void parse_pointer_section(FILE *fptr, struct section_64 *sect) {
     void *section = load_bytes(fptr, sect->offset, sect->size);
 
     const size_t count = sect->size / sizeof(uintptr_t);
@@ -106,6 +120,8 @@ void parse_mod_init_func_section(FILE *fptr, struct section_64 *sect) {
 }
 
 void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd) {
+    printf("LC_SYMTAB (symtab: %lu, strtab: %u)\n", sym_cmd->nsyms * sizeof(struct nlist_64), sym_cmd->strsize);
+
     void *sym_table = load_bytes(fptr, sym_cmd->symoff, sym_cmd->nsyms * sizeof(struct nlist_64));
     void *str_table = load_bytes(fptr, sym_cmd->stroff, sym_cmd->strsize);
 
@@ -118,7 +134,7 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd) {
         format_n_desc(nlist->n_desc, formatted_n_desc);
 
         if (strlen(symbol) > 0) {
-            printf("        0x%016llx  %s", nlist->n_value, symbol);
+            printf("    %-3d 0x%016llx  %-32s", i, nlist->n_value, symbol);
             if (strlen(formatted_n_desc) > 0) {
                 printf("  [n_desc:%s]\n", formatted_n_desc);
             } else {
@@ -129,6 +145,46 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd) {
 
     free(sym_table);
     free(str_table);
+}
+
+void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd) {
+    printf("LC_DYSYMTAB\n");
+
+    printf("    Indirect symbol table (indirectsymoff: 0x%x, nindirectsyms: %d)\n", dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms);
+    uint32_t *indirect_symtab = (uint32_t *)load_bytes(fptr, dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms * sizeof(uint32_t)); // the index is 32 bits
+
+    printf("        Indices: [");
+    for (int i = 0; i < dysym_cmd->nindirectsyms; ++i) {
+        printf("%d, ", *(indirect_symtab + i));
+    }
+
+    printf("]\n");
+}
+
+void format_section_type(uint8_t type, char *out) {
+    if (type == S_REGULAR) {
+        strcpy(out, "S_REGULAR");
+    } else if (type == S_ZEROFILL) {
+        strcpy(out, "S_ZEROFILL");
+    } else if (type == S_CSTRING_LITERALS) {
+        strcpy(out, "S_CSTRING_LITERALS");
+    } else if (type == S_4BYTE_LITERALS) {
+        strcpy(out, "S_4BYTE_LITERALS");
+    } else if (type == S_8BYTE_LITERALS) {
+        strcpy(out, "S_8BYTE_LITERALS");
+    } else if (type == S_LITERAL_POINTERS) {
+        strcpy(out, "S_LITERAL_POINTERS");
+    } else if (type == S_NON_LAZY_SYMBOL_POINTERS) {
+        strcpy(out, "S_NON_LAZY_SYMBOL_POINTERS");
+    } else if (type == S_LAZY_SYMBOL_POINTERS) {
+        strcpy(out, "S_LAZY_SYMBOL_POINTERS");
+    } else if (type == S_LITERAL_POINTERS) {
+        strcpy(out, "S_LITERAL_POINTERS");
+    } else if (type == S_SYMBOL_STUBS) {
+        strcpy(out, "S_SYMBOL_STUBS");
+    } else {
+        sprintf(out, "OTHER(0x%x)", type);
+    }
 }
 
 void format_n_desc(uint16_t n_desc, char *formatted) {
