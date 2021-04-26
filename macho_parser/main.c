@@ -77,7 +77,8 @@ void parse_segments(FILE *fptr, struct segment_command_64 *seg_cmd) {
 
         format_section_type(type, formatted_type);
         sprintf(formatted_seg_sec, "(%s,%s)", sect.segname, sect.sectname);
-        printf("    %-32s [size: %4lld] [type: %-32s]\n", formatted_seg_sec, sect.size, formatted_type);
+        printf("    %-32s [size: %4lld] [type: %-32s] [reserved1: %2d, reserved2: %2d]\n",
+            formatted_seg_sec, sect.size, formatted_type, sect.reserved1, sect.reserved2);
 
         // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
         if (type == S_CSTRING_LITERALS) {
