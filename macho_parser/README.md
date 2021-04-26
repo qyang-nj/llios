@@ -63,12 +63,11 @@ struct dysymtab_command {
     // ...
 };
 ```
-The indirect symbol is an array of 32-bit values. Each value is an index to symbols in `SYMTAB`. It's used to record the symbol associated to the pointer in the `__stubs`,`__got`, add `__la_symbol_ptr` sections. These sections uses `reserved1` and `reserved2` to indicate the start position and length in the indirect table.
+The indirect symbol is an array of 32-bit values. Each value is an index to symbols in `SYMTAB`. It's used to record the symbol associated to the pointer in the `__stubs`,`__got` add `__la_symbol_ptr` sections. These sections uses `reserved1` to indicate the start position in the indirect table. The length usually is `struct section_64.size / sizeof(uintptr_t)`.
 ```
 struct section_64
     // ...
-	uint32_t	reserved1;	/* reserved (for offset or index) */
-	uint32_t	reserved2;	/* reserved (for count or sizeof) */
+    uint32_t reserved1; /* reserved (for offset or index) */
     // ...
 };
 ```
@@ -78,8 +77,33 @@ For example, the symbol of the 3rd pointer in `__got` is (in pseudocode):
 symbol_table[indirect_symbol_table[__got.section_64.reserved + (3 - 1)]]
 ```
 
+In practice, We use `otool -I` to dump the indirect symbol table.
+```
+$ otool -I a.out
+a.out:
+Indirect symbols for (__TEXT,__stubs) 1 entries
+address            index
+0x0000000100003f96     3                                  --> _lib_func
+Indirect symbols for (__DATA_CONST,__got) 2 entries
+address            index
+0x0000000100004000     4                                  --> _lib_str
+0x0000000100004008     5                                  --> dyld_stub_binder
+Indirect symbols for (__DATA,__la_symbol_ptr) 1 entries
+address            index
+0x0000000100008000     3                                  --> _lib_func
+```
 
-We can use `otool -I` to dump the indirect symbol table.
+Then we can look up the indices through `nm` to find out the actual symbols.
+```
+$ nm -ap a.out | nl -v 0
+     0	0000000100008008 d __dyld_private
+     1	0000000100000000 T __mh_execute_header
+     2	0000000100003f70 T _main
+     3	                 U _lib_func
+     4	                 U _lib_str
+     5	                 U dyld_stub_binder
+```
+(The `-a` and `-p` for `nm` are really important here. They make sure the all symbols are listed in the same order as in `SYMTAB`.)
 
 ### Other
 #### `+load` in ObjC
