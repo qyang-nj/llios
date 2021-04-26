@@ -99,8 +99,56 @@ The values in `__got` are all 0x0 in the file, because we won't know the values 
 
 Another symbol in `__got` is `dyld_stub_binder`. We will talk about it in the next section.
 
+
 ## Lazy binding
+Another interesting line is line 7.
+```
+0000000100003f89	callq	0x100003f96
+```
+From `main.c`, we know the only method is called is `lib_func`, so this line must be calling into it.
 
+`0x3f96` is in the `__stubs` section. There is only one `jmpq` instruction.
+```
+$ otool -v -s __TEXT __stubs a.out
+Contents of (__TEXT,__stubs) section
+0000000100003f96	jmpq	*0x4064(%rip)
+```
 
-## References
+The star sign in `*0x4064(%rip)` indicates this is indirect addressing. It will jump to the address stored in `0x4064(%rip)`. As always, the value of `%rip` is the address of the next instruction. However this is only instruction in this section. Call the same otool command without `-v`.
 
+```
+$ otool -s __TEXT __stubs a.out
+Contents of (__TEXT,__stubs) section
+0000000100003f96 ff 25 64 40 00 00
+```
+We know the size `jmpq` is 6 bytes, so the `%rip` is `0x3f9c` (0x3f96 + 0x6). Hence `0x4064(%rip)` is `0x8000` (0x3F9C + 0x4064). Where is `0x8000` then? It's in the `__la_symbol_ptr` section.
+```
+$ otool -s __DATA __la_symbol_ptr a.out
+Contents of (__DATA,__la_symbol_ptr) section
+0000000100008000	ac 3f 00 00 01 00 00 00
+```
+
+Same as `__got` section, `__la_symbol_ptr` is also an array 64-bit pointers which are associated to indirect symbols. Using the same approach described before, `0x8000` is for the symbol `_lib_func`, which is what we expect.
+```
+$ otool -I a.out
+Indirect symbols for (__DATA,__la_symbol_ptr) 1 entries
+address            index
+0x0000000100008000     3
+```
+
+Different from `__got`, the current value of `0x8000` is not `0x0`. Instead it's `0x3fac` (endianness). Interestingly, `0x3fac` is in the section `__stub_helper`.
+```
+$ otool -v -s __TEXT __stub_helper a.out
+Contents of (__TEXT,__stub_helper) section
+0000000100003f9c	leaq	0x4065(%rip), %r11
+0000000100003fa3	pushq	%r11
+0000000100003fa5	jmpq	*0x5d(%rip)
+0000000100003fab	nop
+0000000100003fac	pushq	$0x0
+0000000100003fb1	jmp	0x100003f9c
+```
+Please note that `0x3fac` is at line 5. Following the code, it jumps to `0x3f9c` which is line 1. Eventually it jumps to `*0x5d(%rip)` (indirect addressing again). We should be good at this now. `0x5d(%rip)` is `0x4008` (0x3fab + 0x5d). It seems we have seen this location before. Yes, it's the 2nd element in `__got`, which is `dyld_stub_binder`. As you may still remember, `__got` is the non-lazy binding section and the address of `dyld_stub_binder` will be written there at launch time.
+
+If you haven't got lost so far, `callq	0x100003f96` instruction actually calls into [`dyld_stub_binder`](https://opensource.apple.com/source/dyld/dyld-195.5/src/dyld_stub_binder.s.auto.html). This is a special method provided by `dyld`. It finds the address of the symbol (it's `_lib_func` in our case) and writes the address in the `__la_symbol_ptr`.
+
+Here is what happens when calling a method in a dylib. The program calls into code in (__TEXT,__stub) which reads the address stored in `__la_symbol_ptr` and jumps to that. At the first time, that address is pointing to (__TEXT,__stub_helper) which in turn calls into `dyld_stub_binder`. `dyld_stub_binder` finds the symbol in the dylib, writes it back to `__la_symbol_ptr` and jumps to the real method. Next time calling the same method, `__la_symbol_ptr` has the real address, so the program can jump to it directly.
