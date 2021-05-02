@@ -27,7 +27,7 @@ xcrun ld -bundle -o build/Test.xctest/Test build/Test.o \
 
 # To set environment variables in the simulator, use SIMCTL_CHILD_ prefix
 # export SIMCTL_CHILD_DYLD_PRINT_ENV=1
-export SIMCTL_CHILD_DYLD_PRINT_LIBRARIES=1
+# export SIMCTL_CHILD_DYLD_PRINT_LIBRARIES=1
 
 xcrun simctl spawn --standalone "iPhone 8" \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
