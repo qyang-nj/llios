@@ -61,7 +61,7 @@ cmdsize 48
 Well, it seems that the test runner loads `XCTest.framework` already, so the test doesn't need to load it again. It sounds reasonable, but how does this work? (Keep reading!)
 
 ## `libXCTestSwiftSupport.dylib`
-One of changes introduced by Xcode 12.5 is requiring `libXCTestSwiftSupport.dylib`.
+One of the changes introduced by Xcode 12.5 is requiring `libXCTestSwiftSupport.dylib`.
 
 > Xcode no longer includes XCTest’s legacy Swift overlay library (libswiftXCTest.dylib). Use the library’s replacement, libXCTestSwiftSupport.dylib, instead.
 
@@ -77,7 +77,7 @@ Again, how does this happen? (Keep reading!)
 
 
 ## `MH_BUNDLE`
-One fact that is usually ignored is that the type of the test binary is neither executable (`MH_EXECUTE`) nor dylib (`MH_DYLIB`). **It actually is a bundle (`MH_BUNDLE`)**. The type is defined in the Mach-O header. When we build the test bundle, we passed `-bundle` to the static linker.
+One fact, usually being overlooked, is that the type of the test binary is neither executable (`MH_EXECUTE`) nor dylib (`MH_DYLIB`). **It actually is a bundle (`MH_BUNDLE`)**. Distinct from the directory structure, this bundle is a file type defined in the Mach-O header. When we build the test bundle, we passed `-bundle` to the static linker.
 
 ```
 $ otool -vh Test.xctest/Test
@@ -85,7 +85,7 @@ $ otool -vh Test.xctest/Test
 ...    BUNDLE  ...
 ```
 
-Bundles provide the Mach-O mechanism for loading extension (or plugin-in) code into an application at runtime. You can google to find out more details about `MH_BUNDLE`. The important thing we need to know is that bundle is loaded by the loader (usually the executable) through `dlopen`.
+Bundles provide the Mach-O mechanism for loading extension (or plugin-in) code into an application at runtime. You can google to find out more details about `MH_BUNDLE`. The important thing we need to know here is that bundle is loaded by the loader (usually the executable) through `dlopen`.
 
 After digging into the `dyld` source code, I found this interesting snippet of code ([link](https://github.com/opensource-apple/dyld/blob/3f928f32597888c5eac6003b9199d972d49857b5/src/dyldAPIs.cpp#L1428-L1432)).
 
@@ -97,6 +97,6 @@ After digging into the `dyld` source code, I found this interesting snippet of c
         dyld::mainExecutable()->getRPaths(dyld::gLinkContext, rpathsFromCallerImage);
 ```
 
-Just reading the comment, we know that when a bundle is opened, not only its own `rpath` but also the `rpath` of the loader and main executable are appended to the list. In our case, the `rpath` of the test runner (executable) are used for searching. They include `@executable_path/../../Frameworks/` and `@executable_path/../../../usr/lib`, where the `XCTest.framework` and `libXCTestSwiftSupport.dylib`.
+Just reading the comment, we know that when a bundle is opened, not only its own `rpath` but also the `rpath` of the loader and main executable are appended to the list. In our case, the `rpath` of the test runner (executable) are also used for searching. They include `@executable_path/../../Frameworks/` and `@executable_path/../../../usr/lib`, where the `XCTest.framework` and `libXCTestSwiftSupport.dylib` are.
 
 Okay, the mystery is solved.
