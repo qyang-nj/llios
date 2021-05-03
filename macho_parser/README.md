@@ -73,12 +73,12 @@ Two major benefits of two-level namespace:
 
 ## LC_DYSYMTAB
 This load command is used to support dynamic linking.
-```
+``` c
 struct dysymtab_command { ... }
 ```
 
 ### Indirect symbol table
-```
+``` c
 struct dysymtab_command {
     // ...
     uint32_t indirectsymoff; /* file offset to the indirect symbol table */
@@ -87,7 +87,7 @@ struct dysymtab_command {
 };
 ```
 The indirect symbol is an array of 32-bit values. Each value is an index to symbols in `SYMTAB`. It's used to record the symbol associated to the pointer in the `__stubs`,`__got` add `__la_symbol_ptr` sections. These sections uses `reserved1` to indicate the start position in the indirect table. The length usually is `struct section_64.size / sizeof(uintptr_t)`.
-```
+``` c
 struct section_64
     // ...
     uint32_t reserved1; /* reserved (for offset or index) */
