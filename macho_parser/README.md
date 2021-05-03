@@ -1,23 +1,20 @@
-# MachO Parser
-To learn the MachO format, the best way is to build a parser from scratch. It helps understand how MachO format is exactly laid out.
+# Mach-O Format
+This is **not** a complete reference of Mach-O format.
 
-This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, etc.
-
-## Usage
-Build and run,
+## Mach-O Parser
+To learn the Mach-O format, the best way is to build a parser from scratch. It helps me understand, byte by byte, how Mach-O format is exactly laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, etc. To build and run,
 ``` bash
 ./build.sh
 ./parser /path/to/a/macho
 ```
 
-There is a sample that you can change the code and observe how the macho is changed.
+This directory also has a sample that you can change the code and observe how the macho is changed.
 ```
 cd sample && ./build.sh && cd ..
 ./parser sample/sample
 ```
 
-## Notes
-### LC_SEGMENT_64
+## LC_SEGMENT_64
 #### __mod_init_func
 `(__DATA,__mod_init_func)` or `(__DATA_CONST,__mod_init_func)`
 
@@ -31,31 +28,57 @@ c_constructor_function (in sample) + 0
 
 ⚠️ Please note that ObjC's `+load` methods will also be executed before `main`, but uses a different mechanism. See below "+load in ObjC" section.
 
-### LC_SYMTAB
-#### Two Level Namespace
+## LC_SYMTAB
+``` c
+/* This is the symbol table entry structure for 64-bit architectures. */
+struct nlist_64 {
+    union {
+        uint32_t  n_strx;  /* index into the string table */
+    } n_un;
+    uint8_t n_type;        /* type flag, see below */
+    uint8_t n_sect;        /* section number or NO_SECT */
+    uint16_t n_desc;       /* see <mach-o/stab.h> */
+    uint64_t n_value;      /* value of this symbol (or stab offset) */
+};
+```
+
+### n_desc
+`n_desc` is a field of `nlist_64`. Although it's only 16 bits, it's packed a lot of information about a symbol.
+```
+0000 0000 0000 0000
+────┬──── ││││  ─┬─
+    │     ││││   └─ REFERENCE_TYPE
+    │     │││└─ REFERENCED_DYNAMICALLY
+    │     ││└─ NO_DEAD_STRIP
+    │     │└─ N_WEAK_REF
+    │     └─ N_WEAK_DEF
+    └─ LIBRARY_ORDINAL (used by two-level namespace)
+```
+
+#### N_NO_DEAD_STRIP
+Enabled by `__attribute__((constructor))`. It tells the linker (`ld`) to keep this symbol even it's not used. It exits in object files (`MH_OBJECT`). Read more about [dead code elimination](https://github.com/qyang-nj/llios/tree/main/dce).
+
+#### N_WEAK_REF
+Enabled by `__attribute__((weak))`. It tells dynamic loader (`dyld`) if the symbol cannot be found at runtime, set NULL to its address.
+
+### Two Level Namespace
 The linker enables the two-level namespace option (`-twolevel_namespace`) by default. It can be disabled by `-flat_namespace` option. The first level of the two-level namespace is the name of the library that contains the symbol, and the second is the name of the symbol. Once enabled, the macho header has `MH_TWOLEVEL` flag set. Each undefined symbols will record its library information by `LIBRARY_ORDINAL` in `nlist.n_desc`.
 
 Two major benefits of two-level namespace:
 * avoid symbol conflict from different libraries
 * accelerate symbol lookup at runtime
 
-##### References
-[Mac OS X Developer Release Notes: Two-Level Namespace Executables]()
+##### Learn more
+[Mac OS X Developer Release Notes: Two-Level Namespace Executables](http://mirror.informatimago.com/next/developer.apple.com/releasenotes/DeveloperTools/TwoLevelNamespaces.html)
 
-#### N_NO_DEAD_STRIP
-Enabled by `__attribute__((constructor))`. It tells the linker (`ld`) to keep this symbol even it's not used. It's a flag in `nlist.n_desc` and exits in object of instead file executable.
-
-#### N_WEAK_REF
-Enabled by `__attribute__((weak))`. It tells dynamic loader (`dyld`) if the symbol cannot be found at runtime, set NULL to its address.
-
-### LC_DYSYMTAB
+## LC_DYSYMTAB
 This load command is used to support dynamic linking.
-```
+``` c
 struct dysymtab_command { ... }
 ```
 
-#### Indirect symbol table
-```
+### Indirect symbol table
+``` c
 struct dysymtab_command {
     // ...
     uint32_t indirectsymoff; /* file offset to the indirect symbol table */
@@ -64,7 +87,7 @@ struct dysymtab_command {
 };
 ```
 The indirect symbol is an array of 32-bit values. Each value is an index to symbols in `SYMTAB`. It's used to record the symbol associated to the pointer in the `__stubs`,`__got` add `__la_symbol_ptr` sections. These sections uses `reserved1` to indicate the start position in the indirect table. The length usually is `struct section_64.size / sizeof(uintptr_t)`.
-```
+``` c
 struct section_64
     // ...
     uint32_t reserved1; /* reserved (for offset or index) */
@@ -105,8 +128,15 @@ $ nm -ap a.out | nl -v 0
 ```
 (The `-a` and `-p` for `nm` are really important here. They make sure the all symbols are listed in the same order as in `SYMTAB`.)
 
-### Other
-#### `+load` in ObjC
+## LC_LINKER_OPTION
+
+`LC_LINKER_OPTION` only exists in the object files (`MH_OBJECT`) and is used for auto-linking. This load command literally contains linker flags that will be used by the static linker.
+
+##### Learn more
+[Auto Linking on iOS & macOS](https://milen.me/writings/auto-linking-on-ios-and-macos/)
+
+## Other
+### `+load` in ObjC
 The MachO that has Objective-C code will have two sections, `(__DATA_CONST,__objc_classlist)` and `(__DATA_CONST,__objc_nlclslist)`. `__objc_classlist` includes the addresses of all ObjC classes, while `__objc_nlclslist` contains only *non-lazy* classes. [Non-lazy classes are classes that have `+load` method](https://github.com/opensource-apple/objc4/blob/cd5e62a5597ea7a31dccef089317abb3a661c154/runtime/objc-runtime-new.mm#L2806~L2812) and will be loaded at launch time.
 
 **How `+load` is executed during startup?**
@@ -115,6 +145,6 @@ The MachO that has Objective-C code will have two sections, `(__DATA_CONST,__obj
 
 The difference between `+load` and `__mod_init_func` is that the former guarantees [certain order of execution](https://developer.apple.com/documentation/objectivec/nsobject/1418815-load?language=objc), while the latter doesn't.
 
-##### References
+##### Learn more
 * [Objective-C: What is a lazy class?](https://stackoverflow.com/a/15318325/3056242)
 * [What did Runtime do during the startup of Runtime objc4-779.1 App?](https://programmer.group/what-did-runtime-do-during-the-startup-of-runtime-objc4-779.1-app.html)
