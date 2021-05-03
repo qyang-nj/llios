@@ -1,6 +1,6 @@
 # XCTest
 
-The word "xctest" is extensively used in the world of iOS testing, the test bundle (`.xctest`), the test framework (`XCTest.framework`), and the test runner (`xctest`). This sample will dive into some details about iOS testing.
+The word "xctest" is extensively used in the realm of iOS testing, the test bundle (`.xctest`), the test framework (`XCTest.framework`), and the test runner (`xctest`). This article along with a sample will dive into some details about iOS testing.
 
 ## Build and Run
 The script `build_and_run.sh` in this directory will build a simple xctest bundle and run it on the simulator directly without Xcode or other full-fledged test runners.
@@ -21,7 +21,7 @@ Test Suite 'All tests' passed at 2021-05-01 11:05:52.727.
 The test bundle structure is as simple as `Test.xctest/Test`. Even `Info.plist` is not needed to run the test.
 
 ## `XCTest.framework`
-`XCTest.framework` is the key in iOS testing. Almost all tests import `XCTest` and depend on this framework. For the obvious reason, `XCTest.framework` needs to be present at compiling and linking time. **The really interesting thing is how it's loaded at runtime.**
+Almost all tests import `XCTest` and depend on `XCTest.framework`. For the obvious reason, it needs to be present at compiling and linking time. **The really interesting thing is how it's loaded at runtime.**
 
 From `otool -L` we can see that the test indeed depends on `XCTest.framework`.
 ```
@@ -31,11 +31,11 @@ $ otool -L Test.xctest/Test
 ...
 ```
 
-However, we didn't package the framework into our test bundle, and test file doesn't have any `LC_RPATH` at all. So, how on earth can `dyld` loads `XCTest.framework` at runtime?
+However, we didn't package the framework into our test bundle, and test file doesn't have any `LC_RPATH` at all. How on earth can `dyld` loads `XCTest.framework` at runtime?
 
 One guess is through environment variable like `DYLD_FALLBACK_FRAMEWORK_PATH`. Luckily we can `export SIMCTL_CHILD_DYLD_PRINT_ENV=1` to see what the environment variables are. *(Adding `SIMCTL_CHILD_` prefix is the way to pass environment variable from host machine to simulator.)*
 
-As we can see, `DYLD_FALLBACK_FRAMEWORK_PATH` is indeed set, but those paths don't contain `XCTest.framework`.
+As we can see, `DYLD_FALLBACK_FRAMEWORK_PATH` is indeed set, but those paths don't lead to `XCTest.framework`.
 ```
 DYLD_FALLBACK_FRAMEWORK_PATH=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/System/Library/Frameworks
 ```
@@ -58,14 +58,14 @@ cmdsize 48
    path @executable_path/../../Frameworks/ (offset 12)
 ```
 
-Well, it seems that the test runner loads `XCTest.framework` already, so the test doesn't need to load it again. It sounds reasonable, but how does this work? (Keep reading!)
+Well, it seems that the test runner loads `XCTest.framework` already, so the test doesn't need to load it again. If this is true, tests and test runner must share the same memory space, but how does this work? (Keep reading!)
 
 ## `libXCTestSwiftSupport.dylib`
 One of the changes introduced by Xcode 12.5 is requiring `libXCTestSwiftSupport.dylib`.
 
 > Xcode no longer includes XCTest’s legacy Swift overlay library (libswiftXCTest.dylib). Use the library’s replacement, libXCTestSwiftSupport.dylib, instead.
 
-Similar to `XCTest.framework`, our test binary depends on it through @rpath, but we didn't package it into test bundle either.
+Similar to `XCTest.framework`, our test binary depends on it through @rpath, and we didn't package it into test bundle either.
 ```
 @rpath/libXCTestSwiftSupport.dylib (compatibility version 1.0.0, current version 1.0.0)
 ```
@@ -73,7 +73,7 @@ Unlike `XCTest.framework`, the test runner doesn't depend on `libXCTestSwiftSupp
 ```
 dyld: loaded: <3585C82D-EBB7-3D65-8FA3-00BBAF113C52> /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Xcode/Agents/../../../usr/lib/libXCTestSwiftSupport.dylib
 ```
-Again, how does this happen? (Keep reading!)
+This is even more mysterious, How does this happen? (Keep reading!)
 
 
 ## `MH_BUNDLE`
@@ -85,18 +85,27 @@ $ otool -vh Test.xctest/Test
 ...    BUNDLE  ...
 ```
 
-Bundles provide the Mach-O mechanism for loading extension (or plugin-in) code into an application at runtime. You can google to find out more details about `MH_BUNDLE`. The important thing we need to know here is that bundle is loaded by the loader (usually the executable) through `dlopen`.
+Bundles provide the Mach-O mechanism for loading extension (or plugin-in) code into an application at runtime. More details about `MH_BUNDLE` can be found through Google. The important thing we need to know here is that bundle is loaded by the loader (usually the executable) through `dlopen`.
 
-After digging into the `dyld` source code, I found this interesting snippet of code ([link](https://github.com/opensource-apple/dyld/blob/3f928f32597888c5eac6003b9199d972d49857b5/src/dyldAPIs.cpp#L1428-L1432)).
+I spent some time digging into the `dyld` source code. It's an eureka moment when I saw this snippet of code ([link](https://github.com/opensource-apple/dyld/blob/3f928f32597888c5eac6003b9199d972d49857b5/src/dyldAPIs.cpp#L1428-L1432)).
 
 ``` c
-    // for dlopen, use rpath from caller image and from main executable
-    if ( callerImage != NULL )
-        callerImage->getRPaths(dyld::gLinkContext, rpathsFromCallerImage);
-    if ( callerImage != dyld::mainExecutable() )
-        dyld::mainExecutable()->getRPaths(dyld::gLinkContext, rpathsFromCallerImage);
+// for dlopen, use rpath from caller image and from main executable
+if ( callerImage != NULL )
+    callerImage->getRPaths(dyld::gLinkContext, rpathsFromCallerImage);
+if ( callerImage != dyld::mainExecutable() )
+    dyld::mainExecutable()->getRPaths(dyld::gLinkContext, rpathsFromCallerImage);
 ```
 
-Just reading the comment, we know that when a bundle is opened, not only its own `rpath` but also the `rpath` of the loader and main executable are appended to the list. In our case, the `rpath` of the test runner (executable) are also used for searching. They include `@executable_path/../../Frameworks/` and `@executable_path/../../../usr/lib`, where the `XCTest.framework` and `libXCTestSwiftSupport.dylib` are.
+Just reading the comment, we know that when a bundle is opened, not only its own `rpath` but also the `rpath` of its loader and main executable are appended to the list. In our case, the `rpath` of the test runner (executable) are also used for searching. They include `@executable_path/../../Frameworks/` and `@executable_path/../../../usr/lib`, where the `XCTest.framework` and `libXCTestSwiftSupport.dylib` are. Okay, I believe the mystery is solved.
 
-Okay, the mystery is solved.
+## Host App
+Some tests require a host app. Therefore the executable is no longer `xctest`. Instead, it's the host app, which is unlikely to have the right `rpath` for test libraries. In this case, environment variable `DYLD_FALLBACK_FRAMEWORK_PATH` and `DYLD_FALLBACK_LIBRARY_PATH` come in handy. We can set them through `SIMCTL_CHILD_` prefix or the test runner's config file, like `.xctestrun`.
+
+```
+<key>TestingEnvironmentVariables</key>
+<dict>
+    <key>DYLD_FALLBACK_LIBRARY_PATH</key>
+    <string>__PLATFORMS__/iPhoneSimulator.platform/Developer/usr/lib</string>
+</dict>
+```
