@@ -4,15 +4,16 @@
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 
-void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds);
-void parse_segments(FILE *fptr, struct segment_command_64 *seg_cmd);
-void parse_cstring_section(FILE *fptr, struct section_64 *cstring_sect);
-void parse_pointer_section(FILE *fptr, struct section_64 *sect);
-void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd);
-void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd);
-void format_section_type(uint8_t type, char *out);
-void format_n_desc(uint16_t n_desc, char *formatted);
-void format_string(char *str, char *formatted);
+void parse_load_commands(FILE *, int offset, uint32_t );
+void parse_segments(FILE *, struct segment_command_64 *);
+void parse_cstring_section(FILE *, struct section_64 *);
+void parse_pointer_section(FILE *, struct section_64 *);
+void parse_symbol_table(FILE *, struct symtab_command *);
+void parse_dynamic_symbol_table(FILE *, struct dysymtab_command *);
+void parse_linker_option(FILE *, struct linker_option_command *);
+void format_section_type(uint8_t , char *);
+void format_n_desc(uint16_t, char *);
+void format_string(char *, char *);
 
 
 void *load_bytes(FILE *fptr, int offset, int size) {
@@ -40,24 +41,22 @@ int main(int argc, char **argv) {
 void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
     for (int i = 0; i < ncmds; ++i) {
         struct load_command *lcmd = load_bytes(fptr, offset, sizeof(struct load_command));
+        void *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
 
         if (lcmd->cmd == LC_SEGMENT_64) {
-            struct segment_command_64 *seg_cmd = load_bytes(fptr, offset, lcmd->cmdsize);
-            parse_segments(fptr, seg_cmd);
-            free(seg_cmd);
+            parse_segments(fptr, (struct segment_command_64 *)cmd);
         } else if (lcmd->cmd == LC_SYMTAB) {
-            struct symtab_command *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
-            parse_symbol_table(fptr, cmd);
-            free(cmd);
+            parse_symbol_table(fptr, (struct symtab_command *)cmd);
         } else if (lcmd->cmd == LC_DYSYMTAB) {
-            struct dysymtab_command *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
-            parse_dynamic_symbol_table(fptr, cmd);
-            free(cmd);
+            parse_dynamic_symbol_table(fptr, (struct dysymtab_command *)cmd);
+        } else if (lcmd->cmd == LC_LINKER_OPTION) {
+            parse_linker_option(fptr, (struct linker_option_command *)cmd);
         } else {
             // printf("Load command: %d\n", lcmd->cmd);
         }
 
         offset += lcmd->cmdsize;
+        free(cmd);
         free(lcmd);
     }
 }
@@ -160,6 +159,24 @@ void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd) 
     }
 
     printf("]\n");
+}
+
+void parse_linker_option(FILE *fptr, struct linker_option_command *cmd) {
+    // char *option = (char *)cmd + sizeof(struct linker_option_command);
+
+    char *options = calloc(1, cmd->cmdsize);
+    memcpy(options, (char *)cmd + sizeof(struct linker_option_command), cmd->cmdsize -  sizeof(struct linker_option_command));
+
+    char *opt = options;
+    // replace '\n' to ' '. For example "abc\0def\0" -> "abc def\0"
+    for (int i = 0; i < cmd->count - 1; ++i) {
+        int len = strlen(opt);
+        options[strlen(opt)] = ' ';
+        opt = opt + len;
+    }
+
+    printf("LC_LINKER_OPTION [size: %2u count: %d] %s\n", cmd->cmdsize, cmd->count, options);
+    free(options);
 }
 
 void format_section_type(uint8_t type, char *out) {
