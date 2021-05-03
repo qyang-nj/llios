@@ -4,7 +4,7 @@
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 
-void parse_load_commands(FILE *, int offset, uint32_t );
+void parse_load_commands(FILE *, int offset, uint32_t);
 void parse_segments(FILE *, struct segment_command_64 *);
 void parse_cstring_section(FILE *, struct section_64 *);
 void parse_pointer_section(FILE *, struct section_64 *);
@@ -162,8 +162,6 @@ void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd) 
 }
 
 void parse_linker_option(FILE *fptr, struct linker_option_command *cmd) {
-    // char *option = (char *)cmd + sizeof(struct linker_option_command);
-
     char *options = calloc(1, cmd->cmdsize);
     memcpy(options, (char *)cmd + sizeof(struct linker_option_command), cmd->cmdsize -  sizeof(struct linker_option_command));
 

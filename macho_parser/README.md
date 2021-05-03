@@ -1,5 +1,5 @@
 # Mach-O Format
-This is **not** a complete reference of Mach-O format. It's more like my personal study note. The content will be growing as I'm learning.
+This is **not** a complete reference of Mach-O format.
 
 ## Mach-O Parser
 To learn the Mach-O format, the best way is to build a parser from scratch. It helps me understand, byte by byte, how Mach-O format is exactly laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, etc. To build and run,
