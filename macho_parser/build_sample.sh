@@ -5,7 +5,7 @@ set -e
 
 mkdir -p build
 
-clang -dynamiclib -o build/my_dylib.dylib sample/my_dylib.c
+clang -dynamiclib -install_name "@rpath/my_dylib.dylib" -o build/my_dylib.dylib sample/my_dylib.c
 
 clang -c -o build/main.o sample/main.c
 clang -c -fmodules -o build/objc.o sample/objc.m
@@ -14,5 +14,5 @@ clang -c -fmodules -o build/objc.o sample/objc.m
 clang $two_level_flag \
     -o sample.out \
     -Xlinker -U -Xlinker "_c_extern_weak_function" \
-    -rpath "/a/random/path" \
+    -rpath "build" \
     build/main.o build/objc.o build/my_dylib.dylib
