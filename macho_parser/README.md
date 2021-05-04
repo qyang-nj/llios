@@ -129,11 +129,14 @@ $ nm -ap a.out | nl -v 0
 (The `-a` and `-p` for `nm` are really important here. They make sure the all symbols are listed in the same order as in `SYMTAB`.)
 
 ## LC_LINKER_OPTION
-
 `LC_LINKER_OPTION` only exists in the object files (`MH_OBJECT`) and is used for auto-linking. This load command literally contains linker flags that will be used by the static linker.
 
 ##### Learn more
 [Auto Linking on iOS & macOS](https://milen.me/writings/auto-linking-on-ios-and-macos/)
+
+## LC_ID_DYLIB
+
+## LC_RPATH
 
 ## Other
 ### `+load` in ObjC

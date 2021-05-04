@@ -14,4 +14,5 @@ clang -c -fmodules -o build/objc.o sample/objc.m
 clang $two_level_flag \
     -o sample.out \
     -Xlinker -U -Xlinker "_c_extern_weak_function" \
+    -rpath "/a/random/path" \
     build/main.o build/objc.o build/my_dylib.dylib

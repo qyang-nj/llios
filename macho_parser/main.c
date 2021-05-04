@@ -11,6 +11,8 @@ void parse_pointer_section(FILE *, struct section_64 *);
 void parse_symbol_table(FILE *, struct symtab_command *);
 void parse_dynamic_symbol_table(FILE *, struct dysymtab_command *);
 void parse_linker_option(FILE *, struct linker_option_command *);
+void parse_dylib(FILE *, struct dylib_command *);
+void parse_rpath(FILE *, struct rpath_command *);
 void format_section_type(uint8_t , char *);
 void format_n_desc(uint16_t, char *);
 void format_string(char *, char *);
@@ -51,6 +53,10 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
             parse_dynamic_symbol_table(fptr, (struct dysymtab_command *)cmd);
         } else if (lcmd->cmd == LC_LINKER_OPTION) {
             parse_linker_option(fptr, (struct linker_option_command *)cmd);
+        } else if (lcmd->cmd == LC_ID_DYLIB || lcmd->cmd == LC_LOAD_DYLIB || lcmd->cmd == LC_LOAD_WEAK_DYLIB) {
+            parse_dylib(fptr, (struct dylib_command *)cmd);
+        } else if (lcmd->cmd == LC_RPATH) {
+            parse_rpath(fptr, (struct rpath_command *)cmd);
         } else {
             // printf("Load command: %d\n", lcmd->cmd);
         }
@@ -175,6 +181,22 @@ void parse_linker_option(FILE *fptr, struct linker_option_command *cmd) {
 
     printf("LC_LINKER_OPTION [size: %2u count: %d] %s\n", cmd->cmdsize, cmd->count, options);
     free(options);
+}
+
+void parse_dylib(FILE *fptr, struct dylib_command *cmd) {
+    char *cmd_name = "";
+    if (cmd->cmd == LC_ID_DYLIB) {
+        cmd_name = "LC_ID_DYLIB";
+    } else if (cmd->cmd == LC_LOAD_DYLIB) {
+        cmd_name = "LC_LOAD_DYLIB";
+    } else if (cmd->cmd == LC_LOAD_WEAK_DYLIB) {
+        cmd_name = "LC_LOAD_WEAK_DYLIB";
+    }
+    printf("%s [size: %3u] %s\n", cmd_name, cmd->cmdsize, (char *)cmd + cmd->dylib.name.offset);
+}
+
+void parse_rpath(FILE *fptr, struct rpath_command *cmd) {
+    printf("LC_RPATH [size: %2u] %s\n", cmd->cmdsize, (char *)cmd + cmd->path.offset);
 }
 
 void format_section_type(uint8_t type, char *out) {
