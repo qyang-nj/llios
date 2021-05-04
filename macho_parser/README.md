@@ -8,10 +8,10 @@ To learn the Mach-O format, the best way is to build a parser from scratch. It h
 ./parser /path/to/a/macho
 ```
 
-This directory also has a sample that you can change the code and observe how the macho is changed.
+This directory also includes a sample that demonstrates how source code settings end up in the Mach-O file. For example, symbols with `__attribute__((used))` will be marked as `N_NO_DEAD_STRIP` in the symbol table. You can verify this by the following commands.
 ```
-cd sample && ./build.sh && cd ..
-./parser sample/sample
+./build_sample.sh
+./parser sample.out
 ```
 
 ## LC_SEGMENT_64

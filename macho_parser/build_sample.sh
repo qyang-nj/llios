@@ -3,13 +3,15 @@ set -e
 
 [ -z "$TWO_LEVEL_NAMESAPCE" ] && TWO_LEVEL_NAMESAPCE=1
 
-clang -dynamiclib -o build/my_dylib.dylib my_dylib.c
+mkdir -p build
 
-clang -c -o build/main.o main.c
-clang -c -fmodules -o build/objc.o objc.m
+clang -dynamiclib -o build/my_dylib.dylib sample/my_dylib.c
+
+clang -c -o build/main.o sample/main.c
+clang -c -fmodules -o build/objc.o sample/objc.m
 
 [ "$TWO_LEVEL_NAMESAPCE" == 1 ] && two_level_flag="" || two_level_flag="-flat_namespace"
 clang $two_level_flag \
-    -o sample \
+    -o sample.out \
     -Xlinker -U -Xlinker "_c_extern_weak_function" \
     build/main.o build/objc.o build/my_dylib.dylib
