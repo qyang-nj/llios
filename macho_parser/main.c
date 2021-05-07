@@ -8,7 +8,8 @@
 
 struct option {
     bool list_command_only;
-    char *commands[12];
+    unsigned int commands[12];
+    int command_count;
 };
 
 void parse_load_commands(FILE *, int offset, uint32_t);
@@ -23,6 +24,8 @@ void parse_rpath(FILE *, struct rpath_command *);
 void format_section_type(uint8_t , char *);
 void format_n_desc(uint16_t, char *);
 void format_string(char *, char *);
+unsigned int string_to_load_command(char *);
+bool show_command(unsigned int cmd);
 
 struct option options;
 
@@ -42,7 +45,7 @@ int main(int argc, char **argv) {
                 options.list_command_only = true;
                 break;
             case 'c':
-                printf("option: %s\n", optarg);
+                options.commands[options.command_count++] = string_to_load_command(optarg);
                 break;
             case '?':
                 printf("unknown option: %c", optopt);
@@ -70,6 +73,13 @@ int main(int argc, char **argv) {
 void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
     for (int i = 0; i < ncmds; ++i) {
         struct load_command *lcmd = load_bytes(fptr, offset, sizeof(struct load_command));
+
+        if (!show_command(lcmd->cmd)) {
+            offset += lcmd->cmdsize;
+            free(lcmd);
+            continue;
+        }
+
         void *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
 
         if (lcmd->cmd == LC_SEGMENT_64) {
@@ -297,4 +307,40 @@ void format_string(char *str, char *formatted) {
         }
     }
     formatted[j] = '\0';
+}
+
+unsigned int string_to_load_command(char *cmd_str) {
+    if (strcmp(cmd_str, "LC_SEGMENT_64") == 0) {
+        return LC_SEGMENT_64;
+    } else if (strcmp(cmd_str, "LC_SYMTAB") == 0) {
+        return LC_SYMTAB;
+    } else if (strcmp(cmd_str, "LC_ID_DYLIB") == 0) {
+        return LC_ID_DYLIB;
+    } else if (strcmp(cmd_str, "LC_DYSYMTAB") == 0) {
+        return LC_DYSYMTAB;
+    } else if (strcmp(cmd_str, "LC_LOAD_DYLIB") == 0) {
+        return LC_LOAD_DYLIB;
+    } else if (strcmp(cmd_str, "LC_LOAD_WEAK_DYLIB") == 0) {
+        return LC_LOAD_WEAK_DYLIB;
+    } else if (strcmp(cmd_str, "LC_RPATH") == 0) {
+        return LC_RPATH;
+    }
+
+    return 0;
+}
+
+bool show_command(unsigned int cmd) {
+    if (options.command_count == 0) {
+        // if no cmd is specified, who all commands.
+        return true;
+    }
+
+    bool show = false;
+    for (int i = 0; i < options.command_count; ++i) {
+        if (options.commands[i] == cmd) {
+            show = true;
+            break;
+        }
+    }
+    return show;
 }
