@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "argument.h"
@@ -17,8 +18,8 @@ void parse_arguments(int argc, char **argv) {
                 args.commands[args.command_count++] = string_to_load_command(optarg);
                 break;
             case '?':
-                printf("unknown option: %c", optopt);
-                break;
+                fprintf(stderr, "Unknow option: %c.\n", optopt);
+                exit(1);
         }
     }
 
@@ -44,7 +45,8 @@ unsigned int string_to_load_command(char *cmd_str) {
         return LC_RPATH;
     }
 
-    return 0;
+    fprintf(stderr, "Unknow load command: %s.\n", cmd_str);
+    exit(1);
 }
 
 bool show_command(unsigned int cmd) {
