@@ -79,7 +79,7 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
 }
 
 void parse_segments(FILE *fptr, struct segment_command_64 *seg_cmd) {
-    printf("%-20s cmdsize: %-6d segname: %-16s fileoff: 0x%08llx filesize: %-12lld (fileend: 0x%08llx)\n",
+    printf("%-20s cmdsize: %-6d segname: %-16s fileoff: 0x%08llx  filesize: %-12lld (fileend: 0x%08llx)\n",
         "LC_SEGMENT_64", seg_cmd->cmdsize, seg_cmd->segname, seg_cmd->fileoff, seg_cmd->filesize,
         seg_cmd->fileoff + seg_cmd->filesize);
 

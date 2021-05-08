@@ -2,16 +2,37 @@
 This is **not** a complete reference of Mach-O format.
 
 ## Mach-O Parser
-To learn the Mach-O format, the best way is to build a parser from scratch. It helps me understand, byte by byte, how Mach-O format is exactly laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, etc. To build and run,
-``` bash
-./build.sh
-./parser /path/to/a/macho
+To learn the Mach-O format, no way is better than building a parser from scratch. It helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, etc.
+
+#### Usage
+To build the parser, run `./build.sh`.
+
+```
+parser [-s] [-c <cmd>] <mach-o file>
+
+       -s         short description (one line per a load command)
+       -c <cmd>   only show specified load command
 ```
 
-This directory also includes a sample that demonstrates how source code settings end up in the Mach-O file. For example, symbols with `__attribute__((used))` will be marked as `N_NO_DEAD_STRIP` in the symbol table. You can verify this by the following commands.
+#### Sample
+This directory also includes a sample that demonstrates how source code ends up in the different parts of binary file.
+
 ```
-./build_sample.sh
-./parser sample.out
+$ ./build_sample.sh
+$ ./parser -s sample.out
+LC_SEGMENT_64        cmdsize: 72     segname: __PAGEZERO       fileoff: 0x00000000 filesize: 0            (fileend: 0x00000000)
+LC_SEGMENT_64        cmdsize: 712    segname: __TEXT           fileoff: 0x00000000 filesize: 16384        (fileend: 0x00004000)
+LC_SEGMENT_64        cmdsize: 552    segname: __DATA_CONST     fileoff: 0x00004000 filesize: 16384        (fileend: 0x00008000)
+LC_SEGMENT_64        cmdsize: 392    segname: __DATA           fileoff: 0x00008000 filesize: 16384        (fileend: 0x0000c000)
+LC_SEGMENT_64        cmdsize: 72     segname: __LINKEDIT       fileoff: 0x0000c000 filesize: 1328         (fileend: 0x0000c530)
+LC_SYMTAB            cmdsize: 24     symoff: 0x8c360   nsyms: 21   (symsize: 336)   stroff: 0x08c360   strsize: 464
+LC_DYSYMTAB          cmdsize: 80     nlocalsym: 5  nextdefsym: 7   nundefsym: 9   nindirectsyms: 10
+LC_LOAD_DYLIB        cmdsize: 48     @rpath/my_dylib.dylib
+LC_LOAD_DYLIB        cmdsize: 56     /usr/lib/libSystem.B.dylib
+LC_LOAD_DYLIB        cmdsize: 104    /System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+LC_LOAD_DYLIB        cmdsize: 96     /System/Library/Frameworks/Foundation.framework/Versions/C/Foundation
+LC_LOAD_DYLIB        cmdsize: 56     /usr/lib/libobjc.A.dylib
+LC_RPATH             cmdsize: 24     build
 ```
 
 ## LC_SEGMENT_64
