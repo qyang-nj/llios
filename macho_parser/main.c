@@ -1,16 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdbool.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
-
-struct option {
-    bool list_command_only;
-    unsigned int commands[12];
-    int command_count;
-};
+#include "argument.h"
 
 void parse_load_commands(FILE *, int offset, uint32_t);
 void parse_segments(FILE *, struct segment_command_64 *);
@@ -24,10 +18,6 @@ void parse_rpath(FILE *, struct rpath_command *);
 void format_section_type(uint8_t , char *);
 void format_n_desc(uint16_t, char *);
 void format_string(char *, char *);
-unsigned int string_to_load_command(char *);
-bool show_command(unsigned int cmd);
-
-struct option options;
 
 void *load_bytes(FILE *fptr, int offset, int size) {
     void *buf = calloc(1, size);
@@ -37,30 +27,14 @@ void *load_bytes(FILE *fptr, int offset, int size) {
 }
 
 int main(int argc, char **argv) {
-    int opt = 0;
-    while((opt = getopt(argc, argv, "lc:")) != -1) {
-        switch(opt)
-        {
-            case 'l':
-                options.list_command_only = true;
-                break;
-            case 'c':
-                options.commands[options.command_count++] = string_to_load_command(optarg);
-                break;
-            case '?':
-                printf("unknown option: %c", optopt);
-                break;
-        }
+    parse_arguments(argc, argv);
+
+    if (args.file_name == NULL) {
+        puts("Usage: parser [-s] [-c <cmd>] <mach-o file>");
+        exit(1);
     }
 
-    char *file_name = NULL;
-    if (optind < argc) {
-        file_name = argv[optind];
-    } else {
-        puts("Error: missing Mach-O file.");
-    }
-
-    FILE *fptr = fopen(file_name, "rb");
+    FILE *fptr = fopen(args.file_name, "rb");
 
     struct mach_header_64 *header = load_bytes(fptr, 0, sizeof(struct mach_header_64));
     parse_load_commands(fptr, sizeof(struct mach_header_64), header->ncmds);
@@ -109,7 +83,7 @@ void parse_segments(FILE *fptr, struct segment_command_64 *seg_cmd) {
         "LC_SEGMENT_64", seg_cmd->cmdsize, seg_cmd->segname, seg_cmd->fileoff, seg_cmd->filesize,
         seg_cmd->fileoff + seg_cmd->filesize);
 
-    if (options.list_command_only) { return; }
+    if (args.short_desc) { return; }
 
     // section_64 is immediately after segment_command_64.
     struct section_64 *sections = (void *)seg_cmd + sizeof(struct segment_command_64);
@@ -171,7 +145,7 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd) {
         "LC_SYMTAB", sym_cmd->cmdsize, sym_cmd->stroff, sym_cmd->nsyms,
         sym_cmd->nsyms * sizeof(struct nlist_64), sym_cmd->stroff, sym_cmd->strsize);
 
-    if (options.list_command_only) { return; }
+    if (args.short_desc) { return; }
 
     void *sym_table = load_bytes(fptr, sym_cmd->symoff, sym_cmd->nsyms * sizeof(struct nlist_64));
     void *str_table = load_bytes(fptr, sym_cmd->stroff, sym_cmd->strsize);
@@ -202,7 +176,7 @@ void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd) 
     printf("%-20s cmdsize: %-6u nlocalsym: %d  nextdefsym: %d   nundefsym: %d   nindirectsyms: %d \n",
         "LC_DYSYMTAB", dysym_cmd->cmdsize, dysym_cmd->nlocalsym, dysym_cmd->nextdefsym,  dysym_cmd->nundefsym, dysym_cmd->nindirectsyms);
 
-    if (options.list_command_only) { return; }
+    if (args.short_desc) { return; }
 
     printf("    Indirect symbol table (indirectsymoff: 0x%x, nindirectsyms: %d)\n", dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms);
     uint32_t *indirect_symtab = (uint32_t *)load_bytes(fptr, dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms * sizeof(uint32_t)); // the index is 32 bits
@@ -307,40 +281,4 @@ void format_string(char *str, char *formatted) {
         }
     }
     formatted[j] = '\0';
-}
-
-unsigned int string_to_load_command(char *cmd_str) {
-    if (strcmp(cmd_str, "LC_SEGMENT_64") == 0) {
-        return LC_SEGMENT_64;
-    } else if (strcmp(cmd_str, "LC_SYMTAB") == 0) {
-        return LC_SYMTAB;
-    } else if (strcmp(cmd_str, "LC_ID_DYLIB") == 0) {
-        return LC_ID_DYLIB;
-    } else if (strcmp(cmd_str, "LC_DYSYMTAB") == 0) {
-        return LC_DYSYMTAB;
-    } else if (strcmp(cmd_str, "LC_LOAD_DYLIB") == 0) {
-        return LC_LOAD_DYLIB;
-    } else if (strcmp(cmd_str, "LC_LOAD_WEAK_DYLIB") == 0) {
-        return LC_LOAD_WEAK_DYLIB;
-    } else if (strcmp(cmd_str, "LC_RPATH") == 0) {
-        return LC_RPATH;
-    }
-
-    return 0;
-}
-
-bool show_command(unsigned int cmd) {
-    if (options.command_count == 0) {
-        // if no cmd is specified, who all commands.
-        return true;
-    }
-
-    bool show = false;
-    for (int i = 0; i < options.command_count; ++i) {
-        if (options.commands[i] == cmd) {
-            show = true;
-            break;
-        }
-    }
-    return show;
 }
