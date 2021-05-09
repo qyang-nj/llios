@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#include "argument.h"
 
 void parse_load_commands(FILE *, int offset, uint32_t);
 void parse_segments(FILE *, struct segment_command_64 *);
@@ -17,7 +19,6 @@ void format_section_type(uint8_t , char *);
 void format_n_desc(uint16_t, char *);
 void format_string(char *, char *);
 
-
 void *load_bytes(FILE *fptr, int offset, int size) {
     void *buf = calloc(1, size);
     fseek(fptr, offset, SEEK_SET);
@@ -26,11 +27,18 @@ void *load_bytes(FILE *fptr, int offset, int size) {
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
-        puts("Error: missing Mach-O file.");
+    parse_arguments(argc, argv);
+
+    if (args.file_name == NULL) {
+        puts("Usage: parser [-s] [-c <cmd>] <mach-o file>");
         return 1;
     }
-    FILE *fptr = fopen(argv[1], "rb");
+
+    FILE *fptr = fopen(args.file_name, "rb");
+    if (fptr == NULL) {
+        fprintf(stderr, "Cannot open file %s\n", args.file_name);
+        return 1;
+    }
 
     struct mach_header_64 *header = load_bytes(fptr, 0, sizeof(struct mach_header_64));
     parse_load_commands(fptr, sizeof(struct mach_header_64), header->ncmds);
@@ -43,6 +51,13 @@ int main(int argc, char **argv) {
 void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
     for (int i = 0; i < ncmds; ++i) {
         struct load_command *lcmd = load_bytes(fptr, offset, sizeof(struct load_command));
+
+        if (!show_command(lcmd->cmd)) {
+            offset += lcmd->cmdsize;
+            free(lcmd);
+            continue;
+        }
+
         void *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
 
         if (lcmd->cmd == LC_SEGMENT_64) {
@@ -68,7 +83,11 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
 }
 
 void parse_segments(FILE *fptr, struct segment_command_64 *seg_cmd) {
-    printf("LC_SEGMENT_64: %s (%lld)\n", seg_cmd->segname, seg_cmd->filesize);
+    printf("%-20s cmdsize: %-6d segname: %-16s fileoff: 0x%08llx  filesize: %-12lld (fileend: 0x%08llx)\n",
+        "LC_SEGMENT_64", seg_cmd->cmdsize, seg_cmd->segname, seg_cmd->fileoff, seg_cmd->filesize,
+        seg_cmd->fileoff + seg_cmd->filesize);
+
+    if (args.short_desc) { return; }
 
     // section_64 is immediately after segment_command_64.
     struct section_64 *sections = (void *)seg_cmd + sizeof(struct segment_command_64);
@@ -126,7 +145,11 @@ void parse_pointer_section(FILE *fptr, struct section_64 *sect) {
 }
 
 void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd) {
-    printf("LC_SYMTAB (symtab: %lu, strtab: %u)\n", sym_cmd->nsyms * sizeof(struct nlist_64), sym_cmd->strsize);
+    printf("%-20s cmdsize: %-6d symoff: 0x8%x   nsyms: %d   (symsize: %lu)   stroff: 0x08%x   strsize: %u\n",
+        "LC_SYMTAB", sym_cmd->cmdsize, sym_cmd->stroff, sym_cmd->nsyms,
+        sym_cmd->nsyms * sizeof(struct nlist_64), sym_cmd->stroff, sym_cmd->strsize);
+
+    if (args.short_desc) { return; }
 
     void *sym_table = load_bytes(fptr, sym_cmd->symoff, sym_cmd->nsyms * sizeof(struct nlist_64));
     void *str_table = load_bytes(fptr, sym_cmd->stroff, sym_cmd->strsize);
@@ -154,7 +177,10 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd) {
 }
 
 void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd) {
-    printf("LC_DYSYMTAB\n");
+    printf("%-20s cmdsize: %-6u nlocalsym: %d  nextdefsym: %d   nundefsym: %d   nindirectsyms: %d \n",
+        "LC_DYSYMTAB", dysym_cmd->cmdsize, dysym_cmd->nlocalsym, dysym_cmd->nextdefsym,  dysym_cmd->nundefsym, dysym_cmd->nindirectsyms);
+
+    if (args.short_desc) { return; }
 
     printf("    Indirect symbol table (indirectsymoff: 0x%x, nindirectsyms: %d)\n", dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms);
     uint32_t *indirect_symtab = (uint32_t *)load_bytes(fptr, dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms * sizeof(uint32_t)); // the index is 32 bits
@@ -179,7 +205,7 @@ void parse_linker_option(FILE *fptr, struct linker_option_command *cmd) {
         opt = opt + len;
     }
 
-    printf("LC_LINKER_OPTION [size: %2u count: %d] %s\n", cmd->cmdsize, cmd->count, options);
+    printf("%-20s cmdsize: %-6u count: %d   %s\n", "LC_LINKER_OPTION", cmd->cmdsize, cmd->count, options);
     free(options);
 }
 
@@ -192,11 +218,11 @@ void parse_dylib(FILE *fptr, struct dylib_command *cmd) {
     } else if (cmd->cmd == LC_LOAD_WEAK_DYLIB) {
         cmd_name = "LC_LOAD_WEAK_DYLIB";
     }
-    printf("%s [size: %3u] %s\n", cmd_name, cmd->cmdsize, (char *)cmd + cmd->dylib.name.offset);
+    printf("%-20s cmdsize: %-6u %s\n", cmd_name, cmd->cmdsize, (char *)cmd + cmd->dylib.name.offset);
 }
 
 void parse_rpath(FILE *fptr, struct rpath_command *cmd) {
-    printf("LC_RPATH [size: %2u] %s\n", cmd->cmdsize, (char *)cmd + cmd->path.offset);
+    printf("%-20s cmdsize: %-6u %s\n", "LC_RPATH", cmd->cmdsize, (char *)cmd + cmd->path.offset);
 }
 
 void format_section_type(uint8_t type, char *out) {
