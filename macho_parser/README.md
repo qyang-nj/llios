@@ -15,7 +15,7 @@ parser [-s] [-c <cmd>] <mach-o file>
 ```
 
 #### Sample
-This directory also includes a sample that demonstrates how source code ends up in the different parts of binary file.
+This directory also includes a sample that demonstrates how source code ends up in the different parts of a binary file.
 
 ```
 $ ./build_sample.sh
