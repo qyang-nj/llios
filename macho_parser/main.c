@@ -31,10 +31,14 @@ int main(int argc, char **argv) {
 
     if (args.file_name == NULL) {
         puts("Usage: parser [-s] [-c <cmd>] <mach-o file>");
-        exit(1);
+        return 1;
     }
 
     FILE *fptr = fopen(args.file_name, "rb");
+    if (fptr == NULL) {
+        fprintf(stderr, "Cannot open file %s\n", args.file_name);
+        return 1;
+    }
 
     struct mach_header_64 *header = load_bytes(fptr, 0, sizeof(struct mach_header_64));
     parse_load_commands(fptr, sizeof(struct mach_header_64), header->ncmds);
