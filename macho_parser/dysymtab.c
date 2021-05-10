@@ -3,38 +3,54 @@
 #include "argument.h"
 #include "dysymtab.h"
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 extern void *load_bytes(FILE *fptr, int offset, int size);
 
 void symtab_cmd(FILE *fptr, void **sym_table, void **str_table);
+void print_symbols(void *sym_table, void *str_table, int offset, int num);
+void print_indirect_symbols(void *sym_table, void *str_table, uint32_t *indirect_symtab, int size);
 
-void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd) {
+void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysymtab_cmd) {
     printf("%-20s cmdsize: %-6u nlocalsym: %d  nextdefsym: %d   nundefsym: %d   nindirectsyms: %d \n",
-        "LC_DYSYMTAB", dysym_cmd->cmdsize, dysym_cmd->nlocalsym, dysym_cmd->nextdefsym,  dysym_cmd->nundefsym, dysym_cmd->nindirectsyms);
+        "LC_DYSYMTAB", dysymtab_cmd->cmdsize, dysymtab_cmd->nlocalsym,
+        dysymtab_cmd->nextdefsym,  dysymtab_cmd->nundefsym, dysymtab_cmd->nindirectsyms);
 
     if (args.short_desc) { return; }
+
+    printf("    ilocalsym     : %-10d  nlocalsym    : %d\n", dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
+    printf("    iextdefsym    : %-10d  nextdefsym   : %d\n", dysymtab_cmd->iextdefsym, dysymtab_cmd->nextdefsym);
+    printf("    iundefsym     : %-10d  nundefsym    : %d\n", dysymtab_cmd->iundefsym, dysymtab_cmd->nundefsym);
+    printf("    tocoff        : 0x%-8x  ntoc         : %d\n", dysymtab_cmd->tocoff, dysymtab_cmd->ntoc);
+    printf("    modtaboff     : 0x%-8x  nmodtab      : %d\n", dysymtab_cmd->modtaboff, dysymtab_cmd->nmodtab);
+    printf("    extrefsymoff  : 0x%-8x  nextrefsyms  : %d\n", dysymtab_cmd->extrefsymoff, dysymtab_cmd->nextrefsyms);
+    printf("    indirectsymoff: 0x%08x  nindirectsyms: %d\n", dysymtab_cmd->indirectsymoff, dysymtab_cmd->nindirectsyms);
+    printf("    extreloff     : 0x%-8x  nextrel      : %d\n", dysymtab_cmd->extreloff, dysymtab_cmd->nextrel);
+    printf("    locreloff     : 0x%-8x  nlocrel      : %d\n", dysymtab_cmd->locreloff, dysymtab_cmd->nlocrel);
+
+    printf("\n");
 
     void *sym_table = NULL;
     void *str_table = NULL;
 
     symtab_cmd(fptr, &sym_table, &str_table);
 
-    printf("    Indirect symbol table (indirectsymoff: 0x%x, nindirectsyms: %d)\n", dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms);
-    uint32_t *indirect_symtab = (uint32_t *)load_bytes(fptr, dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms * sizeof(uint32_t)); // the index is 32 bits
+    printf("    Local symbols (ilocalsym %d, nlocalsym:%d)\n", dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
+    print_symbols(sym_table, str_table, dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
+    printf("\n");
 
-    char *symbol =NULL;
-    for (int i = 0; i < dysym_cmd->nindirectsyms; ++i) {
-        int index = *(indirect_symtab + i);
-        if (index == INDIRECT_SYMBOL_LOCAL) {
-            symbol = "INDIRECT_SYMBOL_LOCAL";
-        } else if (index == INDIRECT_SYMBOL_ABS) {
-            symbol = "INDIRECT_SYMBOL_ABS";
-        } else {
-            struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * index;
-            symbol = str_table + nlist->n_un.n_strx;
-        }
+    printf("    Externally defined symbols (iextdefsym: %d, nextdefsym:%d)\n", dysymtab_cmd->iextdefsym, dysymtab_cmd->nextdefsym);
+    print_symbols(sym_table, str_table, dysymtab_cmd->iextdefsym, dysymtab_cmd->nextdefsym);
+    printf("\n");
 
-        printf("        %d -> %s\n", index, symbol);
-    }
+    printf("    Undefined symbols (iundefsym: %d, nundefsym:%d)\n", dysymtab_cmd->iundefsym, dysymtab_cmd->nundefsym);
+    print_symbols(sym_table, str_table, dysymtab_cmd->iundefsym, dysymtab_cmd->nundefsym);
+    printf("\n");
+
+    printf("    Indirect symbol table (indirectsymoff: 0x%x, nindirectsyms: %d)\n", dysymtab_cmd->indirectsymoff, dysymtab_cmd->nindirectsyms);
+    uint32_t *indirect_symtab = (uint32_t *)load_bytes(fptr, dysymtab_cmd->indirectsymoff, dysymtab_cmd->nindirectsyms * sizeof(uint32_t)); // the index is 32 bits
+    print_indirect_symbols(sym_table, str_table, indirect_symtab, dysymtab_cmd->nindirectsyms);
+    free(indirect_symtab);
 
     free(sym_table);
     free(str_table);
@@ -60,3 +76,35 @@ void symtab_cmd(FILE *fptr, void **sym_table, void **str_table) {
     }
 }
 
+void print_symbols(void *sym_table, void *str_table, int offset, int num) {
+    for (int i = 0; i < MIN(num, 10); ++i) {
+        struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * (offset + i);
+        const char * symbol = str_table + nlist->n_un.n_strx;
+        printf("        %s\n", symbol);
+    }
+
+    if (num > 10) {
+        printf("        ... %d more ...\n", num - 10);
+    }
+}
+
+void print_indirect_symbols(void *sym_table, void *str_table, uint32_t *indirect_symtab, int size) {
+    const char *symbol =NULL;
+    for (int i = 0; i < MIN(size, 10); ++i) {
+        int index = *(indirect_symtab + i);
+        if (index == INDIRECT_SYMBOL_LOCAL) {
+            symbol = "INDIRECT_SYMBOL_LOCAL";
+        } else if (index == INDIRECT_SYMBOL_ABS) {
+            symbol = "INDIRECT_SYMBOL_ABS";
+        } else {
+            struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * index;
+            symbol = str_table + nlist->n_un.n_strx;
+        }
+
+        printf("        %-2d: %-5d -> %s\n", i, index, symbol);
+    }
+
+    if (size > 10) {
+        printf("        ... %d more ...\n", size - 10);
+    }
+}
