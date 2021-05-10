@@ -7,7 +7,7 @@
 
 extern void *load_bytes(FILE *fptr, int offset, int size);
 
-void symtab_cmd(FILE *fptr, void **sym_table, void **str_table);
+void load_symtab_cmd(FILE *fptr, void **sym_table, void **str_table);
 void print_symbols(void *sym_table, void *str_table, int offset, int num);
 void print_indirect_symbols(void *sym_table, void *str_table, uint32_t *indirect_symtab, int size);
 
@@ -27,13 +27,12 @@ void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysymtab_cm
     printf("    indirectsymoff: 0x%08x  nindirectsyms: %d\n", dysymtab_cmd->indirectsymoff, dysymtab_cmd->nindirectsyms);
     printf("    extreloff     : 0x%-8x  nextrel      : %d\n", dysymtab_cmd->extreloff, dysymtab_cmd->nextrel);
     printf("    locreloff     : 0x%-8x  nlocrel      : %d\n", dysymtab_cmd->locreloff, dysymtab_cmd->nlocrel);
-
     printf("\n");
 
     void *sym_table = NULL;
     void *str_table = NULL;
 
-    symtab_cmd(fptr, &sym_table, &str_table);
+    load_symtab_cmd(fptr, &sym_table, &str_table);
 
     printf("    Local symbols (ilocalsym %d, nlocalsym:%d)\n", dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
     print_symbols(sym_table, str_table, dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
@@ -57,7 +56,7 @@ void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysymtab_cm
 }
 
 
-void symtab_cmd(FILE *fptr, void **sym_table, void **str_table) {
+void load_symtab_cmd(FILE *fptr, void **sym_table, void **str_table) {
     struct mach_header_64 *header = load_bytes(fptr, 0, sizeof(struct mach_header_64));
     int offset = sizeof(struct mach_header_64);
     for (int i = 0; i < header->ncmds; ++i) {
