@@ -63,6 +63,16 @@ struct nlist_64 {
 };
 ```
 
+### n_type
+```
+0000 0000
+─┬─│ ─┬─│
+ │ │  │ └─ N_EXT
+ │ │  └─ N_TYPE
+ │ └─ N_PEXT
+ └─ N_STAB
+```
+
 ### n_desc
 `n_desc` is a field of `nlist_64`. Although it's only 16 bits, it's packed a lot of information about a symbol.
 ```
