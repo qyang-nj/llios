@@ -76,34 +76,43 @@ void load_symtab_cmd(FILE *fptr, void **sym_table, void **str_table) {
 }
 
 void print_symbols(void *sym_table, void *str_table, int offset, int num) {
-    for (int i = 0; i < MIN(num, 10); ++i) {
+    int max_number = args.verbose ? num : MIN(num, 10);
+    for (int i = 0; i < max_number; ++i) {
         struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * (offset + i);
         const char * symbol = str_table + nlist->n_un.n_strx;
         printf("        %s\n", symbol);
     }
 
-    if (num > 10) {
+    if (!args.verbose && num > 10) {
         printf("        ... %d more ...\n", num - 10);
     }
 }
 
 void print_indirect_symbols(void *sym_table, void *str_table, uint32_t *indirect_symtab, int size) {
-    const char *symbol =NULL;
-    for (int i = 0; i < MIN(size, 10); ++i) {
+    int max_number = args.verbose ? size : MIN(size, 10);
+    for (int i = 0; i < max_number; ++i) {
         int index = *(indirect_symtab + i);
+        const char *symbol = NULL;
+
+        // Handle special index values
         if (index == INDIRECT_SYMBOL_LOCAL) {
             symbol = "INDIRECT_SYMBOL_LOCAL";
         } else if (index == INDIRECT_SYMBOL_ABS) {
             symbol = "INDIRECT_SYMBOL_ABS";
+        } else if (index == (INDIRECT_SYMBOL_LOCAL | INDIRECT_SYMBOL_ABS)) {
+            symbol = "INDIRECT_SYMBOL_LOCAL | INDIRECT_SYMBOL_ABS";
+        }
+
+        if (symbol != NULL) {
+            printf("        %-2d: %s\n", i, symbol);
         } else {
             struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * index;
             symbol = str_table + nlist->n_un.n_strx;
+            printf("        %-2d: %-5d -> %s\n", i, index, symbol);
         }
-
-        printf("        %-2d: %-5d -> %s\n", i, index, symbol);
     }
 
-    if (size > 10) {
+    if (!args.verbose && size > 10) {
         printf("        ... %d more ...\n", size - 10);
     }
 }
