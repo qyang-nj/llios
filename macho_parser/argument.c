@@ -8,7 +8,7 @@ struct argument args;
 
 void parse_arguments(int argc, char **argv) {
     int opt = 0;
-    while((opt = getopt(argc, argv, "sc:")) != -1) {
+    while((opt = getopt(argc, argv, "sc:v")) != -1) {
         switch(opt)
         {
             case 's':
@@ -16,6 +16,9 @@ void parse_arguments(int argc, char **argv) {
                 break;
             case 'c':
                 args.commands[args.command_count++] = string_to_load_command(optarg);
+                break;
+            case 'v':
+                args.verbose = true;
                 break;
             case '?':
                 fprintf(stderr, "Unknow option: %c.\n", optopt);

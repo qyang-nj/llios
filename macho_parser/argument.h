@@ -8,6 +8,8 @@
 struct argument {
     // -s: show a short one-line description for each load command
     bool short_desc;
+    // -v: verbose
+    bool verbose;
     // -c <cmd>: show specified command
     unsigned int commands[12];
     // the number of specified commands

@@ -5,13 +5,13 @@
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 #include "argument.h"
+#include "dysymtab.h"
 
 void parse_load_commands(FILE *, int offset, uint32_t);
 void parse_segments(FILE *, struct segment_command_64 *);
 void parse_cstring_section(FILE *, struct section_64 *);
 void parse_pointer_section(FILE *, struct section_64 *);
 void parse_symbol_table(FILE *, struct symtab_command *);
-void parse_dynamic_symbol_table(FILE *, struct dysymtab_command *);
 void parse_linker_option(FILE *, struct linker_option_command *);
 void parse_dylib(FILE *, struct dylib_command *);
 void parse_rpath(FILE *, struct rpath_command *);
@@ -174,23 +174,6 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *sym_cmd) {
 
     free(sym_table);
     free(str_table);
-}
-
-void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysym_cmd) {
-    printf("%-20s cmdsize: %-6u nlocalsym: %d  nextdefsym: %d   nundefsym: %d   nindirectsyms: %d \n",
-        "LC_DYSYMTAB", dysym_cmd->cmdsize, dysym_cmd->nlocalsym, dysym_cmd->nextdefsym,  dysym_cmd->nundefsym, dysym_cmd->nindirectsyms);
-
-    if (args.short_desc) { return; }
-
-    printf("    Indirect symbol table (indirectsymoff: 0x%x, nindirectsyms: %d)\n", dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms);
-    uint32_t *indirect_symtab = (uint32_t *)load_bytes(fptr, dysym_cmd->indirectsymoff, dysym_cmd->nindirectsyms * sizeof(uint32_t)); // the index is 32 bits
-
-    printf("        Indices: [");
-    for (int i = 0; i < dysym_cmd->nindirectsyms; ++i) {
-        printf("%d, ", *(indirect_symtab + i));
-    }
-
-    printf("]\n");
 }
 
 void parse_linker_option(FILE *fptr, struct linker_option_command *cmd) {

@@ -93,9 +93,40 @@ Two major benefits of two-level namespace:
 [Mac OS X Developer Release Notes: Two-Level Namespace Executables](http://mirror.informatimago.com/next/developer.apple.com/releasenotes/DeveloperTools/TwoLevelNamespaces.html)
 
 ## LC_DYSYMTAB
-This load command is used to support dynamic linking.
 ``` c
 struct dysymtab_command { ... }
+```
+This load command is used to support dynamic linking.
+
+### Local symbols
+``` c
+struct dysymtab_command {
+    // ...
+    uint32_t ilocalsym;	/* index to local symbols */
+    uint32_t nlocalsym;	/* number of local symbols */
+    // ...
+};
+```
+The local symbols are used only for debugging. `ilocalsym` is the first index in the symbol table. From this structure, we can tell that **local symbols are consecutively listed in the symbol table**. So are external and undefined symbols.
+
+### Externally defined symbols
+``` c
+struct dysymtab_command {
+    // ...
+    uint32_t iextdefsym;/* index to externally defined symbols */
+    uint32_t nextdefsym;/* number of externally defined symbols */
+    // ...
+};
+```
+
+### Undefined symbols
+``` c
+struct dysymtab_command {
+    // ...
+    uint32_t iundefsym;	/* index to undefined symbols */
+    uint32_t nundefsym;	/* number of undefined symbols */
+    // ...
+};
 ```
 
 ### Indirect symbol table
@@ -118,36 +149,27 @@ struct section_64
 
 For example, the symbol of the 3rd pointer in `__got` is (in pseudocode):
 ```
-symbol_table[indirect_symbol_table[__got.section_64.reserved + (3 - 1)]]
+symbol_table[indirect_symbol_table[__got.section_64.reserved1 + (3 - 1)]]
 ```
 
-In practice, We use `otool -I` to dump the indirect symbol table.
+In practice, we use `otool -Iv` to dump the indirect symbol table.
 ```
 $ otool -I a.out
 a.out:
 Indirect symbols for (__TEXT,__stubs) 1 entries
-address            index
-0x0000000100003f96     3                                  --> _lib_func
+address            index name
+0x0000000100003f96     3 _lib_func
 Indirect symbols for (__DATA_CONST,__got) 2 entries
-address            index
-0x0000000100004000     4                                  --> _lib_str
-0x0000000100004008     5                                  --> dyld_stub_binder
+address            index name
+0x0000000100004000     4 _lib_str
+0x0000000100004008     5 dyld_stub_binder
 Indirect symbols for (__DATA,__la_symbol_ptr) 1 entries
-address            index
-0x0000000100008000     3                                  --> _lib_func
+address            index name
+0x0000000100008000     3 _lib_func
 ```
 
-Then we can look up the indices through `nm` to find out the actual symbols.
-```
-$ nm -ap a.out | nl -v 0
-     0	0000000100008008 d __dyld_private
-     1	0000000100000000 T __mh_execute_header
-     2	0000000100003f70 T _main
-     3	                 U _lib_func
-     4	                 U _lib_str
-     5	                 U dyld_stub_binder
-```
-(The `-a` and `-p` for `nm` are really important here. They make sure the all symbols are listed in the same order as in `SYMTAB`.)
+**INDIRECT_SYMBOL_LOCAL**
+There are two special values in the indirect symbol table (`INDIRECT_SYMBOL_LOCAL` and `INDIRECT_SYMBOL_ABS`). It seems there is a way to have an indirect symbol for a local defined symbols. As the index is a special value, it's not pointing to any symbol in symbol table. *I'm not sure how and why a local defined symbol needs indirect symbol table.*
 
 ## LC_LINKER_OPTION
 `LC_LINKER_OPTION` only exists in the object files (`MH_OBJECT`) and is used for auto-linking. This load command literally contains linker flags that will be used by the static linker.
@@ -172,8 +194,6 @@ struct dylib {
 ```
 
 All these `LC_*_DYLIB` commands use the same `dylib_command` struct. `LC_ID_DYLIB` exists in the dynamic library (`MH_DYLIB`), and `LC_LOAD_DYLIB` and `LC_LOAD_WEAK_DYLIB` are in the binary (could be any macho-o type) that links dynamic libraries.
-
-
 
 ### Install name
 The most important field of `struct dylib` is `name`, library's path name, aka, install name. An install name is just a filepath embedded within a dynamic library which tells the linker where that library can be found at runtime. To specify the install name, we pass `-install_name <path>` to the static linker at build time. For an existing library, we can use `install_name_tool` to change it.
