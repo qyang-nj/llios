@@ -7,7 +7,7 @@ mkdir -p build
 
 clang -dynamiclib -install_name "@rpath/my_dylib.dylib" -o build/my_dylib.dylib sample/my_dylib.c
 
-clang -c -o build/main.o sample/main.c
+clang -c -g -o build/main.o sample/main.c
 clang -c -fmodules -o build/objc.o sample/objc.m
 
 [ "$TWO_LEVEL_NAMESAPCE" == 1 ] && two_level_flag="" || two_level_flag="-flat_namespace"
