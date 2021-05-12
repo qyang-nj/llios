@@ -19,9 +19,10 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *symtab_cmd) {
     void *sym_table = load_bytes(fptr, symtab_cmd->symoff, symtab_cmd->nsyms * sizeof(struct nlist_64));
     void *str_table = load_bytes(fptr, symtab_cmd->stroff, symtab_cmd->strsize);
 
+    int nsyms = symtab_cmd->nsyms;
+    int max_number = args.verbose ? nsyms : (nsyms > 10 ? 10 : nsyms);
 
-
-    for (int i = 0; i < symtab_cmd->nsyms; ++i) {
+    for (int i = 0; i < max_number; ++i) {
         char formatted_n_type[256];
         char formatted_n_desc[256];
 
@@ -31,8 +32,19 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *symtab_cmd) {
         format_n_type(nlist->n_type, formatted_n_type);
         format_n_desc(nlist->n_type, nlist->n_desc, formatted_n_desc);
 
-        printf("    %-4d: 0x%016llx  %s %s   %s\n",
-            i, nlist->n_value, formatted_n_type, formatted_n_desc, symbol);
+        char formatted_value[32];
+        if ((nlist->n_type & N_TYPE) != N_UNDF) {
+            sprintf(formatted_value, "%016llx", nlist->n_value);
+        } else {
+            sprintf(formatted_value, "%s", "                ");
+        }
+
+        printf("    %-4d: %s  %s %s   %s\n",
+            i, formatted_value, formatted_n_type, formatted_n_desc, symbol);
+    }
+
+    if (!args.verbose && nsyms > 10) {
+        printf("        ... %d more ...\n", nsyms - 10);
     }
 
     free(sym_table);
