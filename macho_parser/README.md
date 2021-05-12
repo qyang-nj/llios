@@ -51,7 +51,15 @@ c_constructor_function (in sample) + 0
 
 ## LC_SYMTAB
 ``` c
-/* This is the symbol table entry structure for 64-bit architectures. */
+struct symtab_command {
+	uint32_t	cmd;		/* LC_SYMTAB */
+	uint32_t	cmdsize;	/* sizeof(struct symtab_command) */
+	uint32_t	symoff;		/* symbol table offset */
+	uint32_t	nsyms;		/* number of symbol table entries */
+	uint32_t	stroff;		/* string table offset */
+	uint32_t	strsize;	/* string table size in bytes */
+};
+
 struct nlist_64 {
     union {
         uint32_t  n_strx;  /* index into the string table */
@@ -63,28 +71,32 @@ struct nlist_64 {
 };
 ```
 
+Symbol table contains a list of `nlist` and a string table. Both are part of `__LINKEDIT`. The string table here are exclusively used for symbols. Don't confuse it with `__cstring` section, which is part of `__TEXT`.
+
 ### n_type
 ```
 0000 0000
 ─┬─│ ─┬─│
- │ │  │ └─ N_EXT
- │ │  └─ N_TYPE
- │ └─ N_PEXT
- └─ N_STAB
+ │ │  │ └─ N_EXT (external symbol)
+ │ │  └─ N_TYPE (N_UNDF, N_ABS, N_SECT, N_PBUD, N_INDR)
+ │ └─ N_PEXT (private external symbol)
+ └─ N_STAB (debugging symbol)
 ```
 
 ### n_desc
-`n_desc` is a field of `nlist_64`. Although it's only 16 bits, it's packed a lot of information about a symbol.
 ```
 0000 0000 0000 0000
 ────┬──── ││││  ─┬─
-    │     ││││   └─ REFERENCE_TYPE
+    │     ││││   └─ REFERENCE_TYPE (used by undefined symbols)
     │     │││└─ REFERENCED_DYNAMICALLY
     │     ││└─ NO_DEAD_STRIP
     │     │└─ N_WEAK_REF
     │     └─ N_WEAK_DEF
     └─ LIBRARY_ORDINAL (used by two-level namespace)
 ```
+
+#### REFERENCE_TYPE
+I'm not sure how exactly the `REFERENCE_TYPE` is used. My understanding is that global variables are non-lazy bound and functions are lazily bound (see [dynamic linking](https://github.com/qyang-nj/llios/tree/main/dynamic_linking)). However, those function symbols are `REFERENCE_FLAG_UNDEFINED_NON_LAZY`. That's why I'm confused.
 
 #### N_NO_DEAD_STRIP
 Enabled by `__attribute__((constructor))`. It tells the linker (`ld`) to keep this symbol even it's not used. It exits in object files (`MH_OBJECT`). Read more about [dead code elimination](https://github.com/qyang-nj/llios/tree/main/dce).
