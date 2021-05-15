@@ -131,6 +131,5 @@ $ xxd -s 16576 -l 88 sample.out
 ```
 
 Obviously macho file stores public symbols twice - a trie in the export info and a list in symbol table.
-* Can we safely remove public symbols from symbol tables but keep the export info?
-    * If so, how? Nether `strip` nor `ld` has a flag to just do that.
-    * If not, how are those symbols in symbol table used by `dyld`?
+
+**Can we safely remove public symbols from symbol tables but keep the export info?** If so, how? Nether `strip` nor `ld` has a flag to just do that. If not, how are those symbols in symbol table used by `dyld`?
