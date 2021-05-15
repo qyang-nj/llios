@@ -25,11 +25,11 @@ $ xxd -s 16384 -l 88 a.out
 
 
 ## Export Trie
-A [trie](https://en.wikipedia.org/wiki/Trie) is a tree structure that is used for accelerating searching strings. As it's a tree, it has nodes and edges. Different from the trie we were taught by text book, in an export trie, an edge is a string, and a node stores associated data.
+A [trie](https://en.wikipedia.org/wiki/Trie) is a tree structure that is used for accelerating searching strings. It has nodes and edges. Different from the trie we were taught in text book, in an export trie, an edge is a string, and a node stores associated data.
 
 The export trie in the Mach-O file is a bit stream that is encoded by [ULEB128](https://en.wikipedia.org/wiki/LEB128). Although I'm not going into the algorithm of ULEB128, the thing worth mentioning is that if a number is <= 128 (0x7f), ULEB128 representation is the same as `uint8`. Since in this sample the size of export is only 88 bytes, for the sake of simplicity, we will pretend they are byte values instead of decoding ULEB128.
 
-It's really hard to describe how the trie is encoded in simple language. However, if I break each node, use relative address, and convert ASCII values to the characters, visually the above mystery hex dump can be translated into the format below.
+It's really hard to describe how the trie is encoded in simple language. However, if I break each node, use relative address, and convert ASCII values to the characters, visually the above mystery hex dump can be translated into the form below.
 
 ```
 4000: 00 01 "_" 05
@@ -45,25 +45,26 @@ It's really hard to describe how the trie is encoded in simple language. However
  +4f: 04 (00 80 80 01) 00
 ```
 
-Now it's much easy to read and here is what each number means.
+Hopefully this is much easier to read and with a little explantion, you can understand how the trie is embeded.
 ```
 [offset]: [size] ([data]) [children count] [edge 1 string] [child 1 offset]
                                            [edge 2 string] [child 2 offset]
 
 offset        : the offset relative to the beginning of the export info
-size          : the size of the data. If the size is larger than 0, the node is a terminal node,
-                meaning that from the root to this node, all the edges concatenated is a complete symbol.
-data          : information about the symbol, like flags, address, etc
-children count: the number of children of this children has
-edge n string : the zero-terminated string value of the edge of this node to this nth child
-child n offset: the nth child offset relative to the beginning of the export info
+size          : the size of the data. If the size is larger than 0, the node is a terminal node.
+data          : information about the symbol
+children count: the number of children of this node has
+edge n string : the zero-terminated string value of the edge from this node to its nth child
+child n offset: the nth child's location. It's the offset relative to the beginning of the export info.
 ```
 
-This is what the trie actually looks like.
+One important concept for a trie is **terminal node**. In the export trie, concatenating all the edges (string) from the root to a terminal node is a complete symbol. Terminal node also stores the data associated to that symbol, like flags, addres, etc. Please note terminal node can also have children, which is demonstrated by the symbol `_llios_func` and `_llios_func_2nd`.
 
-"Insert image here"
+This is what the trie actually looks like. The green nodes are the terminal nodes. 
 
-[Here]() is the simple trie parser in the [macho parser](), and [here](https://github.com/opensource-apple/dyld/blob/3f928f32597888c5eac6003b9199d972d49857b5/launch-cache/MachOTrie.hpp) is the full-fledged parser in `dyld`.
+![Trie Graph](../articles/images/Export%20Trie.png)
+
+To learn more, [here](../macho_parser/dyld_info.c) is the simple trie parser in the [macho parser](../macho_parser), and [here](https://github.com/opensource-apple/dyld/blob/3f928f32597888c5eac6003b9199d972d49857b5/launch-cache/MachOTrie.hpp) is the full-fledged parser in `dyld`.
 
 ## Strip
 
