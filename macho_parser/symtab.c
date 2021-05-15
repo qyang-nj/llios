@@ -10,8 +10,8 @@ static void format_n_type(uint8_t n_type, char *formatted);
 static void format_n_desc(uint8_t n_type, uint16_t n_desc, char *formatted);
 
 void parse_symbol_table(FILE *fptr, struct symtab_command *symtab_cmd) {
-    printf("%-20s cmdsize: %-6d symoff: 0x8%x   nsyms: %d   (symsize: %lu)   stroff: 0x08%x   strsize: %u\n",
-        "LC_SYMTAB", symtab_cmd->cmdsize, symtab_cmd->stroff, symtab_cmd->nsyms,
+    printf("%-20s cmdsize: %-6d symoff: %d   nsyms: %d   (symsize: %lu)   stroff: %d   strsize: %u\n",
+        "LC_SYMTAB", symtab_cmd->cmdsize, symtab_cmd->symoff, symtab_cmd->nsyms,
         symtab_cmd->nsyms * sizeof(struct nlist_64), symtab_cmd->stroff, symtab_cmd->strsize);
 
     if (args.short_desc) { return; }
