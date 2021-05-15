@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # swiftc main.swift
-clang main.c
+clang -o sample.out main.c
