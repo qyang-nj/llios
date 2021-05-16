@@ -1,7 +1,7 @@
 # Exported Symbol
-Exported symbols are basically the public APIs provided by a dynamic library. For a long time, I thought the exported symbols were stored in the symbol table (It's not wrong). Surprisingly exported symbols are stored somewhere in a more efficient way, smaller on disk and faster at runtime. In this article, we will dive into the details of exported symbol information (short for export info).
+Exported symbols are basically the public APIs provided by a dynamic library. For a long time, I thought the exported symbols were stored in the symbol table (It's not wrong though). Surprisingly exported symbols are stored somewhere in a more efficient way, smaller on disk and faster at runtime. In this article, we will dive into the details of exported symbol information (short for export info).
 
-It may not be obvious, an executable can also have exported symbols (use cases are explained in below "strip" section). We will anatomize the following sample code which contains a few public symbols. We are using C here as it does the least name mangling than other languages. In case you don't know, non-static functions in C are external/public.
+It may not be obvious that an executable can also have exported symbols (use cases are explained in below "strip" section). We will anatomize the following sample code which contains a few public symbols. We are using C here as it does the least name mangling than other languages.
 
 ``` c
 // clang -o sample.out sample.c
@@ -13,8 +13,8 @@ int main() { return 0; }
 ```
 *(The sample code and build script are in this directory.)*
 
-## LC_DYLD_INFO(_ONLY)
-As mentioned above, export info is not stored in symbol table (`LC_SYMTAB`). Instead, they are in the `LC_DYLD_INFO` or `LC_DYLD_INFO_ONLY` load command. With the help of `otool -l`, we're able to see the offset and the size of export info.
+## LC_DYLD_INFO_ONLY
+As mentioned above, export info is not stored in symbol table (`LC_SYMTAB`). Instead, they are in the `LC_DYLD_INFO_ONLY` load command. With the help of `otool -l`, we're able to see the offset and the size of export info.
 
 ```
 $ otool -l sample.out
@@ -35,7 +35,7 @@ $ xxd -s 16384 -l 88 a.out
 00004050: 0080 8001 0000 0000                      ........
 ```
 
-Before parsing the bytes by ourselves, just let you know that we can use `dyldinfo -export` to dump all the exported symbols. We can use them to verify our parsing results.
+Before parsing the bytes by ourselves, just let you know that we can use `dyldinfo -export` to dump all the exported symbols and use them to verify our parsing results.
 ```
 $ xcrun dyldinfo -export sample.out
 export information (from trie):
@@ -51,7 +51,7 @@ The export info is actually a trie. A [trie](https://en.wikipedia.org/wiki/Trie)
 
 The export trie in the Mach-O file is a bit stream that is encoded by [ULEB128](https://en.wikipedia.org/wiki/LEB128). Although I'm not going into the algorithm of ULEB128, the thing worth mentioning is that if a number is <= 128 (0x7f), ULEB128 representation is the same as `uint8`. Since in this sample the size of export is only 88 bytes, for the sake of simplicity, we will pretend they are byte values instead of decoding ULEB128.
 
-It's really hard to describe how the trie is encoded in simple language. However, if I break each node, use relative address, and convert ASCII values to the characters, visually the above mystery hex dump can be translated into the form below.
+It's really hard to describe how the trie is encoded in a few sentences. However, if I break each node, use relative address, and convert ASCII values to the characters, visually the above mystery hex dump can be translated into the form below.
 
 ```
 4000: 00 01 "_" 05
@@ -74,13 +74,13 @@ Hopefully this is much easier to read and with a little explantion, you can unde
 
 offset        : the offset relative to the beginning of the export info
 size          : the size of the data. If the size is larger than 0, the node is a terminal node.
-data          : information about the symbol
-children count: the number of children of this node has
-edge n string : the zero-terminated string value of the edge from this node to its nth child
+data          : information about the symbol. Only terminal node has data.
+children count: the number of this node's children
+edge n string : the zero-terminated string of the edge from this node to its nth child
 child n offset: the nth child's location. It's the offset relative to the beginning of the export info.
 ```
 
-One important concept for a trie is **terminal node**. In the export trie, concatenating all the edges (string) from the root to a terminal node is a complete symbol. Terminal node also stores the data associated to that symbol, like flags, addres, etc. Please note terminal node can also have children, which is demonstrated by the symbol `_llios_func` and `_llios_func_2nd`.
+One important concept for a trie is **terminal node**. In the export trie, concatenating all the edges (string) from the root to a terminal node is a complete symbol. Terminal node also stores the data associated to that symbol, like flags, address, etc. Please note terminal node can also have children, which is demonstrated by the symbol `_llios_func` and `_llios_func_2nd`.
 
 This is what the trie actually looks like. The green nodes are the terminal nodes. Traversing the trie, we can get five exported symbols which are the same as we saw in the above `dyldinfo -export` command.
 
@@ -107,10 +107,10 @@ $ xxd -s 16384 -l 88 a.out
 
 For more details, see the [source code](https://github.com/opensource-apple/cctools/blob/fdb4825f303fd5c0751be524babd32958181b3ed/misc/strip.c#L3944) of `strip` and the [prune_trie](https://github.com/apple-opensource/ld64/blob/e28c028b20af187a16a7161d89e91868a450cadc/src/other/PruneTrie.cpp#L45) method of `ld64`.
 
-There is one use case that an executable needs to preserve the exported symbol - loading plugins. The plugins (`MH_BUNDLE`) is loaded by an executable (`MH_EXECUTE`) and uses the executable's exported symbols. One example is that a test runner loads test cases as plugins (see [xctest](../xctest)). I can't think of a case that iOS app needs to load plugins at runtime.
+There is one use case that an executable needs to preserve the exported symbol — loading plugins. The plugins (`MH_BUNDLE`) is loaded by an executable (`MH_EXECUTE`) and uses the executable's exported symbols. One example is that a test runner loads test cases as plugins (see [xctest](../xctest)). I can't think of a case why an iOS app needs to load plugins at runtime.
 
 ## Symbol Table
-I'm still puzzled by one question . As I said at the beginning, I was not wrong that pubic symbols are stored in the symbol table, which is a different parts of macho file.
+So far I'm still puzzled by one question. As I said at the beginning, I was not wrong that pubic symbols are stored in the symbol table, which is a different parts of macho file. We can dump the content of symbol table and string table to verify this.
 ```
 $ nm -pg sample.out
 0000000100000000 T __mh_execute_header
