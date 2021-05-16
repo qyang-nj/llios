@@ -36,6 +36,10 @@ unsigned int string_to_load_command(char *cmd_str) {
         return LC_SEGMENT_64;
     } else if (strcmp(cmd_str, "LC_SYMTAB") == 0) {
         return LC_SYMTAB;
+    } else if (strcmp(cmd_str, "LC_DYLD_INFO") == 0) {
+        return LC_DYLD_INFO;
+    } else if (strcmp(cmd_str, "LC_DYLD_INFO_ONLY") == 0) {
+        return LC_DYLD_INFO_ONLY;
     } else if (strcmp(cmd_str, "LC_ID_DYLIB") == 0) {
         return LC_ID_DYLIB;
     } else if (strcmp(cmd_str, "LC_DYSYMTAB") == 0) {

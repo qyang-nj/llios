@@ -7,6 +7,7 @@
 #include "argument.h"
 #include "symtab.h"
 #include "dysymtab.h"
+#include "dyld_info.h"
 
 void parse_load_commands(FILE *, int offset, uint32_t);
 void parse_segments(FILE *, struct segment_command_64 *);
@@ -15,6 +16,7 @@ void parse_pointer_section(FILE *, struct section_64 *);
 void parse_linker_option(FILE *, struct linker_option_command *);
 void parse_dylib(FILE *, struct dylib_command *);
 void parse_rpath(FILE *, struct rpath_command *);
+
 void format_section_type(uint8_t , char *);
 void format_string(char *, char *);
 
@@ -71,6 +73,8 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
             parse_dylib(fptr, (struct dylib_command *)cmd);
         } else if (lcmd->cmd == LC_RPATH) {
             parse_rpath(fptr, (struct rpath_command *)cmd);
+        } else if (lcmd->cmd == LC_DYLD_INFO || lcmd->cmd == LC_DYLD_INFO_ONLY) {
+            parse_dyld_info(fptr, (struct dyld_info_command *)cmd);
         } else {
             // printf("Load command: %d\n", lcmd->cmd);
         }
@@ -217,3 +221,4 @@ void format_string(char *str, char *formatted) {
     }
     formatted[j] = '\0';
 }
+

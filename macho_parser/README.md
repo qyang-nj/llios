@@ -49,25 +49,53 @@ c_constructor_function (in sample) + 0
 
 ⚠️ Please note that ObjC's `+load` methods will also be executed before `main`, but uses a different mechanism. See below "+load in ObjC" section.
 
+## LC_DYLD_INFO_ONLY
+``` c
+struct dyld_info_command {
+    uint32_t cmd;            /* LC_DYLD_INFO or LC_DYLD_INFO_ONLY */
+    uint32_t cmdsize;        /* sizeof(struct dyld_info_command) */
+
+    uint32_t rebase_off;     /* file offset to rebase info  */
+    uint32_t rebase_size;    /* size of rebase info   */
+
+    uint32_t bind_off;       /* file offset to binding info   */
+    uint32_t bind_size;      /* size of binding info  */
+
+    uint32_t weak_bind_off;  /* file offset to weak binding info   */
+    uint32_t weak_bind_size; /* size of weak binding info  */
+
+    uint32_t lazy_bind_off;  /* file offset to lazy binding info */
+    uint32_t lazy_bind_size; /* size of lazy binding infs */
+
+    uint32_t export_off;     /* file offset to lazy binding info */
+    uint32_t export_size;    /* size of lazy binding infs */
+};
+```
+
+This load command is only used by `dyld` at runtime. The information here can inspected by `xcrun dyldinfo (-rebase|-bind|-weak_bind|-lazy_bind|-export)`.
+
+### Export Info
+A deep dive of exported info is at "[exported_symbol](../exported_symbol)".
+
 ## LC_SYMTAB
 ``` c
 struct symtab_command {
-	uint32_t	cmd;		/* LC_SYMTAB */
-	uint32_t	cmdsize;	/* sizeof(struct symtab_command) */
-	uint32_t	symoff;		/* symbol table offset */
-	uint32_t	nsyms;		/* number of symbol table entries */
-	uint32_t	stroff;		/* string table offset */
-	uint32_t	strsize;	/* string table size in bytes */
+    uint32_t cmd;        /* LC_SYMTAB */
+    uint32_t cmdsize;    /* sizeof(struct symtab_command) */
+    uint32_t symoff;     /* symbol table offset */
+    uint32_t nsyms;      /* number of symbol table entries */
+    uint32_t stroff;     /* string table offset */
+    uint32_t strsize;    /* string table size in bytes */
 };
 
 struct nlist_64 {
     union {
-        uint32_t  n_strx;  /* index into the string table */
+        uint32_t n_strx;  /* index into the string table */
     } n_un;
-    uint8_t n_type;        /* type flag, see below */
-    uint8_t n_sect;        /* section number or NO_SECT */
-    uint16_t n_desc;       /* see <mach-o/stab.h> */
-    uint64_t n_value;      /* value of this symbol (or stab offset) */
+    uint8_t n_type;       /* type flag, see below */
+    uint8_t n_sect;       /* section number or NO_SECT */
+    uint16_t n_desc;      /* see <mach-o/stab.h> */
+    uint64_t n_value;     /* value of this symbol (or stab offset) */
 };
 ```
 
