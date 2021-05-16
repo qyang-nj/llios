@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "argument.h"
 #include "dyld_info.h"
 
@@ -7,7 +8,7 @@ extern void *load_bytes(FILE *fptr, int offset, int size);
 int read_uleb128(const uint8_t *p, uint64_t *out);
 
 void parse_export(FILE *fptr, uint32_t export_off, uint32_t export_size);
-void parse_export_trie(uint8_t *export_start, uint8_t *node_ptr, char *curr_string, int curr_len);
+void parse_export_trie(uint8_t *export_start, uint8_t *node_ptr, int level);
 
 void parse_dyld_info(FILE *fptr, struct dyld_info_command *dyld_info_cmd) {
     const char *name = (dyld_info_cmd->cmd == LC_DYLD_INFO_ONLY ? "LC_DYLD_INFO_ONLY" : "LC_DYLD_INFO");
@@ -29,26 +30,26 @@ void parse_dyld_info(FILE *fptr, struct dyld_info_command *dyld_info_cmd) {
 void parse_export(FILE *fptr, uint32_t export_off, uint32_t export_size) {
     uint8_t *export = load_bytes(fptr, export_off, export_size);
 
-    printf ("\n    Exported Symbols:\n");
-    char symbol[4096];
-    parse_export_trie(export, export, symbol, 0);
+    printf ("\n    Exported Symbols (Trie):");
+    parse_export_trie(export, export, 0);
 
     free(export);
 }
 
-// This method only passes the symbols in the trie, not the associated data.
-// For detailed export trie parsing, see MachOTrie.hpp in dyld.
-void parse_export_trie(uint8_t *export_start, uint8_t *node_ptr, char *curr_string, int curr_len) {
+// Print out the export trie.
+void parse_export_trie(uint8_t *export_start, uint8_t *node_ptr, int level) {
     uint64_t terminal_size;
     int byte_count = read_uleb128(node_ptr, &terminal_size);
     uint8_t *children_count_ptr = node_ptr + byte_count + terminal_size;
 
     if (terminal_size != 0) {
-        printf("        %s (data: ", curr_string);
+        printf(" (data: ");
         for (int i = 0; i < terminal_size; ++i) {
-            printf("%x", *(node_ptr + byte_count + i));
+            printf("%02x", *(node_ptr + byte_count + i));
         }
         printf(")\n");
+    } else {
+        printf("\n");
     }
 
     // According to the source code in dyld,
@@ -56,20 +57,13 @@ void parse_export_trie(uint8_t *export_start, uint8_t *node_ptr, char *curr_stri
     uint8_t children_count = *children_count_ptr;
     uint8_t *s = children_count_ptr + 1;
     for (int i = 0; i < children_count; ++i) {
-        int edge_len = 0;
-        while (*s != '\0') {
-            curr_string[curr_len + edge_len] = *s;
-            ++s;
-            ++edge_len;
-        }
-
-        curr_string[curr_len + edge_len] = '\0';
-        s++;
+        printf("    %*s%s", level * 4, "", s);
+        s += strlen((char *)s) + 1;
 
         uint64_t child_offset;
         byte_count = read_uleb128(s, &child_offset);
         s += byte_count; // now s points to the next child's edge string
-        parse_export_trie(export_start, export_start + child_offset, curr_string, curr_len + edge_len);
+        parse_export_trie(export_start, export_start + child_offset, level + 1);
     }
 }
 
