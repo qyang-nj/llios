@@ -221,6 +221,16 @@ address            index name
 **INDIRECT_SYMBOL_LOCAL**
 There are two special values in the indirect symbol table (`INDIRECT_SYMBOL_LOCAL` and `INDIRECT_SYMBOL_ABS`). It seems there is a way to have an indirect symbol for a local defined symbols. As the index is a special value, it's not pointing to any symbol in symbol table. *I'm not sure how and why a local defined symbol needs indirect symbol table.*
 
+## LC_MAIN
+``` c
+struct entry_point_command {
+    uint32_t  cmd;	/* LC_MAIN only used in MH_EXECUTE filetypes */
+    uint32_t  cmdsize;	/* 24 */
+    uint64_t  entryoff;	/* file (__TEXT) offset of main() */
+    uint64_t  stacksize;/* if not zero, initial stack size */
+};
+```
+
 ## LC_LINKER_OPTION
 `LC_LINKER_OPTION` only exists in the object files (`MH_OBJECT`) and is used for auto-linking. This load command literally contains linker flags that will be used by the static linker.
 

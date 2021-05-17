@@ -14,6 +14,7 @@ void parse_segments(FILE *, struct segment_command_64 *);
 void parse_cstring_section(FILE *, struct section_64 *);
 void parse_pointer_section(FILE *, struct section_64 *);
 void parse_dylinker(FILE *, struct dylinker_command *);
+void parse_entry_point(FILE *, struct entry_point_command *);
 void parse_linker_option(FILE *, struct linker_option_command *);
 void parse_dylib(FILE *, struct dylib_command *);
 void parse_rpath(FILE *, struct rpath_command *);
@@ -63,34 +64,46 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
 
         void *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
 
-        if (lcmd->cmd == LC_SEGMENT_64) {
-            parse_segments(fptr, (struct segment_command_64 *)cmd);
-        } else if (lcmd->cmd == LC_SYMTAB) {
-            parse_symbol_table(fptr, (struct symtab_command *)cmd);
-        } else if (lcmd->cmd == LC_DYSYMTAB) {
-            parse_dynamic_symbol_table(fptr, (struct dysymtab_command *)cmd);
-        } else if (lcmd->cmd == LC_LOAD_DYLINKER) {
-            parse_dylinker(fptr, (struct dylinker_command *)cmd);
-        } else if (lcmd->cmd == LC_LINKER_OPTION) {
-            parse_linker_option(fptr, (struct linker_option_command *)cmd);
-        } else if (lcmd->cmd == LC_ID_DYLIB
-            || lcmd->cmd == LC_LOAD_DYLIB
-            || lcmd->cmd == LC_LOAD_WEAK_DYLIB) {
-            parse_dylib(fptr, (struct dylib_command *)cmd);
-        } else if (lcmd->cmd == LC_RPATH) {
-            parse_rpath(fptr, (struct rpath_command *)cmd);
-        } else if (lcmd->cmd == LC_DYLD_INFO
-            || lcmd->cmd == LC_DYLD_INFO_ONLY) {
-            parse_dyld_info(fptr, (struct dyld_info_command *)cmd);
-        } else if (lcmd->cmd == LC_CODE_SIGNATURE
-            || lcmd->cmd == LC_SEGMENT_SPLIT_INFO
-            || lcmd->cmd == LC_FUNCTION_STARTS
-            || lcmd->cmd == LC_DATA_IN_CODE
-            || lcmd->cmd == LC_DYLIB_CODE_SIGN_DRS
-            || lcmd->cmd == LC_LINKER_OPTIMIZATION_HINT) {
-            parse_linkedit_data(fptr, (struct linkedit_data_command *)cmd);
-        } else {
-            printf("LC_(%x)\n", lcmd->cmd);
+        switch (lcmd->cmd) {
+            case LC_SEGMENT_64:
+                parse_segments(fptr, (struct segment_command_64 *)cmd);
+                break;
+            case LC_SYMTAB:
+                parse_symbol_table(fptr, (struct symtab_command *)cmd);
+                break;
+            case LC_DYSYMTAB:
+                parse_dynamic_symbol_table(fptr, (struct dysymtab_command *)cmd);
+                break;
+            case LC_LOAD_DYLINKER:
+                parse_dylinker(fptr, (struct dylinker_command *)cmd);
+                break;
+            case LC_MAIN:
+                parse_entry_point(fptr, (struct entry_point_command *)cmd);
+                break;
+            case LC_LINKER_OPTION:
+                parse_linker_option(fptr, (struct linker_option_command *)cmd);
+                break;
+            case LC_ID_DYLIB:
+            case LC_LOAD_DYLIB:
+            case LC_LOAD_WEAK_DYLIB:
+                parse_dylib(fptr, (struct dylib_command *)cmd);
+                break;
+            case LC_RPATH:
+                parse_rpath(fptr, (struct rpath_command *)cmd);
+                break;
+            case LC_DYLD_INFO:
+            case LC_DYLD_INFO_ONLY:
+                parse_dyld_info(fptr, (struct dyld_info_command *)cmd);
+                break;
+            case LC_CODE_SIGNATURE:
+            case LC_FUNCTION_STARTS:
+            case LC_DATA_IN_CODE:
+            case LC_DYLIB_CODE_SIGN_DRS:
+            case LC_LINKER_OPTIMIZATION_HINT:
+                parse_linkedit_data(fptr, (struct linkedit_data_command *)cmd);
+                break;
+            default:
+                printf("LC_(%x)\n", lcmd->cmd);
         }
 
         offset += lcmd->cmdsize;
@@ -164,6 +177,12 @@ void parse_pointer_section(FILE *fptr, struct section_64 *sect) {
 void parse_dylinker(FILE *fptr, struct dylinker_command *dylinker_cmd) {
     printf("%-20s cmdsize: %-6u %s\n", "LC_LOAD_DYLINKER",
         dylinker_cmd->cmdsize, (char *)dylinker_cmd + dylinker_cmd->name.offset);
+}
+
+void parse_entry_point(FILE *fptr, struct entry_point_command *entry_point_cmd) {
+    uint64_t entryoff = entry_point_cmd->entryoff;
+    printf("%-20s cmdsize: %-6u entryoff: 0x%llx(%llu) stacksize: %llu\n", "LC_MAIN",
+        entry_point_cmd->cmdsize, entryoff, entryoff, entry_point_cmd->stacksize);
 }
 
 void parse_linker_option(FILE *fptr, struct linker_option_command *cmd) {
