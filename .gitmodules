@@ -1,9 +1,0 @@
-[submodule "read_only/dyld"]
-	path = read_only/dyld
-	url = https://github.com/opensource-apple/dyld.git
-[submodule "read_only/ld64"]
-	path = read_only/ld64
-	url = git@github.com:apple-opensource/ld64.git
-[submodule "read_only/cctools"]
-	path = read_only/cctools
-	url = https://github.com/opensource-apple/cctools.git
