@@ -1,0 +1,21 @@
+//
+//  codesign_allocate.xcconfig
+//  cctools
+//
+//  Created by Michael Trent on 12/24/18.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+#include "public_tool.xcconfig"
+
+PRODUCT_NAME = codesign_allocate
+
+// embed an info plist into codesign_allocate for codesign's use. Details
+// can be found here:
+//
+// <rdar://problem/5681503> codesign_allocate should be a member of com.apple.tool.codesign_allocate
+
+
+OTHER_LDFLAGS = ${inherited} -sectcreate __TEXT __info_plist ${SRCROOT}/misc/codesign_allocate-Info.plist

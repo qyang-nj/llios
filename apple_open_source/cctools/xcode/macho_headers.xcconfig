@@ -1,0 +1,49 @@
+//
+//  macho_headers.xcconfig
+//  cctools
+//
+//  Created by Michael Trent on 3/2/20.
+//
+//  The macho_headers.xcconfig covers settings for header files that are not
+//  part of the libmacho API that need to be installed on the system. All of
+//  the (bogus library) header targets share this xcconfig file for ease of
+//  maintenance.
+
+// CCTB_PUBLIC_HEADER_BASE and CCTB_PRIVATE_HEADER_BASE are the paths to the
+// appropriate include directories. For example:
+//
+//   CCTB_PUBLIC_HEADER_BASE = /usr/include
+//   CCTB_PRIVATE_HEADER_BASE = /usr/local/include
+//
+// The default value are the values above, prefixed with CCTOOLS_LOCATION.
+CCTB_PUBLIC_HEADER_BASE_IS_DRIVERKIT_  = ${CCTOOLS_LOCATION}/usr/include
+CCTB_PRIVATE_HEADER_BASE_IS_DRIVERKIT_ = ${CCTOOLS_LOCATION}/usr/local/include
+CCTB_PUBLIC_HEADER_BASE_IS_DRIVERKIT_YES  = ${CCTOOLS_LOCATION}/Runtime/usr/include
+CCTB_PRIVATE_HEADER_BASE_IS_DRIVERKIT_YES = ${CCTOOLS_LOCATION}/Runtime/usr/local/include
+CCTB_PUBLIC_HEADER_BASE  = ${CCTB_PUBLIC_HEADER_BASE_IS_DRIVERKIT_${CCTB_DRIVERKIT}}
+CCTB_PRIVATE_HEADER_BASE = ${CCTB_PRIVATE_HEADER_BASE_IS_DRIVERKIT_${CCTB_DRIVERKIT}}
+
+// CCTB_HEADER_SUBDIR is the directory within ./include into which a target
+// installs its public and private headers. For example:
+//
+//   CCTB_HEADER_SUBDIR = mach-o/ppc
+//
+// The default value is (NULL) for unspecified targets, which will resolve to
+// the include directory.
+CCTB_HEADER_SUBDIR_macho_h_i386 = mach-o/i386
+CCTB_HEADER_SUBDIR_macho_h_arm = mach-o/arm
+CCTB_HEADER_SUBDIR_macho_h_arm64 = mach-o/arm64
+CCTB_HEADER_SUBDIR_macho_h_x86_64 = mach-o/x86_64
+CCTB_HEADER_SUBDIR_macho_h_m68k = mach-o/m68k
+CCTB_HEADER_SUBDIR_macho_h_m88k = mach-o/m88k
+CCTB_HEADER_SUBDIR_macho_h_hppa = mach-o/hppa
+CCTB_HEADER_SUBDIR_macho_h_ppc = mach-o/ppc
+CCTB_HEADER_SUBDIR_macho_h_i860 = mach-o/i860
+CCTB_HEADER_SUBDIR_macho_h_sparc = mach-o/sparc
+CCTB_HEADER_SUBDIR_dyld_h = dyld
+CCTB_HEADER_SUBDIR = ${CCTB_HEADER_SUBDIR_${TARGET_NAME}}
+
+// PUBLIC_HEADERS_FOLDER_PATH and PRIVATE_HEADERS_FOLDER_PATH are the Xcode
+// settings for installing header content.
+PUBLIC_HEADERS_FOLDER_PATH  =  ${CCTB_PUBLIC_HEADER_BASE}/${CCTB_HEADER_SUBDIR}
+PRIVATE_HEADERS_FOLDER_PATH = ${CCTB_PRIVATE_HEADER_BASE}/${CCTB_HEADER_SUBDIR}
