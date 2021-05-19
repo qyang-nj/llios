@@ -1,8 +1,14 @@
-# Build iOS app without Xcode
-This topic demonstrates how to build and launch an iOS app without an IDE or even a build system. The demonstration includes building static libraries, dynamic libraries, executables and so on.
+# Build iOS App without Xcode
+This topic demonstrates how to build and launch an iOS app without an IDE or a build system.
 ```
 ./build_and_launch.sh
 ```
+
+The demonstration includes
+* building static libraries
+* building dynamic libraries
+* building an executable
+* packaging an app bundle
 
 ## swiftc
 
