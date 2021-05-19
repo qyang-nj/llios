@@ -1,5 +1,5 @@
 # Build iOS app without Xcode
-This demonstrates how to build static library, dynamic library, executable and app bundle without Xcode.
+This topic demonstrates how to build and launch an iOS app without an IDE or even a build system. The demonstration includes building static libraries, dynamic libraries, executables and so on.
 ```
 ./build_and_launch.sh
 ```
@@ -94,6 +94,6 @@ quick reference:
 ```
 xcrun simctl shutdown all
 xcrun simctl boot "iPhone 12"
-xcrun simctl install booted "Build/$APP_NAME.app"
-xcrun simctl launch booted "com.qyang-nj.$APP_NAME"
+xcrun simctl install booted "Build/SampleApp.app"
+xcrun simctl launch booted "com.qyang-nj.SampleApp"
 ```
