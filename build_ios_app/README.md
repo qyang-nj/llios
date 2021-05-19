@@ -1,19 +1,34 @@
-# Build iOS app without Xcode
-This demonstrates how to build static library, dynamic library, exectuable and app bundle without Xcode. To build and launch the app, run `make launch_app`.
+# Build iOS App without Xcode
+This topic demonstrates how to build and launch an iOS app without an IDE or a build system.
+```
+./build_and_launch.sh
+```
 
-## Notes
+The demonstration includes
+* building static libraries
+* building dynamic libraries
+* building an executable
+* packaging an app bundle
+
+## swiftc
+
+### -c (-emit-object)
+Generate a object file.
+
+### -emit-library
+Directly Generate a dynamic library.
 
 ### -wmo (-whole-module-optimization)
 Here is the [Apple's words for WMO]( https://github.com/apple/swift/blob/master/docs/OptimizationTips.rst#whole-module-optimizations-wmo).
 
-WMO can take multiple source files and generate one object.
+WMO can take multiple source files and generate one object. Because of this, `-wmo` doesn't work with some other flags. For example, with `--index-store-path` it will yield error "index output filenames do not match input source files".
 
-`swiftc -wmo -o one.o source1.swift source2.swift`
-
-Because of this, `-wmo` doesn't work with some other flags. For exmaple, with `--index-store-path` it will yeild error "index output filenames do not match input source files".
+```
+swiftc -wmo -o one.o source1.swift source2.swift
+```
 
 ### -incremental
-`-incremental` is the opposite to `-wmo`. It generates each `.o` file every `.swift` source files. `-incremental` requires an output file map provided by `-output-file-map`.
+`-incremental` is the opposite to `-wmo`. It generates each a `.o` file for every `.swift` source file. `-incremental` requires an output file map provided by `-output-file-map`.
 ```
 {
   "": {
@@ -43,9 +58,10 @@ swiftc -frontend -merge-modules -emit-module Build/bar.swiftmodule Build/foo.swi
 ```
 
 ### -parse-as-library
-Parse the input file(s) as libraries, not scripts. Without this, swiftc will include main, which causes duplicate symbols.
+Parse the input file(s) as libraries, not scripts. Without this, swiftc generates the `main` method for each compilation unit.
 
-### Install Name
+## ld
+### -install_name
 Install name, which is unique on Darwin platform, provides a dylib search path. It's set by passing `-install_name` to the linker (ld) when building a dylib (not an executable). In other words, install name is an attribute of a dylib itself.
 When `-install_name path/to/DynamicLib.dylib` is given, it ends up to a load command (`LC_ID_DYLIB`) in the dylib's macho-o load section.
 ```
@@ -73,5 +89,17 @@ The install name can start with `@executable_path`, `@loader_path`, or `@rpath`,
 
 Note: `-install_name` is a linker flag. If calling from swift driver, we need to use `-Xlinker`.
 
-Reference:
+##### Learn more
 - [Mach-O linking and loading tricks](http://blog.darlinghq.org/2018/07/mach-o-linking-and-loading-tricks.html)
+
+## libtool
+Unlike `-emit-library`, I didn't find a flag for building a static library, so we need to use `libtool -static` to create a static library.
+
+## simctl
+quick reference:
+```
+xcrun simctl shutdown all
+xcrun simctl boot "iPhone 12"
+xcrun simctl install booted "Build/SampleApp.app"
+xcrun simctl launch booted "com.qyang-nj.SampleApp"
+```
