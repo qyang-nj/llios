@@ -3,12 +3,19 @@ set -e
 
 SDK=iphonesimulator
 SDK_PATH=$(xcrun --show-sdk-path --sdk $SDK)
+BUILD_TYPE="Debug" # Debug or Release
 
 # Targeting ios12 or lower will end up linking with libSwiftCompatibility50
 # and libSwiftCompatibilityDynamicReplacements.
 TARGET=x86_64-apple-ios12.0-simulator
 SWIFTC="xcrun swiftc -sdk $SDK_PATH -target $TARGET"
 APP_NAME="SampleApp"
+
+if [ "$BUILD_TYPE" == "Release" ]; then
+    SWIFTC="$SWIFTC -O"
+else
+    SWIFTC="$SWIFTC -g -Onone"
+fi
 
 # Prepare
 rm -rf Build
@@ -52,12 +59,12 @@ $SWIFTC \
 
 # Build the executable
 $SWIFTC \
-		-emit-executable \
-		-I Build \
-		-o "Build/$APP_NAME" \
-		-Xlinker -rpath -Xlinker @executable_path/ \
-		Build/StaticLib.a Build/DynamicLib.dylib \
-		Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
+    -emit-executable \
+    -I Build \
+    -o "Build/$APP_NAME" \
+    -Xlinker -rpath -Xlinker @executable_path/ \
+    Build/StaticLib.a Build/DynamicLib.dylib \
+    Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
 
 # Process Info.plist
 PLIST_BUDDY="/usr/libexec/PlistBuddy"
@@ -75,9 +82,3 @@ mv "Build/DynamicLib.dylib" "Build/$APP_NAME.app"
 mv "Build/Info.plist" "Build/$APP_NAME.app"
 
 echo "Done. Build/$APP_NAME.app"
-
-# Launch app in the simulator
-xcrun simctl shutdown all
-xcrun simctl boot "iPhone 12"
-xcrun simctl install booted "Build/$APP_NAME.app"
-xcrun simctl launch booted "com.qyang-nj.$APP_NAME"
