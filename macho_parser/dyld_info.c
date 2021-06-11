@@ -2,10 +2,7 @@
 #include <string.h>
 #include "argument.h"
 #include "dyld_info.h"
-
-extern void *load_bytes(FILE *fptr, int offset, int size);
-
-int read_uleb128(const uint8_t *p, uint64_t *out);
+#include "util.h"
 
 void parse_export(FILE *fptr, uint32_t export_off, uint32_t export_size);
 void parse_export_trie(uint8_t *export_start, uint8_t *node_ptr, int level);
@@ -67,18 +64,3 @@ void parse_export_trie(uint8_t *export_start, uint8_t *node_ptr, int level) {
     }
 }
 
-// Read a uleb128 number int to `out` and return the number of bytes processed.
-// This method assumes the input correctness and doesn't handle error cases.
-int read_uleb128(const uint8_t *p, uint64_t *out) {
-    uint64_t result = 0;
-    int i = 0;
-
-    do {
-        uint8_t byte = *p & 0x7f;
-        result |= byte << (i * 7);
-        i++;
-    } while (*p++ & 0x80);
-
-    *out = result;
-    return i;
-}
