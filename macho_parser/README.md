@@ -222,8 +222,7 @@ address            index name
 There are two special values in the indirect symbol table (`INDIRECT_SYMBOL_LOCAL` and `INDIRECT_SYMBOL_ABS`). It seems there is a way to have an indirect symbol for a local defined symbols. As the index is a special value, it's not pointing to any symbol in symbol table. *I'm not sure how and why a local defined symbol needs indirect symbol table.*
 
 ## LC_FUNCTION_STARTS
-
-This load command indicates a list of fucntion addresses, which are encoded by a list of [ULEB128](https://en.wikipedia.org/wiki/LEB128) numbers. The first number is the first function's offset to `__TEXT`'s `vmaddr`. The following numbers are the offset to the previous address. (Detailed information can be found in the [`dyldinfo` source code](https://github.com/qyang-nj/llios/blob/49f0fab2f74f0ecb03ee9ae1f54953bc9ad86384/apple_open_source/ld64/src/other/dyldinfo.cpp#L2045-L2071)). In the example of our sample program, here is its `LC_FUNCTION_STARTS`.
+This load command indicates a list of all fucntion addresses, which are encoded by a list of [ULEB128](https://en.wikipedia.org/wiki/LEB128) numbers. The first number is the first function's offset to `__TEXT`'s `vmaddr`. The following numbers are the offset to the previous address. (Detailed information can be found in the [`dyldinfo` source code](https://github.com/qyang-nj/llios/blob/49f0fab2f74f0ecb03ee9ae1f54953bc9ad86384/apple_open_source/ld64/src/other/dyldinfo.cpp#L2045-L2071)). In the example of our sample program, here is its `LC_FUNCTION_STARTS`.
 ```
 $ otool -l sample.out | grep LC_FUNCTION_STARTS -A3
       cmd LC_FUNCTION_STARTS
