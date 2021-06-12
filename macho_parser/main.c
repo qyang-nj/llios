@@ -5,9 +5,11 @@
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 #include "argument.h"
+#include "util.h"
 #include "symtab.h"
 #include "dysymtab.h"
 #include "dyld_info.h"
+#include "linkedit_data.h"
 
 void parse_load_commands(FILE *, int offset, uint32_t);
 void parse_segments(FILE *, struct segment_command_64 *);
@@ -18,17 +20,9 @@ void parse_entry_point(FILE *, struct entry_point_command *);
 void parse_linker_option(FILE *, struct linker_option_command *);
 void parse_dylib(FILE *, struct dylib_command *);
 void parse_rpath(FILE *, struct rpath_command *);
-void parse_linkedit_data(FILE *, struct linkedit_data_command *);
 
 void format_section_type(uint8_t , char *);
 void format_string(char *, char *);
-
-void *load_bytes(FILE *fptr, int offset, int size) {
-    void *buf = calloc(1, size);
-    fseek(fptr, offset, SEEK_SET);
-    fread(buf, size, 1, fptr);
-    return buf;
-}
 
 int main(int argc, char **argv) {
     parse_arguments(argc, argv);
@@ -215,26 +209,6 @@ void parse_dylib(FILE *fptr, struct dylib_command *cmd) {
 
 void parse_rpath(FILE *fptr, struct rpath_command *cmd) {
     printf("%-20s cmdsize: %-6u %s\n", "LC_RPATH", cmd->cmdsize, (char *)cmd + cmd->path.offset);
-}
-
-void parse_linkedit_data(FILE *fptr, struct linkedit_data_command *linkedit_data_cmd) {
-    char *cmd_name = "";
-    if (linkedit_data_cmd->cmd == LC_CODE_SIGNATURE) {
-        cmd_name = "LC_CODE_SIGNATURE";
-    } else if (linkedit_data_cmd->cmd == LC_SEGMENT_SPLIT_INFO) {
-        cmd_name = "LC_SEGMENT_SPLIT_INFO";
-    } else if (linkedit_data_cmd->cmd == LC_FUNCTION_STARTS) {
-        cmd_name = "LC_FUNCTION_STARTS";
-    } else if (linkedit_data_cmd->cmd == LC_DATA_IN_CODE) {
-        cmd_name = "LC_DATA_IN_CODE";
-    } else if (linkedit_data_cmd->cmd == LC_DYLIB_CODE_SIGN_DRS) {
-        cmd_name = "LC_DYLIB_CODE_SIGN_DRS";
-    } else if (linkedit_data_cmd->cmd == LC_LINKER_OPTIMIZATION_HINT) {
-        cmd_name = "LC_LINKER_OPTIMIZATION_HINT";
-    }
-
-    printf("%-20s cmdsize: %-6u dataoff: %d   datasize: %d\n",
-        cmd_name, linkedit_data_cmd->cmdsize, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
 }
 
 void format_section_type(uint8_t type, char *out) {

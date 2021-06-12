@@ -50,6 +50,8 @@ unsigned int string_to_load_command(char *cmd_str) {
         return LC_LOAD_WEAK_DYLIB;
     } else if (strcmp(cmd_str, "LC_RPATH") == 0) {
         return LC_RPATH;
+    } else if (strcmp(cmd_str, "LC_FUNCTION_STARTS") == 0) {
+        return LC_FUNCTION_STARTS;
     }
 
     fprintf(stderr, "Unknow load command: %s.\n", cmd_str);
