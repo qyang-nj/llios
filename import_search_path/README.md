@@ -1,5 +1,5 @@
 # Import Search Path
-We are going to investigate how build time is impacted by the number of import and the number of import search search path (`-I`). Also, we will measure how much it can be improved by using VFS overlays.
+In this article, we are going to investigate how build time is impacted by the number of import and the number of import search path (`-I`). Also, we will take a look at VFS overlays and see how it can improve the build time.
 
 ## Basics
 If you import a module, e.g. `import Foo`, in a swift file, the swift compiler needs to locate that module's swiftmodule (`Foo.swiftmodule`) file in one of the import search paths, which are specified via `-I` flag. This is very similar to how a C compiler finds the included header files.
@@ -29,15 +29,15 @@ import Module1
 import Module99
 print("Hello, world!")
 ```
-Third, we compile this swift file with y import path. We are just emitting the object file (`-c`) to avoid cost of linking.
+Third, we compile this swift file with y import search paths. We are just emitting the object file (`-c`) to avoid the cost of linking.
 ```
 swiftc -c -I module0 -I module1 ... -I module99 main.swift
 ```
 
-Lastly, we measure the build time with different number of import and search path, repeat multiple times, and calculate the average. The full script is [here](./measure.py).
+Lastly, we measure the build time against various number of import and search path, repeat multiple times, and calculate the average. The full script is [here](./measure.py).
 
 ## Result
-I put the result in the below table. The top row is the number of import search path and the left column is the number of import in the swift file. The unit of data is second. All the measurements are done by Swift 5.5 / XCode 12.5.
+I compiled the result in the table below. The top row is the number of import search path and the left column is the number of import in the swift file. The unit of data is second. All the measurements are done by Swift 5.5 / XCode 12.5.
 
 |    |0       |100     |500     |1000     |1500     |2000     |
 |----|--------|--------|--------|---------|---------|---------|
@@ -52,7 +52,7 @@ As we can see here the time complexity is approximately **O(m*n)**,  where **m**
 
 
 ## VFS Overlay
-If we use `time` command to time `swiftc` with 1000 modules, we can see the majority of time are spent on system calls, which, as my guess, is caused by the compiler traversing all search paths in real file system. (I probably can verify this through DTrace.)
+If we use `time` command to time `swiftc` with 1000 modules, we can see the majority of time are spent on system calls, which, as my guess, is caused by the compiler traversing all search paths in real file system.
 ```
 real    0m11.778s
 user    0m1.545s
@@ -78,14 +78,14 @@ Instead of going through the real file system, LLVM provides a virtual file syst
 }
 ```
 
-After generating the overlay file, instead of using a number of `-I`s, we can just provide the overlay file and pass a single `-I`.
+After generating the overlay file, we can, instead of using a number of `-I`s, just provide the overlay file and pass a single `-I`.
 
 ```
 swift -Xfrontend -vfsoverlay -Xfrontend vfsoverlay.yaml -I /import ...
 ```
 
 
-We then run the same measurement against various number of import and search paths. Below shows the result. Same as previous table, the top row is the number of import search path and the left column is the number of import in the swift file.
+We then run the same measurement. Below shows the result. Same as previous table, the top row is the number of import search path and the left column is the number of import in the swift file.
 |    |0       |100     |500     |1000    |1500    |2000    |
 |----|--------|--------|--------|--------|--------|--------|
 |0   |0.047331|0.054232|0.059363|0.061992|0.080064|0.100860|
