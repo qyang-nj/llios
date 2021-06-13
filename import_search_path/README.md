@@ -98,6 +98,6 @@ We then run the same measurement. Below shows the result. Same as previous table
 It's obvious that using VFS overlay significantly reduces the build time. Although generating the overlay file takes a little extra time, but it's totally worth it, especially for a large number of imports.
 
 ## Learn more
-[llvm/include/llvm/Support/VirtualFileSystem.h](https://github.com/llvm/llvm-project/blob/llvmorg-12.0.0/llvm/include/llvm/Support/VirtualFileSystem.h)
-[Swift, Module Maps & VFS Overlays: Example](https://github.com/milend/swift-vfs-overlay-module-map-example)
-[Add vfsoverlay feature for improved compilation performance](https://github.com/bazelbuild/rules_swift/pull/375)
+* [llvm/include/llvm/Support/VirtualFileSystem.h](https://github.com/llvm/llvm-project/blob/llvmorg-12.0.0/llvm/include/llvm/Support/VirtualFileSystem.h)
+* [Swift, Module Maps & VFS Overlays: Example](https://github.com/milend/swift-vfs-overlay-module-map-example)
+* [Add vfsoverlay feature for improved compilation performance](https://github.com/bazelbuild/rules_swift/pull/375)
