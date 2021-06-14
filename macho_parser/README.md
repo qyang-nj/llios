@@ -36,6 +36,12 @@ LC_RPATH             cmdsize: 24     build
 ```
 
 ## LC_SEGMENT_64
+
+### __TEXT
+
+### __DATA
+
+### __DATA_CONST
 #### __mod_init_func
 `(__DATA,__mod_init_func)` or `(__DATA_CONST,__mod_init_func)`
 
@@ -48,6 +54,8 @@ c_constructor_function (in sample) + 0
 ```
 
 ⚠️ Please note that ObjC's `+load` methods will also be executed before `main`, but uses a different mechanism. See below "+load in ObjC" section.
+
+## __LINKEDIT
 
 ## LC_DYLD_INFO_ONLY
 ``` c
