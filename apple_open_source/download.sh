@@ -5,8 +5,9 @@ set -e
 CCTOOLS_URL="https://opensource.apple.com/tarballs/cctools/cctools-973.0.1.tar.gz"
 LD64_URL="https://opensource.apple.com/tarballs/ld64/ld64-609.tar.gz"
 DYLD_URL="https://opensource.apple.com/tarballs/dyld/dyld-851.27.tar.gz"
+XNU_URL="https://opensource.apple.com/tarballs/xnu/xnu-7195.101.1.tar.gz"
 
-for url in "$CCTOOLS_URL" "$LD64_URL" "$DYLD_URL"; do
+for url in "$CCTOOLS_URL" "$LD64_URL" "$DYLD_URL" "$XNU_URL"; do
     echo "$url"
 
     tarfile=$(basename $url)
