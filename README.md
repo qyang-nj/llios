@@ -8,3 +8,4 @@ Random stuff about lower level iOS
 * [Build iOS App](./build_ios_app) - build and debug an iOS app without an IDE
 * [Dead Code Elimination](./dce)
 * [XCTest](./xctest) - bare-bones of iOS testing
+* [Import Search Path](./import_search_path) - how import search path (`-I`) affects build time
