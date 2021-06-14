@@ -37,7 +37,7 @@ swiftc -c -I module0 -I module1 ... -I module99 main.swift
 Lastly, we measure the build time against various number of import and search path, repeat multiple times, and calculate the average. The full script is [here](./measure.py).
 
 ## Result
-I compiled the result in the table below. The top row is the number of import search path and the left column is the number of import in the swift file. The unit of data is second. All the measurements are done by Swift 5.5 / XCode 12.5.
+I compiled the result in the table below. The top row is the number of import search path and the left column is the number of import in the swift file. The unit of data is second. All the measurements are done by Swift 5.4 / XCode 12.5.
 
 |    |0       |100     |500     |1000     |1500     |2000     |
 |----|--------|--------|--------|---------|---------|---------|
