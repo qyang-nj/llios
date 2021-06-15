@@ -21,7 +21,6 @@ int read_uleb128(const uint8_t *p, uint64_t *out) {
     return i;
 }
 
-// If the string contains '\n', replace with literal "\n".s
 void format_string(char *str, char *formatted) {
     int j = 0;
     for (int i = 0; str[i] != '\0'; ++i) {
