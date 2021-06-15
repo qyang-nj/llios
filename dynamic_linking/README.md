@@ -96,7 +96,7 @@ address            index
 
 With the knowledge of [indirect symbol table](https://github.com/qyang-nj/llios/tree/main/macho_parser#indirect-symbol-table), we know that `0x4000` is associated to the 4th element in the symbol table, which is `_lib_str`, the global variable in the dylib.
 
-The values in `__got` are all 0x0 in the file, because we won't know the values until runtime. `dyld`, at launch time, will bind non-lazy symbols and write the value into the section. That is why `__got` is in the writable __DATA section. (What's difference between `__DATA` and `__DATA_CONST`?). Global variables are non-lazily binded while functions are usually lazily binded.
+The values in `__got` are all 0x0 in the file, because we won't know the values until runtime. `dyld`, at launch time, will bind non-lazy symbols and write the value into the section. That is why `__got` is in the [`__DATA_CONST`](../macho_parser#__data_const) section. Global variables are non-lazily binded while functions are usually lazily binded.
 
 Another symbol in `__got` is `dyld_stub_binder`. We will get there in a moment.
 

@@ -6,23 +6,18 @@
 #include <mach-o/nlist.h>
 #include "argument.h"
 #include "util.h"
+#include "segment_64.h"
 #include "symtab.h"
 #include "dysymtab.h"
 #include "dyld_info.h"
 #include "linkedit_data.h"
 
 void parse_load_commands(FILE *, int offset, uint32_t);
-void parse_segments(FILE *, struct segment_command_64 *);
-void parse_cstring_section(FILE *, struct section_64 *);
-void parse_pointer_section(FILE *, struct section_64 *);
 void parse_dylinker(FILE *, struct dylinker_command *);
 void parse_entry_point(FILE *, struct entry_point_command *);
 void parse_linker_option(FILE *, struct linker_option_command *);
 void parse_dylib(FILE *, struct dylib_command *);
 void parse_rpath(FILE *, struct rpath_command *);
-
-void format_section_type(uint8_t , char *);
-void format_string(char *, char *);
 
 int main(int argc, char **argv) {
     parse_arguments(argc, argv);
@@ -60,7 +55,7 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
 
         switch (lcmd->cmd) {
             case LC_SEGMENT_64:
-                parse_segments(fptr, (struct segment_command_64 *)cmd);
+                parse_segment(fptr, (struct segment_command_64 *)cmd);
                 break;
             case LC_SYMTAB:
                 parse_symbol_table(fptr, (struct symtab_command *)cmd);
@@ -106,68 +101,6 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
     }
 }
 
-void parse_segments(FILE *fptr, struct segment_command_64 *seg_cmd) {
-    printf("%-20s cmdsize: %-6d segname: %-16s fileoff: 0x%08llx  filesize: %-12lld (fileend: 0x%08llx)\n",
-        "LC_SEGMENT_64", seg_cmd->cmdsize, seg_cmd->segname, seg_cmd->fileoff, seg_cmd->filesize,
-        seg_cmd->fileoff + seg_cmd->filesize);
-
-    if (args.short_desc) { return; }
-
-    // section_64 is immediately after segment_command_64.
-    struct section_64 *sections = (void *)seg_cmd + sizeof(struct segment_command_64);
-
-    char formatted_type[32];
-    char formatted_seg_sec[64];
-
-    for (int i = 0; i < seg_cmd->nsects; ++i) {
-        struct section_64 sect = sections[i];
-        const uint8_t type = sect.flags & SECTION_TYPE;
-
-        format_section_type(type, formatted_type);
-        sprintf(formatted_seg_sec, "(%s,%s)", sect.segname, sect.sectname);
-        printf("    %-32s [size: %4lld] [type: %-32s] [reserved1: %2d, reserved2: %2d]\n",
-            formatted_seg_sec, sect.size, formatted_type, sect.reserved1, sect.reserved2);
-
-        // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
-        if (type == S_CSTRING_LITERALS) {
-            parse_cstring_section(fptr, &sect);
-        }
-        // (__DATA_CONST,__mod_init_func)
-        else if (type == S_MOD_INIT_FUNC_POINTERS
-            || type == S_NON_LAZY_SYMBOL_POINTERS
-            || type == S_LAZY_SYMBOL_POINTERS) {
-            parse_pointer_section(fptr, &sect);
-        }
-    }
-}
-
-void parse_cstring_section(FILE *fptr, struct section_64 *cstring_sect) {
-    void *section = load_bytes(fptr, cstring_sect->offset, cstring_sect->size);
-
-    char formatted[256];
-    for (char *ptr = section; ptr < (char *)(section + cstring_sect->size);) {
-        if (strlen(ptr) > 0) {
-            format_string(ptr, formatted);
-            printf("        \"%s\"\n", formatted);
-            ptr += strlen(ptr);
-        }
-        ptr += 1;
-    }
-
-    free(section);
-}
-
-void parse_pointer_section(FILE *fptr, struct section_64 *sect) {
-    void *section = load_bytes(fptr, sect->offset, sect->size);
-
-    const size_t count = sect->size / sizeof(uintptr_t);
-    for (int i = 0; i < count; ++i) {
-        printf("        0x%lx\n", *((uintptr_t *)section + i));
-    }
-
-    free(section);
-}
-
 void parse_dylinker(FILE *fptr, struct dylinker_command *dylinker_cmd) {
     printf("%-20s cmdsize: %-6u %s\n", "LC_LOAD_DYLINKER",
         dylinker_cmd->cmdsize, (char *)dylinker_cmd + dylinker_cmd->name.offset);
@@ -211,46 +144,5 @@ void parse_rpath(FILE *fptr, struct rpath_command *cmd) {
     printf("%-20s cmdsize: %-6u %s\n", "LC_RPATH", cmd->cmdsize, (char *)cmd + cmd->path.offset);
 }
 
-void format_section_type(uint8_t type, char *out) {
-    if (type == S_REGULAR) {
-        strcpy(out, "S_REGULAR");
-    } else if (type == S_ZEROFILL) {
-        strcpy(out, "S_ZEROFILL");
-    } else if (type == S_CSTRING_LITERALS) {
-        strcpy(out, "S_CSTRING_LITERALS");
-    } else if (type == S_4BYTE_LITERALS) {
-        strcpy(out, "S_4BYTE_LITERALS");
-    } else if (type == S_8BYTE_LITERALS) {
-        strcpy(out, "S_8BYTE_LITERALS");
-    } else if (type == S_LITERAL_POINTERS) {
-        strcpy(out, "S_LITERAL_POINTERS");
-    } else if (type == S_NON_LAZY_SYMBOL_POINTERS) {
-        strcpy(out, "S_NON_LAZY_SYMBOL_POINTERS");
-    } else if (type == S_LAZY_SYMBOL_POINTERS) {
-        strcpy(out, "S_LAZY_SYMBOL_POINTERS");
-    } else if (type == S_LITERAL_POINTERS) {
-        strcpy(out, "S_LITERAL_POINTERS");
-    } else if (type == S_SYMBOL_STUBS) {
-        strcpy(out, "S_SYMBOL_STUBS");
-    } else {
-        sprintf(out, "OTHER(0x%x)", type);
-    }
-}
 
-// If the string contains '\n', replace with literal "\n".s
-void format_string(char *str, char *formatted) {
-    int j = 0;
-    for (int i = 0; str[i] != '\0'; ++i) {
-        switch(str[i]) {
-            case '\n':
-                formatted[j++] = '\\';
-                formatted[j++] = 'n';
-                break;
-            default:
-                formatted[j++] = str[i];
-                break;
-        }
-    }
-    formatted[j] = '\0';
-}
 

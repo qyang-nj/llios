@@ -36,9 +36,39 @@ LC_RPATH             cmdsize: 24     build
 ```
 
 ## LC_SEGMENT_64
-#### __mod_init_func
-`(__DATA,__mod_init_func)` or `(__DATA_CONST,__mod_init_func)`
+``` c
+struct segment_command_64 {     /* for 64-bit architectures */
+    uint32_t    cmd;            /* LC_SEGMENT_64 */
+    uint32_t    cmdsize;        /* includes sizeof section_64 structs */
+    char        segname[16];    /* segment name */
+    uint64_t    vmaddr;         /* memory address of this segment */
+    uint64_t    vmsize;         /* memory size of this segment */
+    uint64_t    fileoff;        /* file offset of this segment */
+    uint64_t    filesize;       /* amount to map from the file */
+    vm_prot_t   maxprot;        /* maximum VM protection */
+    vm_prot_t   initprot;       /* initial VM protection */
+    uint32_t    nsects;         /* number of sections in segment */
+    uint32_t    flags;          /* flags */
+};
+```
+A `LC_SEGMENT_64` defines a segment, which basically is a chunk of continuous space that will be `mmap`'d to the memory. Most segments are well-known, like `__TEXT` and `__DATA`. Besides their names, the key different among segments is the memory protection mode (`initprot` and `maxprot`).
 
+### __PAGEZERO
+`__PAGEZERO` segment has zero size on disk but 4GB in VM. Its main purpose is to trap NULL dereference, causing segment fault.
+
+### __TEXT
+`__TEXT` segment is where the executable code is. Thus it's readable (`VM_PROT_READ`) and executable (`VM_PROT_EXECUTE`), but not writable (`VM_PROT_WRITE`).
+
+### __DATA
+`__DATA` segment is readable and writable, which makes it useful for mutable data. Fox example, lay binding (`__la_symbol_ptr`).
+
+### __DATA_CONST
+`__DATA_CONST` segment stores constant data, some of which needs to be initialized. At the time of `mmap`, `__DATA_CONST`, same as `__DATA`, is readable and writable. Once initialized, `dyld` will change this segment to just readable via `mprotect`. Then it becomes real constant. One of use cases for this is the non-lazy biding (`__got`).
+
+#### __got
+Global Offset Table. See [dynamic linking](../dynamic_linking).
+
+#### __mod_init_func
 This is the section that contains of a list of function pointers, which will [be executed by `dyld`](https://github.com/opensource-apple/dyld/blob/3f928f32597888c5eac6003b9199d972d49857b5/src/ImageLoaderMachO.cpp#L1815~L1847) before `main`. Those are functions with `__attribute__((constructor))` and they will affect the app launch time.
 
 Once we have the function pointer address, we can use `atos` to query the function name.
@@ -48,6 +78,9 @@ c_constructor_function (in sample) + 0
 ```
 
 ⚠️ Please note that ObjC's `+load` methods will also be executed before `main`, but uses a different mechanism. See below "+load in ObjC" section.
+
+## __LINKEDIT
+`__LINKEDIT` segment contains data that's used by the linker, link symbol table and dyld info. Unlike other segments, this one doesn't have sections. Its contents are described by other load commands.
 
 ## LC_DYLD_INFO_ONLY
 ``` c
