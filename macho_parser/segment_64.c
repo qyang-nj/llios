@@ -17,10 +17,11 @@ void parse_segment(FILE *fptr, struct segment_command_64 *seg_cmd) {
     sprintf(formatted_size1, "(%lld)", seg_cmd->filesize);
     sprintf(formatted_size2, "(%lld)", seg_cmd->vmsize);
 
-    printf("%-20s cmdsize: %-6d segname: %-16s file: 0x%08llx-0x%08llx %-11s  vm: 0x%09llx-0x%09llx %-11s\n",
+    printf("%-20s cmdsize: %-6d segname: %-12s   file: 0x%08llx-0x%08llx %-11s  vm: 0x%09llx-0x%09llx %-12s protection: %d/%d\n",
         "LC_SEGMENT_64", seg_cmd->cmdsize, seg_cmd->segname,
         seg_cmd->fileoff, seg_cmd->fileoff + seg_cmd->filesize, formatted_size1,
-        seg_cmd->vmaddr, seg_cmd->vmaddr + seg_cmd->vmsize, formatted_size2);
+        seg_cmd->vmaddr, seg_cmd->vmaddr + seg_cmd->vmsize, formatted_size2,
+        seg_cmd->initprot, seg_cmd->maxprot);
 
     // section_64 is immediately after segment_command_64.
     struct section_64 *sections = (void *)seg_cmd + sizeof(struct segment_command_64);
