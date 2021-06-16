@@ -135,4 +135,5 @@ Please note that `0x100003fac` is at line 5. Following the code, the program jum
 Here is what happens when calling a method in a dylib. The program calls into code in (__TEXT,__stub) which reads the address stored in `__la_symbol_ptr` and jumps to that. At the first time, that address is pointing to (__TEXT,__stub_helper) which in turn calls into `dyld_stub_binder`. `dyld_stub_binder` finds the symbol in the dylib, writes it back to `__la_symbol_ptr` and jumps to the real method. Next time calling the same method, `__la_symbol_ptr` has the real address, so the program can jump to it directly.
 
 The following diagram shows the binding process. The green arrow is non-lazy binding and the red arrows are the lazy binding flows (first time access).
+
 ![Trie Graph](../articles/images/dynamic_linking_binding.png)
