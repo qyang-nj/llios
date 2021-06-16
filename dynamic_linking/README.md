@@ -130,11 +130,9 @@ Contents of (__TEXT,__stub_helper) section
 0000000100003fac	pushq	$0x0                        <-- line 5
 0000000100003fb1	jmp	0x100003f9c
 ```
-Please note that `0x100003fac` is at line 5. Following the code, the program jumps to `0x100003f9c` which is line 1. Eventually it gets to line 3 and jumps to `*0x5d(%rip)` (indirect addressing again). We should be good at this now. `0x5d(%rip)` is `0x100004008` (0x100003fab + 0x5d). It seems we have seen this location before. Yes, it's the 2nd element in `__got`, which is `dyld_stub_binder`. As you may still remember, `__got` is the non-lazy binding section and the address of `dyld_stub_binder` will be written there at launch time.
-
-Basically, `callq	0x100003f96` (the one supposed to call `llios_lib_func`) instruction actually calls into [`dyld_stub_binder`](https://opensource.apple.com/source/dyld/dyld-195.5/src/dyld_stub_binder.s.auto.html). This is a special method, provided by `dyld`, finds the address of the symbol (it's `_llios_lib_func` in our case), writes the address back to the `__la_symbol_ptr` section, jumps to the real fucntion.
+Please note that `0x100003fac` is at line 5. Following the code, the program jumps to `0x100003f9c` which is line 1. Eventually it gets to line 3 and jumps to `*0x5d(%rip)` (indirect addressing again). We should be good at this now. `0x5d(%rip)` is `0x100004008` (0x100003fab + 0x5d). It seems we have seen this location before. Yes, it's the 2nd element in `__got`, which is `dyld_stub_binder`. As you may still remember, `__got` is the non-lazy binding section and the address of `dyld_stub_binder` will be written there at launch time. Basically, `callq	0x100003f96` (the one supposed to call `llios_lib_func`) instruction actually calls into [`dyld_stub_binder`](https://opensource.apple.com/source/dyld/dyld-195.5/src/dyld_stub_binder.s.auto.html).
 
 Here is what happens when calling a method in a dylib. The program calls into code in (__TEXT,__stub) which reads the address stored in `__la_symbol_ptr` and jumps to that. At the first time, that address is pointing to (__TEXT,__stub_helper) which in turn calls into `dyld_stub_binder`. `dyld_stub_binder` finds the symbol in the dylib, writes it back to `__la_symbol_ptr` and jumps to the real method. Next time calling the same method, `__la_symbol_ptr` has the real address, so the program can jump to it directly.
 
-The following diagram is a quick recap. The green arrow is non-lazy binding and the red arrows are the lazy binding flows (first time access).
+The following diagram shows the binding process. The green arrow is non-lazy binding and the red arrows are the lazy binding flows (first time access).
 ![Trie Graph](../articles/images/dynamic_linking_binding.png)
