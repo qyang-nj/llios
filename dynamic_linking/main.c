@@ -1,8 +1,8 @@
 
-extern char *lib_str;
-extern void lib_func(char *);
+extern char *llios_lib_str;
+extern void llios_lib_func(char *);
 
 int main() {
-    lib_func(lib_str);
+    llios_lib_func(llios_lib_str);
     return 0;
 }
