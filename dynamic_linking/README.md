@@ -77,7 +77,7 @@ Contents of (__DATA_CONST,__got) section
 0000000100004000	00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 ```
 
-The `__got` section is the global offset table, a table for non-lazy imported globals. This section contains an array of 64-bit pointers. In this case there are two elements. Each element is associated to an indirect symbol. (For how indirect symbol works, check [here](.../macho_parser#indirect-symbol-table).)
+The `__got` section is the global offset table, a table for non-lazy imported globals. This section contains an array of 64-bit pointers. In this case there are two elements. Each element is associated to an indirect symbol. (For how indirect symbol works, check [here](../macho_parser#indirect-symbol-table).)
 
 ```
 $ otool -Iv a.out
