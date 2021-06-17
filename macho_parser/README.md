@@ -62,6 +62,9 @@ A `LC_SEGMENT_64` defines a segment, which basically is a chunk of continuous sp
 ### __DATA
 `__DATA` segment is readable and writable, which makes it useful for mutable data. Fox example, lay binding (`__la_symbol_ptr`).
 
+#### __la_symbol_ptr
+Lazy Symbol Pointer. It's used for lazy binding during [dynamic linking](../dynamic_linking).
+
 ### __DATA_CONST
 `__DATA_CONST` segment stores constant data, some of which needs to be initialized. At the time of `mmap`, `__DATA_CONST`, same as `__DATA`, is readable and writable. Once initialized, `dyld` will change this segment to just readable via `mprotect`. Then it becomes real constant. One of use cases for this is the non-lazy biding (`__got`).
 
@@ -80,7 +83,7 @@ c_constructor_function (in sample) + 0
 ⚠️ Please note that ObjC's `+load` methods will also be executed before `main`, but uses a different mechanism. See below "+load in ObjC" section.
 
 ## __LINKEDIT
-`__LINKEDIT` segment contains data that's used by the linker, link symbol table and dyld info. Unlike other segments, this one doesn't have sections. Its contents are described by other load commands.
+`__LINKEDIT` segment contains data that's used by the linker. Unlike other segments, this one doesn't have sections. Its contents are described by other load commands.
 
 ## LC_DYLD_INFO_ONLY
 ``` c
