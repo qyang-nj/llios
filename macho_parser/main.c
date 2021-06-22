@@ -11,6 +11,7 @@
 #include "dysymtab.h"
 #include "dyld_info.h"
 #include "linkedit_data.h"
+#include "build_version.h"
 
 void parse_load_commands(FILE *, int offset, uint32_t);
 void parse_dylinker(FILE *, struct dylinker_command *);
@@ -90,6 +91,15 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
             case LC_DYLIB_CODE_SIGN_DRS:
             case LC_LINKER_OPTIMIZATION_HINT:
                 parse_linkedit_data(fptr, (struct linkedit_data_command *)cmd);
+                break;
+            case LC_BUILD_VERSION:
+                parse_build_version(fptr, (struct build_version_command *)cmd);
+                break;
+            case LC_VERSION_MIN_MACOSX:
+            case LC_VERSION_MIN_IPHONEOS:
+            case LC_VERSION_MIN_WATCHOS:
+            case LC_VERSION_MIN_TVOS:
+                parse_version_min(fptr, (struct version_min_command *)cmd);
                 break;
             default:
                 printf("LC_(%x)\n", lcmd->cmd);
