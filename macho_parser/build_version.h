@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <mach-o/loader.h>
 
+// parse LC_BUILD_VERSION
 void parse_build_version(FILE *fptr, struct build_version_command *build_version_cmd);
 
+// parse LC_VERSION_MIN_MACOSX, LC_VERSION_MIN_IPHONEOS, LC_VERSION_MIN_WATCHOS, LC_VERSION_MIN_TVOS
 void parse_version_min(FILE *fptr, struct version_min_command *version_min_cmd);
 
 #endif /* BUILD_VERSION_H */
