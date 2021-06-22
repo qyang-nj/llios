@@ -336,6 +336,24 @@ struct rpath_command {
 
 The only meaningful thing that `LC_RPATH` has is a filepath. Dynamic linker will use that to replace `@rpath` in the dylib install name to search the dylib file. We can pass multiple `-rpath <path>` to the static linker, and each one results in a `LC_RPATH` is the final binary.
 
+## LC_BUILD_VERSION
+``` c
+struct build_version_command {
+    uint32_t	cmd;		/* LC_BUILD_VERSION */
+    uint32_t	cmdsize;
+    uint32_t	platform;	/* platform */
+    uint32_t	minos;		/* X.Y.Z is encoded in nibbles xxxx.yy.zz */
+    uint32_t	sdk;		/* X.Y.Z is encoded in nibbles xxxx.yy.zz */
+    uint32_t	ntools;		/* number of tool entries following this */
+};
+```
+`LC_BUILD_VERSION` consolidates the old `LC_VERSION_MIN_*` commands and adds version for a few tools (`clang`, `swift`, `ld`).
+* `LC_VERSION_MIN_MACOSX`
+* `LC_VERSION_MIN_IPHONEOS`
+* `LC_VERSION_MIN_WATCHOS`
+* `LC_VERSION_MIN_TVOS`
+
+Previously, to differentiate a binary that is built for macOS or iOS simulator (both are x86_64), we need to check if `MIN_MACOSX` or `MIN_IPHONEOS` presents. The M1 chip makes things more complicated. It's impossible to differentiate arm64 iOS simulator build and iOS device build. With the new `LC_BUILD_VERSION` we are able to tell the architecture via Mach-O header and the target via `platform` field (`IOS`, `IOSSIMULATOR`, `MACOS` and [more](https://github.com/qyang-nj/llios/blob/1f111edc87adbca68c336d3ab501e3ca4a1f2356/apple_open_source/cctools/include/mach-o/loader.h#L1265-L1275)).
 
 ## Other
 ### `+load` in ObjC
