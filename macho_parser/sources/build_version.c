@@ -20,7 +20,7 @@ void parse_build_version(FILE *fptr, struct build_version_command *build_version
         build_version_cmd->cmdsize,
         platform_name, minos_string, sdk_string);
 
-    if (args.short_desc) {
+    if (args.verbose == 0) {
         return;
     }
 
