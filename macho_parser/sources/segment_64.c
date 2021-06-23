@@ -56,7 +56,7 @@ static void parse_section(FILE *fptr, struct section_64 sect) {
 
     printf("\n");
 
-    if (!args.verbose) {
+    if (args.verbose == 0) {
         return;
     }
 

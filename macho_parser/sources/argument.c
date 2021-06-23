@@ -18,7 +18,8 @@ void parse_arguments(int argc, char **argv) {
                 args.commands[args.command_count++] = string_to_load_command(optarg);
                 break;
             case 'v':
-                args.verbose = true;
+                // increase verbose level if multiple -v is provided
+                args.verbose++;
                 break;
             case '?':
                 fprintf(stderr, "Unknow option: %c.\n", optopt);

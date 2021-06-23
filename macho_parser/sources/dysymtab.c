@@ -16,7 +16,7 @@ void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysymtab_cm
         "LC_DYSYMTAB", dysymtab_cmd->cmdsize, dysymtab_cmd->nlocalsym,
         dysymtab_cmd->nextdefsym,  dysymtab_cmd->nundefsym, dysymtab_cmd->nindirectsyms);
 
-    if (args.short_desc) { return; }
+    if (args.verbose == 0) { return; }
 
     printf("    ilocalsym     : %-10d  nlocalsym    : %d\n", dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
     printf("    iextdefsym    : %-10d  nextdefsym   : %d\n", dysymtab_cmd->iextdefsym, dysymtab_cmd->nextdefsym);
@@ -76,20 +76,20 @@ void load_symtab_cmd(FILE *fptr, void **sym_table, void **str_table) {
 }
 
 void print_symbols(void *sym_table, void *str_table, int offset, int num) {
-    int max_number = args.verbose ? num : MIN(num, 10);
+    int max_number = args.verbose == 1 ? MIN(num, 10) : num;
     for (int i = 0; i < max_number; ++i) {
         struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * (offset + i);
         const char * symbol = str_table + nlist->n_un.n_strx;
         printf("        %s\n", symbol);
     }
 
-    if (!args.verbose && num > 10) {
+    if (args.verbose == 1 && num > 10) {
         printf("        ... %d more ...\n", num - 10);
     }
 }
 
 void print_indirect_symbols(void *sym_table, void *str_table, uint32_t *indirect_symtab, int size) {
-    int max_number = args.verbose ? size : MIN(size, 10);
+    int max_number = args.verbose == 1 ? MIN(size, 10) : size;
     for (int i = 0; i < max_number; ++i) {
         int index = *(indirect_symtab + i);
         const char *symbol = NULL;
@@ -112,7 +112,7 @@ void print_indirect_symbols(void *sym_table, void *str_table, uint32_t *indirect
         }
     }
 
-    if (!args.verbose && size > 10) {
+    if (args.verbose == 1 && size > 10) {
         printf("        ... %d more ...\n", size - 10);
     }
 }
