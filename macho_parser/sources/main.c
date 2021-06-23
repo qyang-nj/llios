@@ -19,6 +19,8 @@ void parse_entry_point(FILE *, struct entry_point_command *);
 void parse_linker_option(FILE *, struct linker_option_command *);
 void parse_dylib(FILE *, struct dylib_command *);
 void parse_rpath(FILE *, struct rpath_command *);
+void parse_uuid(FILE *fptr, struct uuid_command *cmd);
+void parse_source_version(FILE *fptr, struct source_version_command *cmd);
 
 int main(int argc, char **argv) {
     parse_arguments(argc, argv);
@@ -101,6 +103,12 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
             case LC_VERSION_MIN_TVOS:
                 parse_version_min(fptr, (struct version_min_command *)cmd);
                 break;
+            case LC_UUID:
+                parse_uuid(fptr, (struct uuid_command *)cmd);
+                break;
+            case LC_SOURCE_VERSION:
+                parse_source_version(fptr, (struct source_version_command *)cmd);
+                break;
             default:
                 printf("LC_(%x)\n", lcmd->cmd);
         }
@@ -154,5 +162,22 @@ void parse_rpath(FILE *fptr, struct rpath_command *cmd) {
     printf("%-20s cmdsize: %-6u %s\n", "LC_RPATH", cmd->cmdsize, (char *)cmd + cmd->path.offset);
 }
 
+void parse_uuid(FILE *fptr, struct uuid_command *cmd) {
+    printf("%-20s cmdsize: %-6u ", "LC_UUID", cmd->cmdsize);
+    for (int i = 0; i < sizeof(cmd->uuid); ++i) {
+        printf("%X", cmd->uuid[i]);
+    }
+    printf("\n");
+}
+
+void parse_source_version(FILE *fptr, struct source_version_command *cmd) {
+    int a = (0xFFFFFF0000000000 & cmd->version) >> 40;
+    int b = (0x000000FFC0000000 & cmd->version) >> 30;
+    int c = (0x000000003FF00000 & cmd->version) >> 20;
+    int d = (0x00000000000FFC00 & cmd->version) >> 10;
+    int e = (0x00000000000003FF & cmd->version);
+    printf("%-20s cmdsize: %-6u %d.%d.%d.%d.%d\n", "LC_SOURCE_VERSION", cmd->cmdsize,
+        a, b, c, d, e);
+}
 
 

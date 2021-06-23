@@ -53,6 +53,12 @@ unsigned int string_to_load_command(char *cmd_str) {
         return LC_RPATH;
     } else if (strcmp(cmd_str, "LC_FUNCTION_STARTS") == 0) {
         return LC_FUNCTION_STARTS;
+    } else if (strcmp(cmd_str, "LC_BUILD_VERSION") == 0) {
+        return LC_BUILD_VERSION;
+    } else if (strcmp(cmd_str, "LC_UUID") == 0) {
+        return LC_UUID;
+    } else if (strcmp(cmd_str, "LC_SOURCE_VERSION") == 0) {
+        return LC_SOURCE_VERSION;
     }
 
     fprintf(stderr, "Unknow load command: %s.\n", cmd_str);
