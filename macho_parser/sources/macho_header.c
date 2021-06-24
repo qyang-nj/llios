@@ -8,7 +8,6 @@
 #include "macho_header.h"
 
 #define NEEDS_SWAP(magic) (magic == FAT_CIGAM || magic == FAT_CIGAM_64 || magic == MH_CIGAM || magic == MH_CIGAM_64)
-#define IS_FAT_HEADER(magic) (magic == FAT_MAGIC || magic == FAT_CIGAM || magic == FAT_MAGIC_64 || magic == FAT_CIGAM_64)
 
 static uint32_t read_magic(FILE *fptr, int offset);
 static struct fat_header read_fat_header(FILE *fptr, bool needs_swap);
