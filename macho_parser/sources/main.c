@@ -6,6 +6,7 @@
 #include <mach-o/nlist.h>
 #include "argument.h"
 #include "util.h"
+#include "macho_header.h"
 #include "segment_64.h"
 #include "symtab.h"
 #include "dysymtab.h"
@@ -36,10 +37,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    struct mach_header_64 *header = load_bytes(fptr, 0, sizeof(struct mach_header_64));
-    parse_load_commands(fptr, sizeof(struct mach_header_64), header->ncmds);
+    struct load_cmd_info lcinfo = parse_header(fptr);
+    parse_load_commands(fptr, lcinfo.offset, lcinfo.count);
 
-    free(header);
     fclose(fptr);
     return 0;
 }
