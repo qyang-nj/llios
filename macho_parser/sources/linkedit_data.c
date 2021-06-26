@@ -92,6 +92,13 @@ static void parse_chained_fixups(FILE *fptr, uint32_t dataoff, uint32_t datasize
     printf("symbols_format: %d\n", header->symbols_format);
     printf("\n");
 
+    for (int i = 0; i < header->imports_count; ++i) {
+        struct dyld_chained_import import = ((struct dyld_chained_import *)(base_addr + header->imports_offset))[i];
+        printf("-- import > lib_ordinal: %d   weak_import: %d   name_offset: %s\n",
+            import.lib_ordinal, import.weak_import, (char *)(base_addr + header->symbols_offset + import.name_offset));
+    }
+    printf("\n");
+
     printf("sizeof(dyld_chained_starts_in_image): %lu\n", sizeof(struct dyld_chained_starts_in_image));
     struct dyld_chained_starts_in_image *starts_in_image = base_addr + header->starts_offset;
     printf("seg_count: %d\n", starts_in_image->seg_count);
