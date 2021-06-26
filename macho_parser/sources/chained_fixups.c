@@ -63,12 +63,13 @@ void parse_chained_fixups(FILE *fptr, uint32_t dataoff, uint32_t datasize) {
                     struct dyld_chained_ptr_64_bind bind;
                     read_bytes(fptr, chain, &bind, sizeof(struct dyld_chained_ptr_64_bind));
                     if (bind.bind) {
-                        printf("        0x%08x BIND   > next: %-3d   ordinal: %d   addend: %d    reserved: %d\n",
-                            chain, bind.next, bind.ordinal, bind.addend, bind.reserved);
+                        printf("        0x%08x BIND   > ordinal: %d   addend: %d    reserved: %d\n",
+                            chain, bind.ordinal, bind.addend, bind.reserved);
                     } else {
                         // rebase
                         struct dyld_chained_ptr_64_rebase rebase = *(struct dyld_chained_ptr_64_rebase *)&bind;
-                        printf("        %#010x REBASE > next: %-3d   target: %#010llx   high8: %d\n", chain, rebase.next, rebase.target, rebase.high8);
+                        printf("        %#010x REBASE > target: %#010llx   high8: %d\n",
+                            chain, rebase.target, rebase.high8);
                     }
 
                     if (bind.next == 0) {
@@ -78,7 +79,7 @@ void parse_chained_fixups(FILE *fptr, uint32_t dataoff, uint32_t datasize) {
                     }
 
                 } else {
-                    printf("Other pointer format: 0x%x", starts_in_segment->pointer_format);
+                    printf("Unsupported pointer format: 0x%x", starts_in_segment->pointer_format);
                     break;
                 }
             }
