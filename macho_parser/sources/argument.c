@@ -59,6 +59,8 @@ unsigned int string_to_load_command(char *cmd_str) {
         return LC_UUID;
     } else if (strcmp(cmd_str, "LC_SOURCE_VERSION") == 0) {
         return LC_SOURCE_VERSION;
+    } else if (strcmp(cmd_str, "LC_DYLD_EXPORTS_TRIE") == 0) {
+        return LC_DYLD_EXPORTS_TRIE;
     } else if (strcmp(cmd_str, "LC_DYLD_CHAINED_FIXUPS") == 0) {
         return LC_DYLD_CHAINED_FIXUPS;
     }
