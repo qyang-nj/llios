@@ -136,4 +136,4 @@ Here is what happens when calling a method in a dylib. The program calls into co
 
 The following diagram shows the binding process. The green arrow is non-lazy binding and the red arrows are the lazy binding flows (first time access).
 
-![Trie Graph](../articles/images/dynamic_linking_binding.png)
+![Dynamic Linking Binding](../articles/images/dynamic_linking_binding.png)
