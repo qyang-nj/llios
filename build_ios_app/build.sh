@@ -63,6 +63,7 @@ $SWIFTC \
     -I Build \
     -o "Build/$APP_NAME" \
     -Xlinker -rpath -Xlinker @executable_path/ \
+    -Xlinker -fixup_chains \
     Build/StaticLib.a Build/DynamicLib.dylib \
     Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
 
