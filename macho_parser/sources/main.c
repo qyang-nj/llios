@@ -92,6 +92,8 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
             case LC_DATA_IN_CODE:
             case LC_DYLIB_CODE_SIGN_DRS:
             case LC_LINKER_OPTIMIZATION_HINT:
+            case LC_DYLD_EXPORTS_TRIE:
+            case LC_DYLD_CHAINED_FIXUPS:
                 parse_linkedit_data(fptr, (struct linkedit_data_command *)cmd);
                 break;
             case LC_BUILD_VERSION:

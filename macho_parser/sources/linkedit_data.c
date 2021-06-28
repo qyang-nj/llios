@@ -1,5 +1,6 @@
 #include "util.h"
 #include "argument.h"
+#include "chained_fixups.h"
 
 #include "linkedit_data.h"
 
@@ -7,13 +8,16 @@ static char *command_name(uint32_t cmd);
 static void parse_function_starts(FILE *fptr, uint32_t dataoff, uint32_t datasize);
 
 void parse_linkedit_data(FILE *fptr, struct linkedit_data_command *linkedit_data_cmd) {
-    printf("%-20s cmdsize: %-6u dataoff: %d   datasize: %d\n",
-        command_name(linkedit_data_cmd->cmd), linkedit_data_cmd->cmdsize, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
+    printf("%-20s cmdsize: %-6u dataoff: 0x%x (%d)   datasize: %d\n",
+        command_name(linkedit_data_cmd->cmd), linkedit_data_cmd->cmdsize,
+        linkedit_data_cmd->dataoff, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
 
-    if (args.short_desc) { return; }
+    if (args.verbose == 0) { return; }
 
     if (linkedit_data_cmd->cmd == LC_FUNCTION_STARTS) {
         parse_function_starts(fptr, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
+    } else if (linkedit_data_cmd->cmd == LC_DYLD_CHAINED_FIXUPS) {
+        parse_chained_fixups(fptr, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
     }
 }
 
@@ -39,6 +43,12 @@ static char *command_name(uint32_t cmd) {
     case LC_LINKER_OPTIMIZATION_HINT:
         cmd_name = "LC_LINKER_OPTIMIZATION_HINT";
         break;
+    case LC_DYLD_EXPORTS_TRIE:
+        cmd_name = "LC_DYLD_EXPORTS_TRIE";
+        break;
+    case LC_DYLD_CHAINED_FIXUPS:
+        cmd_name = "LC_DYLD_CHAINED_FIXUPS";
+        break;
     default:
         break;
     }
@@ -62,3 +72,5 @@ static void parse_function_starts(FILE *fptr, uint32_t dataoff, uint32_t datasiz
 
     free(func_starts);
 }
+
+
