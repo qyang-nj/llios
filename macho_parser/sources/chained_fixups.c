@@ -63,12 +63,14 @@ void parse_chained_fixups(FILE *fptr, uint32_t dataoff, uint32_t datasize) {
                     struct dyld_chained_ptr_64_bind bind;
                     read_bytes(fptr, chain, &bind, sizeof(struct dyld_chained_ptr_64_bind));
                     if (bind.bind) {
-                        printf("        0x%08x BIND   > ordinal: %d   addend: %d    reserved: %d\n",
-                            chain, bind.ordinal, bind.addend, bind.reserved);
+                        struct dyld_chained_import import = ((struct dyld_chained_import *)(base_addr + header->imports_offset))[bind.ordinal];
+                        char *symbol = (char *)(base_addr+ header->symbols_offset + import.name_offset);
+                        printf("        0x%08x BIND     ordinal: %d   addend: %d    reserved: %d   (%s)\n",
+                            chain, bind.ordinal, bind.addend, bind.reserved, symbol);
                     } else {
                         // rebase
                         struct dyld_chained_ptr_64_rebase rebase = *(struct dyld_chained_ptr_64_rebase *)&bind;
-                        printf("        %#010x REBASE > target: %#010llx   high8: %d\n",
+                        printf("        %#010x REBASE   target: %#010llx   high8: %d\n",
                             chain, rebase.target, rebase.high8);
                     }
 

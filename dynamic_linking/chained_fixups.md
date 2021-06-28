@@ -73,10 +73,11 @@ LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0xc000 (49152)   datasize: 296
     page_count: 1
     page_start: 24
         SEGMENT 3, PAGE 0 (offset: 24)
-        0x00008018 REBASE > target: 0x100003f10   high8: 0
-        0x00008060 REBASE > target: 0x100003f10   high8: 0
-        0x00008090 BIND   > ordinal: 4   addend: 0    reserved: 0
-        0x00008098 BIND   > ordinal: 4   addend: 0    reserved: 0
+        0x00008018 REBASE   target: 0x100003f10   high8: 0
+        0x00008060 REBASE   target: 0x100003f10   high8: 0
+        0x00008090 BIND     ordinal: 4   addend: 0    reserved: 0   (_OBJC_METACLASS_$__TtCs12_SwiftObject)
+        0x00008098 BIND     ordinal: 4   addend: 0    reserved: 0   (_OBJC_METACLASS_$__TtCs12_SwiftObject)
+        0x000080a0 BIND     ordinal: 3   addend: 0    reserved: 0   (__objc_empty_cache)
         ...
 ```
 
