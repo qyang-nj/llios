@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 #include <mach-o/fat.h>
 #include <mach-o/swap.h>
 
@@ -9,10 +10,10 @@
 
 #define NEEDS_SWAP(magic) (magic == FAT_CIGAM || magic == FAT_CIGAM_64 || magic == MH_CIGAM || magic == MH_CIGAM_64)
 
-static uint32_t read_magic(FILE *fptr, int offset);
-static struct fat_header read_fat_header(FILE *fptr, bool needs_swap);
-static struct fat_arch *read_fat_archs(FILE *fptr, struct fat_header header, bool needs_swap);
-static struct mach_header_64 read_mach_header(FILE *fptr, uint64_t offset);
+static uint32_t read_magic(void *base, int offset);
+static struct fat_header read_fat_header(void *base, bool needs_swap);
+static struct fat_arch *read_fat_archs(void *base, struct fat_header header, bool needs_swap);
+static struct mach_header_64 read_mach_header(void *base, uint64_t offset);
 
 static void print_fat_header(uint32_t magic, struct fat_header header);
 static void print_fat_archs(struct fat_arch *archs, int nfat_arch);
@@ -22,15 +23,15 @@ static void format_magic(uint32_t magic, char *name);
 static void format_cpu_type(cpu_type_t cputype, char *name);
 static void format_file_type(uint32_t filetype, char *name);
 
-struct load_cmd_info parse_header(FILE *fptr) {
-    uint32_t magic = read_magic(fptr, 0);
+struct load_cmd_info parse_header(void *base) {
+    uint32_t magic = read_magic(base, 0);
     int mach_header_offset = 0;
 
     if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
-        struct fat_header header = read_fat_header(fptr, NEEDS_SWAP(magic));
+        struct fat_header header = read_fat_header(base, NEEDS_SWAP(magic));
         print_fat_header(magic, header);
 
-        struct fat_arch *fat_archs = read_fat_archs(fptr, header, NEEDS_SWAP(magic));
+        struct fat_arch *fat_archs = read_fat_archs(base, header, NEEDS_SWAP(magic));
         print_fat_archs(fat_archs, header.nfat_arch);
 
         for (int i = 0; i < header.nfat_arch; ++i) {
@@ -40,10 +41,9 @@ struct load_cmd_info parse_header(FILE *fptr) {
                 break;
             }
         }
-        free(fat_archs);
     }
 
-    magic = read_magic(fptr, mach_header_offset);
+    magic = read_magic(base, mach_header_offset);
     if (magic != MH_MAGIC_64) {
         char magic_name[32];
         format_magic(magic, magic_name);
@@ -51,7 +51,7 @@ struct load_cmd_info parse_header(FILE *fptr) {
         exit(1);
     }
 
-    struct mach_header_64 header = read_mach_header(fptr, mach_header_offset);
+    struct mach_header_64 header = read_mach_header(base, mach_header_offset);
     print_mach_header(header);
 
     struct load_cmd_info lcinfo;
@@ -60,32 +60,29 @@ struct load_cmd_info parse_header(FILE *fptr) {
     return lcinfo;
 }
 
-static uint32_t read_magic(FILE *fptr, int offset) {
-    uint32_t magic = 0;
-    read_bytes(fptr, offset, &magic, sizeof(magic));
+static uint32_t read_magic(void *filebase, int offset) {
+    uint32_t magic = *(uint32_t *)(filebase + offset);
     return magic;
 }
 
-static struct fat_header read_fat_header(FILE *fptr, bool needs_swap) {
-    struct fat_header header;
-    read_bytes(fptr, 0, &header, sizeof(header));
+static struct fat_header read_fat_header(void *base, bool needs_swap) {
+    struct fat_header header = *(struct fat_header *)base;
     if (needs_swap) {
         swap_fat_header(&header, NX_UnknownByteOrder);
     }
     return header;
 }
 
-static struct fat_arch *read_fat_archs(FILE *fptr, struct fat_header header, bool needs_swap) {
-    struct fat_arch *archs = load_bytes(fptr, sizeof(header), sizeof(struct fat_arch) * header.nfat_arch);
+static struct fat_arch *read_fat_archs(void *base, struct fat_header header, bool needs_swap) {
+    struct fat_arch *archs = base + sizeof(header);
     if (needs_swap) {
         swap_fat_arch(archs, header.nfat_arch, NX_UnknownByteOrder);
     }
     return archs;
 }
 
-static struct mach_header_64 read_mach_header(FILE *fptr, uint64_t offset) {
-    struct mach_header_64 header;
-    read_bytes(fptr, offset, &header, sizeof(header));
+static struct mach_header_64 read_mach_header(void *base, uint64_t offset) {
+    struct mach_header_64 header = *(struct mach_header_64 *)(base + offset);
     return header;
 }
 

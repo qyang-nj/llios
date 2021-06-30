@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 #include "argument.h"
@@ -14,14 +17,14 @@
 #include "linkedit_data.h"
 #include "build_version.h"
 
-void parse_load_commands(FILE *, int offset, uint32_t);
-void parse_dylinker(FILE *, struct dylinker_command *);
-void parse_entry_point(FILE *, struct entry_point_command *);
-void parse_linker_option(FILE *, struct linker_option_command *);
-void parse_dylib(FILE *, struct dylib_command *);
-void parse_rpath(FILE *, struct rpath_command *);
-void parse_uuid(FILE *fptr, struct uuid_command *cmd);
-void parse_source_version(FILE *fptr, struct source_version_command *cmd);
+void parse_load_commands(void *base, int offset, uint32_t);
+void parse_dylinker(void *base, struct dylinker_command *);
+void parse_entry_point(void *base, struct entry_point_command *);
+void parse_linker_option(void *base, struct linker_option_command *);
+void parse_dylib(void *base, struct dylib_command *);
+void parse_rpath(void *base, struct rpath_command *);
+void parse_uuid(void *base, struct uuid_command *cmd);
+void parse_source_version(void *base, struct source_version_command *cmd);
 
 int main(int argc, char **argv) {
     parse_arguments(argc, argv);
@@ -31,61 +34,72 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    FILE *fptr = fopen(args.file_name, "rb");
-    if (fptr == NULL) {
-        fprintf(stderr, "Cannot open file %s\n", args.file_name);
+    // void *base = fopen(args.file_name, "rb");
+    // if (fptr == NULL) {
+    //     fprintf(stderr, "Cannot open file %s\n", args.file_name);
+    //     return 1;
+    // }
+
+    int fd;
+    struct stat sb;
+
+    fd = open(args.file_name, O_RDONLY);
+    fstat(fd, &sb);
+    printf("Size: %llu\n", (uint64_t)sb.st_size);
+
+    void *base = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (base == MAP_FAILED) {
+        fprintf(stderr, "Cannot read file %s\n", args.file_name);
         return 1;
     }
 
-    struct load_cmd_info lcinfo = parse_header(fptr);
-    parse_load_commands(fptr, lcinfo.offset, lcinfo.count);
+    struct load_cmd_info lcinfo = parse_header(base);
+    parse_load_commands(base, lcinfo.offset, lcinfo.count);
 
-    fclose(fptr);
+    munmap(base, sb.st_size);
+    // fclose(fptr);
     return 0;
 }
 
-void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
+void parse_load_commands(void *base, int offset, uint32_t ncmds) {
     for (int i = 0; i < ncmds; ++i) {
-        struct load_command *lcmd = load_bytes(fptr, offset, sizeof(struct load_command));
+        struct load_command *lcmd = base + offset;
 
         if (!show_command(lcmd->cmd)) {
             offset += lcmd->cmdsize;
-            free(lcmd);
             continue;
         }
 
-        void *cmd = load_bytes(fptr, offset, lcmd->cmdsize);
-
         switch (lcmd->cmd) {
             case LC_SEGMENT_64:
-                parse_segment(fptr, (struct segment_command_64 *)cmd);
+                parse_segment(base, (struct segment_command_64 *)lcmd);
                 break;
             case LC_SYMTAB:
-                parse_symbol_table(fptr, (struct symtab_command *)cmd);
+                parse_symbol_table(base, (struct symtab_command *)lcmd);
                 break;
             case LC_DYSYMTAB:
-                parse_dynamic_symbol_table(fptr, (struct dysymtab_command *)cmd);
+                parse_dynamic_symbol_table(base, (struct dysymtab_command *)lcmd);
                 break;
             case LC_LOAD_DYLINKER:
-                parse_dylinker(fptr, (struct dylinker_command *)cmd);
+                parse_dylinker(base, (struct dylinker_command *)lcmd);
                 break;
             case LC_MAIN:
-                parse_entry_point(fptr, (struct entry_point_command *)cmd);
+                parse_entry_point(base, (struct entry_point_command *)lcmd);
                 break;
             case LC_LINKER_OPTION:
-                parse_linker_option(fptr, (struct linker_option_command *)cmd);
+                parse_linker_option(base, (struct linker_option_command *)lcmd);
                 break;
             case LC_ID_DYLIB:
             case LC_LOAD_DYLIB:
             case LC_LOAD_WEAK_DYLIB:
-                parse_dylib(fptr, (struct dylib_command *)cmd);
+                parse_dylib(base, (struct dylib_command *)lcmd);
                 break;
             case LC_RPATH:
-                parse_rpath(fptr, (struct rpath_command *)cmd);
+                parse_rpath(base, (struct rpath_command *)lcmd);
                 break;
             case LC_DYLD_INFO:
             case LC_DYLD_INFO_ONLY:
-                parse_dyld_info(fptr, (struct dyld_info_command *)cmd);
+                parse_dyld_info(base, (struct dyld_info_command *)lcmd);
                 break;
             case LC_CODE_SIGNATURE:
             case LC_FUNCTION_STARTS:
@@ -94,45 +108,43 @@ void parse_load_commands(FILE *fptr, int offset, uint32_t ncmds) {
             case LC_LINKER_OPTIMIZATION_HINT:
             case LC_DYLD_EXPORTS_TRIE:
             case LC_DYLD_CHAINED_FIXUPS:
-                parse_linkedit_data(fptr, (struct linkedit_data_command *)cmd);
+                parse_linkedit_data(base, (struct linkedit_data_command *)lcmd);
                 break;
             case LC_BUILD_VERSION:
-                parse_build_version(fptr, (struct build_version_command *)cmd);
+                parse_build_version(base, (struct build_version_command *)lcmd);
                 break;
             case LC_VERSION_MIN_MACOSX:
             case LC_VERSION_MIN_IPHONEOS:
             case LC_VERSION_MIN_WATCHOS:
             case LC_VERSION_MIN_TVOS:
-                parse_version_min(fptr, (struct version_min_command *)cmd);
+                parse_version_min(base, (struct version_min_command *)lcmd);
                 break;
             case LC_UUID:
-                parse_uuid(fptr, (struct uuid_command *)cmd);
+                parse_uuid(base, (struct uuid_command *)lcmd);
                 break;
             case LC_SOURCE_VERSION:
-                parse_source_version(fptr, (struct source_version_command *)cmd);
+                parse_source_version(base, (struct source_version_command *)lcmd);
                 break;
             default:
                 printf("LC_(%x)\n", lcmd->cmd);
         }
 
         offset += lcmd->cmdsize;
-        free(cmd);
-        free(lcmd);
     }
 }
 
-void parse_dylinker(FILE *fptr, struct dylinker_command *dylinker_cmd) {
+void parse_dylinker(void *base, struct dylinker_command *dylinker_cmd) {
     printf("%-20s cmdsize: %-6u %s\n", "LC_LOAD_DYLINKER",
         dylinker_cmd->cmdsize, (char *)dylinker_cmd + dylinker_cmd->name.offset);
 }
 
-void parse_entry_point(FILE *fptr, struct entry_point_command *entry_point_cmd) {
+void parse_entry_point(void *base, struct entry_point_command *entry_point_cmd) {
     uint64_t entryoff = entry_point_cmd->entryoff;
     printf("%-20s cmdsize: %-6u entryoff: 0x%llx(%llu) stacksize: %llu\n", "LC_MAIN",
         entry_point_cmd->cmdsize, entryoff, entryoff, entry_point_cmd->stacksize);
 }
 
-void parse_linker_option(FILE *fptr, struct linker_option_command *cmd) {
+void parse_linker_option(void *base, struct linker_option_command *cmd) {
     char *options = calloc(1, cmd->cmdsize);
     memcpy(options, (char *)cmd + sizeof(struct linker_option_command), cmd->cmdsize -  sizeof(struct linker_option_command));
 
@@ -148,7 +160,7 @@ void parse_linker_option(FILE *fptr, struct linker_option_command *cmd) {
     free(options);
 }
 
-void parse_dylib(FILE *fptr, struct dylib_command *cmd) {
+void parse_dylib(void *base, struct dylib_command *cmd) {
     char *cmd_name = "";
     if (cmd->cmd == LC_ID_DYLIB) {
         cmd_name = "LC_ID_DYLIB";
@@ -160,11 +172,11 @@ void parse_dylib(FILE *fptr, struct dylib_command *cmd) {
     printf("%-20s cmdsize: %-6u %s\n", cmd_name, cmd->cmdsize, (char *)cmd + cmd->dylib.name.offset);
 }
 
-void parse_rpath(FILE *fptr, struct rpath_command *cmd) {
+void parse_rpath(void *base, struct rpath_command *cmd) {
     printf("%-20s cmdsize: %-6u %s\n", "LC_RPATH", cmd->cmdsize, (char *)cmd + cmd->path.offset);
 }
 
-void parse_uuid(FILE *fptr, struct uuid_command *cmd) {
+void parse_uuid(void *base, struct uuid_command *cmd) {
     printf("%-20s cmdsize: %-6u ", "LC_UUID", cmd->cmdsize);
     for (int i = 0; i < sizeof(cmd->uuid); ++i) {
         printf("%X", cmd->uuid[i]);
@@ -172,7 +184,7 @@ void parse_uuid(FILE *fptr, struct uuid_command *cmd) {
     printf("\n");
 }
 
-void parse_source_version(FILE *fptr, struct source_version_command *cmd) {
+void parse_source_version(void *base, struct source_version_command *cmd) {
     int a = (0xFFFFFF0000000000 & cmd->version) >> 40;
     int b = (0x000000FFC0000000 & cmd->version) >> 30;
     int c = (0x000000003FF00000 & cmd->version) >> 20;

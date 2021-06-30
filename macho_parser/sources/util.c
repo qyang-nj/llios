@@ -1,15 +1,15 @@
 #include "util.h"
 
-void read_bytes(FILE *fptr, int offset, void *buf, int size) {
-    fseek(fptr, offset, SEEK_SET);
-    fread(buf, size, 1, fptr);
-}
+// void read_bytes(void *base, int offset, void *buf, int size) {
+//     fseek(fptr, offset, SEEK_SET);
+//     fread(buf, size, 1, fptr);
+// }
 
-void *load_bytes(FILE *fptr, int offset, int size) {
-    void *buf = calloc(1, size);
-    read_bytes(fptr, offset, buf, size);
-    return buf;
-}
+// void *load_bytes(void *base, int offset, int size) {
+//     void *buf = calloc(1, size);
+//     read_bytes(fptr, offset, buf, size);
+//     return buf;
+// }
 
 int read_uleb128(const uint8_t *p, uint64_t *out) {
     uint64_t result = 0;
