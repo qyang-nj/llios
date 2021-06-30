@@ -23,8 +23,7 @@ void parse_dyld_info(void *base, struct dyld_info_command *dyld_info_cmd) {
 }
 
 void parse_export(void *base, uint32_t export_off, uint32_t export_size) {
-    uint8_t *export = base + export_off; //load_bytes(fptr, export_off, export_size);
-
+    uint8_t *export = base + export_off;
     printf ("\n    Exported Symbols (Trie):");
     parse_export_trie(export, export, 0);
 }

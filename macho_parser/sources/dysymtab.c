@@ -57,9 +57,9 @@ void load_symtab_cmd(void *base, void **sym_table, void **str_table) {
         struct load_command *lcmd = base + offset;
 
         if (lcmd->cmd == LC_SYMTAB) {
-            struct symtab_command *symtab_cmd = base + offset; // load_bytes(fptr, offset, lcmd->cmdsize);
-            *sym_table = base + symtab_cmd->symoff; //load_bytes(base, symtab_cmd->symoff, symtab_cmd->nsyms * sizeof(struct nlist_64));
-            *str_table = base + symtab_cmd->stroff; //load_bytes(base, symtab_cmd->stroff, symtab_cmd->strsize);
+            struct symtab_command *symtab_cmd = base + offset;
+            *sym_table = base + symtab_cmd->symoff;
+            *str_table = base + symtab_cmd->stroff;
             return;
         }
 

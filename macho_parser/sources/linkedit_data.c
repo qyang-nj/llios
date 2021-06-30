@@ -58,7 +58,7 @@ static char *command_name(uint32_t cmd) {
 static void parse_function_starts(void *base, uint32_t dataoff, uint32_t datasize) {
     if (!args.verbose) { return; }
 
-    uint8_t *func_starts = base + dataoff; // load_bytes(fptr, dataoff, datasize);
+    uint8_t *func_starts = base + dataoff;
 
     int i = 0;
     int address = 0;
@@ -69,8 +69,6 @@ static void parse_function_starts(void *base, uint32_t dataoff, uint32_t datasiz
         address += num;
         printf("    0x%x\n", address);
     }
-
-    free(func_starts);
 }
 
 
