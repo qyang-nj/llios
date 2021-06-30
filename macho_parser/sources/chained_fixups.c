@@ -54,7 +54,7 @@ void parse_chained_fixups(void *base, uint32_t dataoff, uint32_t datasize) {
 
             if (page_starts[j] == DYLD_CHAINED_PTR_START_NONE) { continue; }
 
-            uint16_t chain = starts_in_segment->segment_offset + starts_in_segment->page_size * j + page_starts[j];
+            uint32_t chain = starts_in_segment->segment_offset + starts_in_segment->page_size * j + page_starts[j];
 
             bool done = false;
             while (!done) {

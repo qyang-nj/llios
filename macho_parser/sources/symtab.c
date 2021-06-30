@@ -5,8 +5,6 @@
 #include "argument.h"
 #include "symtab.h"
 
-extern void *load_bytes(void *base, int offset, int size);
-
 static void format_n_type(uint8_t n_type, char *formatted);
 static void format_n_desc(uint8_t n_type, uint16_t n_desc, char *formatted);
 
