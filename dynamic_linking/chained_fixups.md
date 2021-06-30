@@ -39,7 +39,9 @@ Contents of (__DATA,__got) section
 ```
 
 ### It reduces launch time
-The rebase and bind data are chained together and organized by pages. It provides the ability to rebase address and bind symbols for any given pages independently. What does this entail? **It enables dyld to skip the mandatory fixups at launch time and only do it when the page is loaded (aka page fault). Basically they all become lazy rebasing and binding.** That's why there is no need for traditional lazy binding.
+This article, [How iOS 15 makes your app launch faster](https://medium.com/geekculture/how-ios-15-makes-your-app-launch-faster-51cf0aa6c520), explains why app launch will become faster. (I was actually inspired by this article to research this topic.)
+
+Besides what's mentioned in that article, I have another thought, but haven't been able to verify it. Since the rebase and bind data are chained together and organized by pages, it provides the ability to rebase address and bind symbols for any given pages independently. **It enables dyld to skip the mandatory fixups at launch time and only do it when the page is loaded (aka page fault).** Basically they all become lazy rebasing and binding. That's why there is no need for traditional lazy binding. If Apple doesn't do this today, it's a potential optimization for the future.
 
 ## Inspection
 
@@ -81,5 +83,3 @@ LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0xc000 (49152)   datasize: 296
         ...
 ```
 
-## Learn more
-* [How iOS 15 makes your app launch faster](https://medium.com/geekculture/how-ios-15-makes-your-app-launch-faster-51cf0aa6c520)
