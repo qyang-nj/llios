@@ -34,18 +34,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // void *base = fopen(args.file_name, "rb");
-    // if (fptr == NULL) {
-    //     fprintf(stderr, "Cannot open file %s\n", args.file_name);
-    //     return 1;
-    // }
-
     int fd;
     struct stat sb;
 
     fd = open(args.file_name, O_RDONLY);
     fstat(fd, &sb);
-    printf("Size: %llu\n", (uint64_t)sb.st_size);
 
     void *base = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (base == MAP_FAILED) {
@@ -57,7 +50,6 @@ int main(int argc, char **argv) {
     parse_load_commands(base, lcinfo.offset, lcinfo.count);
 
     munmap(base, sb.st_size);
-    // fclose(fptr);
     return 0;
 }
 

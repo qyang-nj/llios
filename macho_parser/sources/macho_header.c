@@ -5,6 +5,7 @@
 #include <mach-o/swap.h>
 
 #include "util.h"
+#include "argument.h"
 
 #include "macho_header.h"
 
@@ -29,7 +30,9 @@ struct load_cmd_info parse_header(void *base) {
 
     if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
         struct fat_header header = read_fat_header(base, NEEDS_SWAP(magic));
-        print_fat_header(magic, header);
+        if (show_header()) {
+            print_fat_header(magic, header);
+        }
 
         struct fat_arch *fat_archs = read_fat_archs(base, header, NEEDS_SWAP(magic));
         print_fat_archs(fat_archs, header.nfat_arch);
@@ -52,7 +55,9 @@ struct load_cmd_info parse_header(void *base) {
     }
 
     struct mach_header_64 header = read_mach_header(base, mach_header_offset);
-    print_mach_header(header);
+    if (show_header()) {
+        print_mach_header(header);
+    }
 
     struct load_cmd_info lcinfo;
     lcinfo.count = header.ncmds;
