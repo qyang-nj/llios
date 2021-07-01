@@ -1,23 +1,22 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <mach-o/nlist.h>
 #include "argument.h"
 #include "symtab.h"
 
-extern void *load_bytes(FILE *fptr, int offset, int size);
-
 static void format_n_type(uint8_t n_type, char *formatted);
 static void format_n_desc(uint8_t n_type, uint16_t n_desc, char *formatted);
 
-void parse_symbol_table(FILE *fptr, struct symtab_command *symtab_cmd) {
+void parse_symbol_table(void *base, struct symtab_command *symtab_cmd) {
     printf("%-20s cmdsize: %-6d symoff: %d   nsyms: %d   (symsize: %lu)   stroff: %d   strsize: %u\n",
         "LC_SYMTAB", symtab_cmd->cmdsize, symtab_cmd->symoff, symtab_cmd->nsyms,
         symtab_cmd->nsyms * sizeof(struct nlist_64), symtab_cmd->stroff, symtab_cmd->strsize);
 
     if (args.verbose == 0) { return; }
 
-    void *sym_table = load_bytes(fptr, symtab_cmd->symoff, symtab_cmd->nsyms * sizeof(struct nlist_64));
-    void *str_table = load_bytes(fptr, symtab_cmd->stroff, symtab_cmd->strsize);
+    void *sym_table = base + symtab_cmd->symoff;
+    void *str_table = base + symtab_cmd->stroff;
 
     int nsyms = symtab_cmd->nsyms;
     int max_number = args.verbose == 1 ? (nsyms > 10 ? 10 : nsyms) : nsyms;
@@ -46,9 +45,6 @@ void parse_symbol_table(FILE *fptr, struct symtab_command *symtab_cmd) {
     if (args.verbose == 1 && nsyms > 10) {
         printf("        ... %d more ...\n", nsyms - 10);
     }
-
-    free(sym_table);
-    free(str_table);
 }
 
 static void format_n_type(uint8_t n_type, char *formatted) {

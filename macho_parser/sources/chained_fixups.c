@@ -14,14 +14,14 @@ static void print_imports(struct dyld_chained_fixups_header *header);
 
 static void format_pointer_format(uint16_t pointer_format, char *formatted);
 
-void parse_chained_fixups(FILE *fptr, uint32_t dataoff, uint32_t datasize) {
-    void *base_addr = mmap(NULL, datasize, PROT_READ, MAP_PRIVATE, fileno(fptr), dataoff);
+void parse_chained_fixups(void *base, uint32_t dataoff, uint32_t datasize) {
+    void *fixup_base = base + dataoff;
 
-    struct dyld_chained_fixups_header *header = base_addr;
+    struct dyld_chained_fixups_header *header = fixup_base;
     print_chained_fixups_header(header);
     print_imports(header);
 
-    struct dyld_chained_starts_in_image *starts_in_image = base_addr + header->starts_offset;
+    struct dyld_chained_starts_in_image *starts_in_image = fixup_base + header->starts_offset;
     // printf("    STARTS IN IMAGE\n");
     // printf("    seg_count: %d\n", starts_in_image->seg_count);
     // printf("    seg_info_offset: %d\n", starts_in_image->seg_info_offset[0]);
@@ -36,7 +36,7 @@ void parse_chained_fixups(FILE *fptr, uint32_t dataoff, uint32_t datasize) {
             continue;
         }
 
-        struct dyld_chained_starts_in_segment* starts_in_segment = load_bytes(fptr, dataoff + header->starts_offset + offsets[i], sizeof(struct dyld_chained_starts_in_segment));
+        struct dyld_chained_starts_in_segment* starts_in_segment = base + dataoff + header->starts_offset + offsets[i];
         char formatted_pointer_format[256];
         format_pointer_format(starts_in_segment->pointer_format, formatted_pointer_format);
 
@@ -54,17 +54,16 @@ void parse_chained_fixups(FILE *fptr, uint32_t dataoff, uint32_t datasize) {
 
             if (page_starts[j] == DYLD_CHAINED_PTR_START_NONE) { continue; }
 
-            uint16_t chain = starts_in_segment->segment_offset + starts_in_segment->page_size * j + page_starts[j];
+            uint32_t chain = starts_in_segment->segment_offset + starts_in_segment->page_size * j + page_starts[j];
 
             bool done = false;
             while (!done) {
                 if (starts_in_segment->pointer_format == DYLD_CHAINED_PTR_64
                     || starts_in_segment->pointer_format == DYLD_CHAINED_PTR_64_OFFSET) {
-                    struct dyld_chained_ptr_64_bind bind;
-                    read_bytes(fptr, chain, &bind, sizeof(struct dyld_chained_ptr_64_bind));
+                    struct dyld_chained_ptr_64_bind bind = *(struct dyld_chained_ptr_64_bind *)(base + chain);
                     if (bind.bind) {
-                        struct dyld_chained_import import = ((struct dyld_chained_import *)(base_addr + header->imports_offset))[bind.ordinal];
-                        char *symbol = (char *)(base_addr+ header->symbols_offset + import.name_offset);
+                        struct dyld_chained_import import = ((struct dyld_chained_import *)(fixup_base + header->imports_offset))[bind.ordinal];
+                        char *symbol = fixup_base + header->symbols_offset + import.name_offset;
                         printf("        0x%08x BIND     ordinal: %d   addend: %d    reserved: %d   (%s)\n",
                             chain, bind.ordinal, bind.addend, bind.reserved, symbol);
                     } else {
@@ -88,8 +87,6 @@ void parse_chained_fixups(FILE *fptr, uint32_t dataoff, uint32_t datasize) {
             printf("\n");
         }
     }
-
-    munmap(base_addr, datasize);
 }
 
 static void print_chained_fixups_header(struct dyld_chained_fixups_header *header) {

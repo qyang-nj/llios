@@ -4,6 +4,6 @@
 #include <stdio.h>
 #include <mach-o/loader.h>
 
-void parse_linkedit_data(FILE *, struct linkedit_data_command *);
+void parse_linkedit_data(void *base, struct linkedit_data_command *);
 
 #endif /* LINKEDIT_DATA_H */

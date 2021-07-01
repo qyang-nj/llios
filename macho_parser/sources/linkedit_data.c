@@ -5,9 +5,9 @@
 #include "linkedit_data.h"
 
 static char *command_name(uint32_t cmd);
-static void parse_function_starts(FILE *fptr, uint32_t dataoff, uint32_t datasize);
+static void parse_function_starts(void *base, uint32_t dataoff, uint32_t datasize);
 
-void parse_linkedit_data(FILE *fptr, struct linkedit_data_command *linkedit_data_cmd) {
+void parse_linkedit_data(void *base, struct linkedit_data_command *linkedit_data_cmd) {
     printf("%-20s cmdsize: %-6u dataoff: 0x%x (%d)   datasize: %d\n",
         command_name(linkedit_data_cmd->cmd), linkedit_data_cmd->cmdsize,
         linkedit_data_cmd->dataoff, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
@@ -15,9 +15,9 @@ void parse_linkedit_data(FILE *fptr, struct linkedit_data_command *linkedit_data
     if (args.verbose == 0) { return; }
 
     if (linkedit_data_cmd->cmd == LC_FUNCTION_STARTS) {
-        parse_function_starts(fptr, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
+        parse_function_starts(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
     } else if (linkedit_data_cmd->cmd == LC_DYLD_CHAINED_FIXUPS) {
-        parse_chained_fixups(fptr, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
+        parse_chained_fixups(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
     }
 }
 
@@ -55,10 +55,10 @@ static char *command_name(uint32_t cmd) {
     return cmd_name;
 }
 
-static void parse_function_starts(FILE *fptr, uint32_t dataoff, uint32_t datasize) {
+static void parse_function_starts(void *base, uint32_t dataoff, uint32_t datasize) {
     if (!args.verbose) { return; }
 
-    uint8_t *func_starts = load_bytes(fptr, dataoff, datasize);
+    uint8_t *func_starts = base + dataoff;
 
     int i = 0;
     int address = 0;
@@ -69,8 +69,6 @@ static void parse_function_starts(FILE *fptr, uint32_t dataoff, uint32_t datasiz
         address += num;
         printf("    0x%x\n", address);
     }
-
-    free(func_starts);
 }
 
 

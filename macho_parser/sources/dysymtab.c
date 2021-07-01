@@ -5,13 +5,11 @@
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
-extern void *load_bytes(FILE *fptr, int offset, int size);
-
-void load_symtab_cmd(FILE *fptr, void **sym_table, void **str_table);
+void load_symtab_cmd(void *base, void **sym_table, void **str_table);
 void print_symbols(void *sym_table, void *str_table, int offset, int num);
 void print_indirect_symbols(void *sym_table, void *str_table, uint32_t *indirect_symtab, int size);
 
-void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysymtab_cmd) {
+void parse_dynamic_symbol_table(void *base, struct dysymtab_command *dysymtab_cmd) {
     printf("%-20s cmdsize: %-6u nlocalsym: %d  nextdefsym: %d   nundefsym: %d   nindirectsyms: %d \n",
         "LC_DYSYMTAB", dysymtab_cmd->cmdsize, dysymtab_cmd->nlocalsym,
         dysymtab_cmd->nextdefsym,  dysymtab_cmd->nundefsym, dysymtab_cmd->nindirectsyms);
@@ -32,7 +30,7 @@ void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysymtab_cm
     void *sym_table = NULL;
     void *str_table = NULL;
 
-    load_symtab_cmd(fptr, &sym_table, &str_table);
+    load_symtab_cmd(base, &sym_table, &str_table);
 
     printf("    Local symbols (ilocalsym %d, nlocalsym:%d)\n", dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
     print_symbols(sym_table, str_table, dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
@@ -47,31 +45,25 @@ void parse_dynamic_symbol_table(FILE *fptr, struct dysymtab_command *dysymtab_cm
     printf("\n");
 
     printf("    Indirect symbol table (indirectsymoff: 0x%x, nindirectsyms: %d)\n", dysymtab_cmd->indirectsymoff, dysymtab_cmd->nindirectsyms);
-    uint32_t *indirect_symtab = (uint32_t *)load_bytes(fptr, dysymtab_cmd->indirectsymoff, dysymtab_cmd->nindirectsyms * sizeof(uint32_t)); // the index is 32 bits
+    uint32_t *indirect_symtab = base + dysymtab_cmd->indirectsymoff; // the index is 32 bits
     print_indirect_symbols(sym_table, str_table, indirect_symtab, dysymtab_cmd->nindirectsyms);
-    free(indirect_symtab);
-
-    free(sym_table);
-    free(str_table);
 }
 
 
-void load_symtab_cmd(FILE *fptr, void **sym_table, void **str_table) {
-    struct mach_header_64 *header = load_bytes(fptr, 0, sizeof(struct mach_header_64));
+void load_symtab_cmd(void *base, void **sym_table, void **str_table) {
+    struct mach_header_64 *header = base;
     int offset = sizeof(struct mach_header_64);
     for (int i = 0; i < header->ncmds; ++i) {
-        struct load_command *lcmd = load_bytes(fptr, offset, sizeof(struct load_command));
+        struct load_command *lcmd = base + offset;
 
         if (lcmd->cmd == LC_SYMTAB) {
-            struct symtab_command *symtab_cmd = load_bytes(fptr, offset, lcmd->cmdsize);
-            *sym_table = load_bytes(fptr, symtab_cmd->symoff, symtab_cmd->nsyms * sizeof(struct nlist_64));
-            *str_table = load_bytes(fptr, symtab_cmd->stroff, symtab_cmd->strsize);
-            free(lcmd);
+            struct symtab_command *symtab_cmd = base + offset;
+            *sym_table = base + symtab_cmd->symoff;
+            *str_table = base + symtab_cmd->stroff;
             return;
         }
 
         offset += lcmd->cmdsize;
-        free(lcmd);
     }
 }
 

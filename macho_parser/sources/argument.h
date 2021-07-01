@@ -30,4 +30,7 @@ unsigned int string_to_load_command(char *cmd_str);
 // whether to show a command
 bool show_command(unsigned int cmd);
 
+// whether to show header
+bool show_header();
+
 #endif /* ARGUMENT_H */

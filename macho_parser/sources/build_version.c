@@ -7,7 +7,7 @@ static void get_tool_name(uint32_t tool, char *tool_name);
 static void get_platform_name(uint32_t platform, char *platform_name);
 static void get_version_string(uint32_t version, char *version_string);
 
-void parse_build_version(FILE *fptr, struct build_version_command *build_version_cmd) {
+void parse_build_version(void *base, struct build_version_command *build_version_cmd) {
     char platform_name[128];
     char minos_string[128];
     char sdk_string[128];
@@ -39,7 +39,7 @@ void parse_build_version(FILE *fptr, struct build_version_command *build_version
     }
 }
 
-void parse_version_min(FILE *fptr, struct version_min_command *version_min_cmd) {
+void parse_version_min(void *base, struct version_min_command *version_min_cmd) {
     char *cmd_name = NULL;
     switch (version_min_cmd->cmd) {
         case LC_VERSION_MIN_MACOSX: cmd_name = "LC_VERSION_MIN_MACOSX"; break;

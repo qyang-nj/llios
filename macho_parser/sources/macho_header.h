@@ -1,7 +1,6 @@
 #ifndef MACHO_HEADER_H
 #define MACHO_HEADER_H
 
-#include <stdio.h>
 #include <mach-o/loader.h>
 
 struct load_cmd_info {
@@ -11,6 +10,6 @@ struct load_cmd_info {
     int count;
 };
 
-struct load_cmd_info parse_header(FILE *fptr);
+struct load_cmd_info parse_header(void *base);
 
 #endif /* MACHO_HEADER_H */

@@ -1,16 +1,17 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "argument.h"
 #include "util.h"
 
 #include "segment_64.h"
 
-static void parse_section(FILE *fptr, struct section_64 sect);
-static void parse_cstring_section(FILE *fptr, struct section_64 *sect);
-static void parse_pointer_section(FILE *fptr, struct section_64 *sect);
+static void parse_section(void *base, struct section_64 sect);
+static void parse_cstring_section(void *base, struct section_64 *sect);
+static void parse_pointer_section(void *base, struct section_64 *sect);
 static void format_section_type(uint8_t type, char *out);
 
-void parse_segment(FILE *fptr, struct segment_command_64 *seg_cmd) {
+void parse_segment(void *base, struct segment_command_64 *seg_cmd) {
     char formatted_size1[16];
     char formatted_size2[16];
 
@@ -28,11 +29,11 @@ void parse_segment(FILE *fptr, struct segment_command_64 *seg_cmd) {
 
     for (int i = 0; i < seg_cmd->nsects; ++i) {
         struct section_64 sect = sections[i];
-        parse_section(fptr, sect);
+        parse_section(base, sect);
     }
 }
 
-static void parse_section(FILE *fptr, struct section_64 sect) {
+static void parse_section(void *base, struct section_64 sect) {
     char formatted_type[32];
     char formatted_seg_sec[64];
     char formatted_size[16];
@@ -62,18 +63,18 @@ static void parse_section(FILE *fptr, struct section_64 sect) {
 
     // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
     if (type == S_CSTRING_LITERALS) {
-        parse_cstring_section(fptr, &sect);
+        parse_cstring_section(base, &sect);
     }
     // (__DATA_CONST,__mod_init_func)
     else if (type == S_MOD_INIT_FUNC_POINTERS
         || type == S_NON_LAZY_SYMBOL_POINTERS
         || type == S_LAZY_SYMBOL_POINTERS) {
-        parse_pointer_section(fptr, &sect);
+        parse_pointer_section(base, &sect);
     }
 }
 
-static void parse_cstring_section(FILE *fptr, struct section_64 *sect) {
-    void *section = load_bytes(fptr, sect->offset, sect->size);
+static void parse_cstring_section(void *base, struct section_64 *sect) {
+    void *section = base + sect->offset;
 
     char formatted[256];
     for (char *ptr = section; ptr < (char *)(section + sect->size);) {
@@ -84,19 +85,15 @@ static void parse_cstring_section(FILE *fptr, struct section_64 *sect) {
         }
         ptr += 1;
     }
-
-    free(section);
 }
 
-static void parse_pointer_section(FILE *fptr, struct section_64 *sect) {
-    void *section = load_bytes(fptr, sect->offset, sect->size);
+static void parse_pointer_section(void *base, struct section_64 *sect) {
+    void *section = base + sect->offset;
 
     const size_t count = sect->size / sizeof(uintptr_t);
     for (int i = 0; i < count; ++i) {
         printf("        0x%lx\n", *((uintptr_t *)section + i));
     }
-
-    free(section);
 }
 
 static void format_section_type(uint8_t type, char *out) {

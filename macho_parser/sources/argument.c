@@ -84,3 +84,7 @@ bool show_command(unsigned int cmd) {
     }
     return show;
 }
+
+bool show_header() {
+    return args.command_count == 0;
+}

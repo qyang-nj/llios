@@ -4,10 +4,10 @@
 #include "dyld_info.h"
 #include "util.h"
 
-void parse_export(FILE *fptr, uint32_t export_off, uint32_t export_size);
+void parse_export(void *base, uint32_t export_off, uint32_t export_size);
 void parse_export_trie(uint8_t *export_start, uint8_t *node_ptr, int level);
 
-void parse_dyld_info(FILE *fptr, struct dyld_info_command *dyld_info_cmd) {
+void parse_dyld_info(void *base, struct dyld_info_command *dyld_info_cmd) {
     const char *name = (dyld_info_cmd->cmd == LC_DYLD_INFO_ONLY ? "LC_DYLD_INFO_ONLY" : "LC_DYLD_INFO");
     printf("%-20s cmdsize: %-6u export_size: %d\n", name, dyld_info_cmd->cmdsize, dyld_info_cmd->export_size);
 
@@ -19,16 +19,13 @@ void parse_dyld_info(FILE *fptr, struct dyld_info_command *dyld_info_cmd) {
     printf("    lazy_bind_off: %-10d   lazy_bind_size: %d\n", dyld_info_cmd->lazy_bind_off, dyld_info_cmd->lazy_bind_size);
     printf("    export_off   : %-10d   export_size   : %d\n", dyld_info_cmd->export_off, dyld_info_cmd->export_size);
 
-    parse_export(fptr, dyld_info_cmd->export_off, dyld_info_cmd->export_size);
+    parse_export(base, dyld_info_cmd->export_off, dyld_info_cmd->export_size);
 }
 
-void parse_export(FILE *fptr, uint32_t export_off, uint32_t export_size) {
-    uint8_t *export = load_bytes(fptr, export_off, export_size);
-
+void parse_export(void *base, uint32_t export_off, uint32_t export_size) {
+    uint8_t *export = base + export_off;
     printf ("\n    Exported Symbols (Trie):");
     parse_export_trie(export, export, 0);
-
-    free(export);
 }
 
 // Print out the export trie.
