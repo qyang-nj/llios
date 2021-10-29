@@ -1,6 +1,7 @@
 #include "util.h"
 #include "argument.h"
 #include "chained_fixups.h"
+#include "code_signature.h"
 
 #include "linkedit_data.h"
 
@@ -18,6 +19,8 @@ void parse_linkedit_data(void *base, struct linkedit_data_command *linkedit_data
         parse_function_starts(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
     } else if (linkedit_data_cmd->cmd == LC_DYLD_CHAINED_FIXUPS) {
         parse_chained_fixups(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
+    } else if (linkedit_data_cmd->cmd == LC_CODE_SIGNATURE) {
+        parse_code_signature(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
     }
 }
 
