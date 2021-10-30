@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
             echo "Unknow option: ${1}"
             shift
             ;;
-  esac
+    esac
 done
 
 [ $OPT_DEVICE == 1 ] && SDK="iphoneos" || SDK="iphonesimulator"
