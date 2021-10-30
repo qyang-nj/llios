@@ -106,8 +106,9 @@ mv "Build/Info.plist" "Build/$APP_NAME.app"
 
 # Code Signing (required for device builds)
 # Note: You need to replace the signing identity with your one.
-# You also need to change the app id and modify Entitlements.plist
 # Find a valid signing identity by `security find-identity -v -p codesigning`.
+# You also need to change the app id and modify Entitlements.plist.
+# (It doesn't seem to be necessary to copy the provisioning profile. Idk why.)
 if [ "$OPT_DEVICE" == 1 ]; then
     # The embedded dylibs need to be signed separately and before signing the app bundle.
     codesign --force --sign '08F760DEAD51F26EE4ADC5FF40196215C85AD9DE' "$(ls Build/$APP_NAME.app/*.dylib)"

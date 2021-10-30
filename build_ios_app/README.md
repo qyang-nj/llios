@@ -1,8 +1,9 @@
 # Build iOS App without Xcode
 This topic demonstrates how to build and debug an iOS app without an IDE or a build system.
 ``` bash
-./build.sh   # build the iOS app
-./launch.sh  # launch the app in the simulator
+cd llios/build_ios_app
+./build.sh [--device] [--release]   # build the iOS app
+./launch.sh  # launch the app in the simulator or device
 ./debug.sh   # launch the app and attach lldb to it
 ```
 
@@ -11,7 +12,9 @@ The demonstration includes
 * building dynamic libraries
 * building an executable
 * packaging an app bundle
+* code signing
 * attaching lldb to the app
+* launching an app in a simulator or a device
 
 ## swiftc
 
