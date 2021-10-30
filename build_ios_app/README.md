@@ -31,9 +31,7 @@ Generate a object file.
 Directly Generate a dynamic library.
 
 #### -wmo (-whole-module-optimization)
-Here is the [Apple's words for WMO]( https://github.com/apple/swift/blob/master/docs/OptimizationTips.rst#whole-module-optimizations-wmo).
-
-WMO can take multiple source files and generate one object. Because of this, `-wmo` doesn't work with some other flags. For example, with `--index-store-path` it will yield error "index output filenames do not match input source files".
+Here is the [Apple's words for WMO]( https://github.com/apple/swift/blob/master/docs/OptimizationTips.rst#whole-module-optimizations-wmo). WMO can take multiple source files and generate one object. Because of this, `-wmo` doesn't work with some other flags. For example, with `--index-store-path` it will yield error "index output filenames do not match input source files".
 
 ```
 swiftc -wmo -o one.o source1.swift source2.swift
