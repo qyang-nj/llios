@@ -2,10 +2,20 @@
 set -e
 
 APP_BUNDLE="Build/SampleApp.app"
+APP_BINARY="$APP_BUNDLE/SampleApp"
 SIM_NAME="iPhone 12 Pro"
 
 if [ ! -d "$APP_BUNDLE" ]; then
     ./build.sh
+fi
+
+# Check the target platform of the binary.
+# 2 is iOS device and 7 is iOS simulator. See <mach-o/loader.h>.
+platform=$(otool -l "$APP_BINARY" | grep 'LC_BUILD_VERSION' -A 7 | grep 'platform' | awk '{print $2}')
+
+if [ "$platform" !=  7 ]; then
+    echo "Error: The app bundle is not built for simulator."
+    exit 1
 fi
 
 APP_BUNDLE_ID=$(defaults read "$(realpath Build/SampleApp.app/Info.plist)" CFBundleIdentifier)
