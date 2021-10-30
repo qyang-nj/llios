@@ -1,34 +1,38 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <libkern/OSByteOrder.h>
-// /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/kern/cs_blobs.h
-#include <Kernel/kern/cs_blobs.h>
+#include <openssl/x509.h>
+#include <openssl/pkcs7.h>
+
+#include <Kernel/kern/cs_blobs.h> // /Kernel.framework
+// #include <Kernel/libkern/OSByteOrder.h>
+#include <Security/SecRequirement.h> // Security.framework
 
 #include "util.h"
 #include "argument.h"
 #include "code_signature.h"
 
 static void print_code_directory(CS_CodeDirectory *code_directory);
-static void format_blob_name(uint32_t blob_type, char *formatted);
+static void print_requirement(unsigned char *data, int size);
+static void printPKCS7(const unsigned char* buffer, size_t size);
 static void format_blob_magic(uint32_t magic, char *formated);
 
 void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
     char magic_name[256];
 
     CS_SuperBlob *super_blob = base + dataoff;
-    format_blob_magic(OSSwapInt32(super_blob->magic), magic_name);
 
-    printf("SuperBlob | maggic: %s, length: %d, count: %d\n",
-        magic_name,
-        OSSwapInt32(super_blob->length),
-        OSSwapInt32(super_blob->count));
+    // Code signature is always encoded in little endian (network byte ordering),
+    // so we need to use ntohl to covert byte order from network to host.
+    format_blob_magic(ntohl(super_blob->magic), magic_name);
 
-    for (int i = 0; i < OSSwapInt32(super_blob->count); ++i) {
-        uint32_t blob_type = OSSwapInt32(super_blob->index[i].type);
-        uint32_t blob_offset = OSSwapInt32(super_blob->index[i].offset);
+    printf("SuperBlob | maggic: %s, length: %d, count: %d\n", magic_name, ntohl(super_blob->length), ntohl(super_blob->count));
 
-        uint32_t magic = OSSwapInt32(*(uint32_t *)((void *)super_blob + blob_offset));
+    for (int i = 0; i < ntohl(super_blob->count); ++i) {
+        uint32_t blob_type = ntohl(super_blob->index[i].type);
+        uint32_t blob_offset = ntohl(super_blob->index[i].offset);
+
+        uint32_t magic = ntohl(*(uint32_t *)((void *)super_blob + blob_offset));
         format_blob_magic(magic, magic_name);
 
         printf("  Blob %d | type: %#07x, offset: %-7d, magic: %s\n", i, blob_type, blob_offset, magic_name);
@@ -38,27 +42,68 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
             print_code_directory(code_directory);
         } else if (magic == CSMAGIC_EMBEDDED_ENTITLEMENTS) {
             CS_GenericBlob *generic_blob = (void *)super_blob + blob_offset;
-            // printf("%.*s\n\n", OSSwapInt32(generic_blob->length), generic_blob->data);
+            if (args.verbose > 1) {
+                printf("%.*s\n\n", ntohl(generic_blob->length), generic_blob->data);
+            }
+        } else if (magic == CSMAGIC_REQUIREMENTS) {
+            CS_SuperBlob *req_super_blob = (void *)super_blob + blob_offset;
+            for (int j = 0; j < ntohl(req_super_blob->count); ++j) {
+                uint32_t req_blob_offset = ntohl(req_super_blob->index[j].offset);
+                CS_GenericBlob *req_blob = (void *)req_super_blob + req_blob_offset;
+
+                printf("    Requirement[%d] | offset: %d, length: %d\n", j, req_blob_offset, ntohl(req_blob->length));
+
+                print_requirement((unsigned char *)req_blob, ntohl(req_blob->length));
+            }
+            printf("\n");
+        } else if (magic == CSMAGIC_BLOBWRAPPER) {
+            CS_GenericBlob *generic_blob = (void *)super_blob + blob_offset;
+            printPKCS7((const unsigned char *)generic_blob->data, ntohl(generic_blob->length));
         }
     }
 }
 
-static void print_code_directory(CS_CodeDirectory *code_directory) {
-    uint32_t hash_offset = OSSwapInt32(code_directory->hashOffset);
-    uint8_t hash_size = code_directory->hashSize;
-    uint32_t special_slot_size = OSSwapInt32(code_directory->nSpecialSlots);
-    uint32_t slot_size = OSSwapInt32(code_directory->nCodeSlots);
-    uint32_t identity_offset = OSSwapInt32(code_directory->identOffset);
+static void print_requirement(unsigned char *data, int size) {
+    SecRequirementRef requirement;
+    CFStringRef text;
+    int err_code;
 
-    printf("    magic        : %#x\n", OSSwapInt32(code_directory->magic));
-    printf("    length       : %d\n", OSSwapInt32(code_directory->length));
-    printf("    version      : %#x\n", OSSwapInt32(code_directory->version));
-    printf("    flags        : %#x\n", OSSwapInt32(code_directory->flags));
+    CFDataRef requirement_data = CFDataCreate(kCFAllocatorDefault, data, size);
+
+    err_code = SecRequirementCreateWithData(requirement_data, kSecCSDefaultFlags, &requirement);
+    if (errSecSuccess != err_code) {
+        printf("An error(%d) occurs while parsing requirement binary.\n", err_code);
+        CFRelease(requirement_data);
+        return;
+    }
+
+    err_code = SecRequirementCopyString(requirement, kSecCSDefaultFlags, &text);
+    if (errSecSuccess != err_code) {
+        printf("An error(%d) occurs while de-compiling requirement.\n", err_code);
+        CFRelease(requirement_data);
+        return;
+    }
+
+    printf("      %s\n", CFStringGetCStringPtr(text, kCFStringEncodingUTF8));
+
+    CFRelease(requirement_data);
+}
+
+static void print_code_directory(CS_CodeDirectory *code_directory) {
+    uint32_t hash_offset = ntohl(code_directory->hashOffset);
+    uint8_t hash_size = code_directory->hashSize;
+    uint32_t special_slot_size = ntohl(code_directory->nSpecialSlots);
+    uint32_t slot_size = ntohl(code_directory->nCodeSlots);
+    uint32_t identity_offset = ntohl(code_directory->identOffset);
+
+    printf("    length       : %d\n", ntohl(code_directory->length));
+    printf("    version      : %#x\n", ntohl(code_directory->version));
+    printf("    flags        : %#x\n", ntohl(code_directory->flags));
     printf("    hashOffset   : %d\n", hash_offset);
     printf("    identOffset  : %d\n", identity_offset);
     printf("    nSpecialSlots: %d\n", special_slot_size);
-    printf("    nCodeSlots   : %d\n", OSSwapInt32(code_directory->nCodeSlots));
-    printf("    codeLimit    : %d\n", OSSwapInt32(code_directory->codeLimit));
+    printf("    nCodeSlots   : %d\n", ntohl(code_directory->nCodeSlots));
+    printf("    codeLimit    : %d\n", ntohl(code_directory->codeLimit));
     printf("    hashSize     : %d\n", hash_size);
     printf("    hashType     : %d\n", (code_directory->hashType));
     printf("    platform     : %d\n", (code_directory->platform));
@@ -74,7 +119,7 @@ static void print_code_directory(CS_CodeDirectory *code_directory) {
         printf("    Slot[%3d] : %s\n", -i, hash);
     }
 
-    int max_number = args.verbose == 1 ? (slot_size > 10 ? 10 : slot_size) : slot_size;
+    int max_number = args.verbose > 2 ? slot_size : (slot_size > 10 ? 10 : slot_size);
 
     for (int i = 0; i < max_number; ++i) {
         bzero(hash, sizeof(hash));
@@ -88,17 +133,66 @@ static void print_code_directory(CS_CodeDirectory *code_directory) {
     printf("\n");
 }
 
-static void format_blob_name(uint32_t blob_type, char *formatted) {
-    switch(blob_type) {
-        case CSSLOT_CODEDIRECTORY: strcpy(formatted, "CSSLOT_CODEDIRECTORY"); break;
-        case CSSLOT_INFOSLOT: strcpy(formatted, "CSSLOT_INFOSLOT"); break;
-        case CSSLOT_REQUIREMENTS: strcpy(formatted, "CSSLOT_REQUIREMENTS"); break;
-        case CSSLOT_RESOURCEDIR: strcpy(formatted, "CSSLOT_RESOURCEDIR"); break;
-        case CSSLOT_APPLICATION: strcpy(formatted, "CSSLOT_APPLICATION"); break;
-        case CSSLOT_ENTITLEMENTS: strcpy(formatted, "CSSLOT_ENTITLEMENTS"); break;
-        case CSSLOT_SIGNATURESLOT: strcpy(formatted, "CSSLOT_SIGNATURESLOT"); break;
-        default: sprintf(formatted, "UNKNOWN(0x%x)", blob_type);
+static void printPKCS7(const unsigned char* buffer, size_t size)
+{
+    int result = 0;
+    PKCS7* pkcs7 = NULL;
+    STACK_OF(X509)* signers = NULL;
+
+    pkcs7 = d2i_PKCS7(NULL, &buffer, size);
+    if (pkcs7 == NULL)
+    {
+        printf("error 1");
+        goto error;
     }
+
+    if (!PKCS7_type_is_signed(pkcs7))
+    {
+        printf("error 2");
+        goto error;
+    }
+
+    // STACK_OF(8) *signer_info = PKCS7_get_signer_info(pkcs7);
+
+    // signers = PKCS7_get0_signers(pkcs7, NULL, PKCS7_BINARY);
+    // if (signers == NULL)
+    // {
+    //     printf("error 3");
+    //     goto error;
+    // }
+
+    // const X509* cert = sk_X509_pop(signers);
+    // if (cert == NULL)
+    // {
+    //     printf("error 4");
+    //     goto error;
+    // }
+
+    // printf("Signer name: %s\n", cert->name);
+    // printf("Signature length: %d, signature: ", cert->cert_info->key->public_key->length);
+
+    // for (int i = 0; i < cert->cert_info->key->public_key->length; i++)
+    // {
+    //     printf("0x%02x, ", cert->cert_info->key->public_key->data[i]);
+    // }
+    // printf("\n");
+
+    // if (memcmp(PUBLIC_KEY, cert->cert_info->key->public_key->data, cert->cert_info->key->public_key->length) == 0)
+    // {
+    //     printf("The same\n");
+    //     result = 1;
+    // }
+    // else
+    // {
+    //     printf("Not the same\n");
+    //     result = 0;
+    // }
+
+error:
+    // if (signers) sk_X509_free(signers);
+    if (pkcs7) PKCS7_free(pkcs7);
+
+    // return result;
 }
 
 static void format_blob_magic(uint32_t magic, char *formatted) {
