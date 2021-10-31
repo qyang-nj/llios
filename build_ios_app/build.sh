@@ -49,8 +49,8 @@ OUTPUT_FILE_MAP_JSON="Build/StaticLib_OutputFileMap.json"
 cat > $OUTPUT_FILE_MAP_JSON <<EOL
 {
   "": {"swift-dependencies": "Build/StaticLib-master.swiftdeps"},
-  "Sources/StaticLib/foo.swift": {"object": "Build/foo.o"},
-  "Sources/StaticLib/bar.swift": {"object": "Build/bar.o"}
+  "Sources/StaticLib/foo.swift": {"object": "Build/foo.o", "swift-dependencies": "Build/foo.swiftdeps"},
+  "Sources/StaticLib/bar.swift": {"object": "Build/bar.o", "swift-dependencies": "Build/bar.swiftdeps"}
 }
 EOL
 
