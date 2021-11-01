@@ -1,0 +1,4 @@
+#
+# Suggested internal requirements for CFM code
+#
+host => anchor apple and identifier com.apple.LaunchCFMApp		// CFM runner tool

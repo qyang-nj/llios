@@ -1,0 +1,84 @@
+#!/usr/bin/python
+#
+# gkclear - clear system state for Gatekeeper recording sessions
+#
+# This removes DetachedSignatures, resets SystemPolicy, and removes existing gke files.
+#
+import sys
+import os
+import signal
+import errno
+import subprocess
+import shutil
+
+
+#
+# Usage and fail
+#
+def usage():
+	print >>sys.stderr, "Usage: %s" % sys.argv[0]
+	sys.exit(2)
+
+def fail(whatever):
+	print >>sys.stderr, "%s: %s" % (sys.argv[0], whatever)
+	sys.exit(1)
+
+
+#
+# Argument processing
+#
+if len(sys.argv) != 1:
+	usage()
+
+
+#
+# Places and things
+#
+db = "/var/db/"
+detachedsignatures = db + "DetachedSignatures"
+gkeauth = db + "gke.auth"
+gkesigs = db + "gke.sigs"
+policydb = db + "SystemPolicy"
+policydb_default = db + ".SystemPolicy-default"
+
+
+# must be root
+if os.getuid() != 0:
+	fail("Must have root privileges")
+
+
+#
+# Make sure Gatekeeper is disabled
+#
+subprocess.check_call(["/usr/sbin/spctl", "--master-disable"])
+
+
+#
+# Clear detached signatures database
+#
+for file in [detachedsignatures, gkeauth, gkesigs]:
+	try:
+		os.remove(file)
+	except OSError, e:
+		if e[0] != errno.ENOENT:
+			raise
+
+
+#
+# Reset system policy to default values
+#
+shutil.copyfile(policydb_default, policydb)
+
+
+#
+# Kill any extant syspolicyd to flush state
+#
+null = open("/dev/null", "w")
+subprocess.call(["/usr/bin/killall", "syspolicyd"], stderr=null)
+
+
+#
+# Done
+#
+print "System state has been reset."
+sys.exit(0)
