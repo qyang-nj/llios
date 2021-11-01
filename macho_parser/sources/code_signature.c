@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs7.h>
 
-#include <Kernel/kern/cs_blobs.h> // /Kernel.framework
-// #include <Kernel/libkern/OSByteOrder.h>
+#include <Kernel/kern/cs_blobs.h>    // /Kernel.framework
 #include <Security/SecRequirement.h> // Security.framework
+
+#ifdef OPENSSL
+#include <openssl/pkcs7.h>
+#endif
 
 #include "util.h"
 #include "argument.h"
@@ -14,7 +15,7 @@
 
 static void print_code_directory(CS_CodeDirectory *code_directory);
 static void print_requirement(unsigned char *data, int size);
-static void printPKCS7(const unsigned char* buffer, size_t size);
+static void print_pkcs7(const unsigned char* buffer, size_t size);
 static void format_blob_magic(uint32_t magic, char *formated);
 
 void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
@@ -22,11 +23,10 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
 
     CS_SuperBlob *super_blob = base + dataoff;
 
-    // Code signature is always encoded in little endian (network byte ordering),
+    // Code signature is always encoded in network byte ordering,
     // so we need to use ntohl to covert byte order from network to host.
     format_blob_magic(ntohl(super_blob->magic), magic_name);
-
-    printf("SuperBlob | maggic: %s, length: %d, count: %d\n", magic_name, ntohl(super_blob->length), ntohl(super_blob->count));
+    printf("SuperBlob: magic: %s, length: %d, count: %d\n", magic_name, ntohl(super_blob->length), ntohl(super_blob->count));
 
     for (int i = 0; i < ntohl(super_blob->count); ++i) {
         uint32_t blob_type = ntohl(super_blob->index[i].type);
@@ -35,7 +35,7 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
         uint32_t magic = ntohl(*(uint32_t *)((void *)super_blob + blob_offset));
         format_blob_magic(magic, magic_name);
 
-        printf("  Blob %d | type: %#07x, offset: %-7d, magic: %s\n", i, blob_type, blob_offset, magic_name);
+        printf("  Blob %d: type: %#07x, offset: %-7d, magic: %s\n", i, blob_type, blob_offset, magic_name);
 
         if (magic == CSMAGIC_CODEDIRECTORY) {
             CS_CodeDirectory *code_directory = (void *)super_blob + blob_offset;
@@ -51,14 +51,15 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
                 uint32_t req_blob_offset = ntohl(req_super_blob->index[j].offset);
                 CS_GenericBlob *req_blob = (void *)req_super_blob + req_blob_offset;
 
-                printf("    Requirement[%d] | offset: %d, length: %d\n", j, req_blob_offset, ntohl(req_blob->length));
-
+                printf("    Requirement[%d]: offset: %d, length: %d\n", j, req_blob_offset, ntohl(req_blob->length));
                 print_requirement((unsigned char *)req_blob, ntohl(req_blob->length));
             }
             printf("\n");
         } else if (magic == CSMAGIC_BLOBWRAPPER) {
-            CS_GenericBlob *generic_blob = (void *)super_blob + blob_offset;
-            printPKCS7((const unsigned char *)generic_blob->data, ntohl(generic_blob->length));
+            if (args.verbose > 1) {
+                CS_GenericBlob *generic_blob = (void *)super_blob + blob_offset;
+                print_pkcs7((const unsigned char *)generic_blob->data, ntohl(generic_blob->length));
+            }
         }
     }
 }
@@ -133,67 +134,21 @@ static void print_code_directory(CS_CodeDirectory *code_directory) {
     printf("\n");
 }
 
-static void printPKCS7(const unsigned char* buffer, size_t size)
-{
-    int result = 0;
-    PKCS7* pkcs7 = NULL;
-    STACK_OF(X509)* signers = NULL;
+#ifdef OPENSSL
+static void print_pkcs7(const unsigned char *data, size_t size) {
+    PKCS7* pkcs7 = d2i_PKCS7(NULL, &data, size);
+    assert(pkcs7 != NULL);
 
-    pkcs7 = d2i_PKCS7(NULL, &buffer, size);
-    if (pkcs7 == NULL)
-    {
-        printf("error 1");
-        goto error;
-    }
-
-    if (!PKCS7_type_is_signed(pkcs7))
-    {
-        printf("error 2");
-        goto error;
-    }
-
-    // STACK_OF(8) *signer_info = PKCS7_get_signer_info(pkcs7);
-
-    // signers = PKCS7_get0_signers(pkcs7, NULL, PKCS7_BINARY);
-    // if (signers == NULL)
-    // {
-    //     printf("error 3");
-    //     goto error;
-    // }
-
-    // const X509* cert = sk_X509_pop(signers);
-    // if (cert == NULL)
-    // {
-    //     printf("error 4");
-    //     goto error;
-    // }
-
-    // printf("Signer name: %s\n", cert->name);
-    // printf("Signature length: %d, signature: ", cert->cert_info->key->public_key->length);
-
-    // for (int i = 0; i < cert->cert_info->key->public_key->length; i++)
-    // {
-    //     printf("0x%02x, ", cert->cert_info->key->public_key->data[i]);
-    // }
-    // printf("\n");
-
-    // if (memcmp(PUBLIC_KEY, cert->cert_info->key->public_key->data, cert->cert_info->key->public_key->length) == 0)
-    // {
-    //     printf("The same\n");
-    //     result = 1;
-    // }
-    // else
-    // {
-    //     printf("Not the same\n");
-    //     result = 0;
-    // }
-
-error:
-    // if (signers) sk_X509_free(signers);
-    if (pkcs7) PKCS7_free(pkcs7);
-
-    // return result;
+    BIO *bio = BIO_new(BIO_s_file());
+    BIO_set_fp(bio, stdout, BIO_NOCLOSE);
+    PKCS7_print_ctx(bio, pkcs7, 4, NULL);
+    BIO_free(bio);
 }
+#else
+static void print_pkcs7(const unsigned char *data, size_t size) {
+    puts("    Info: To show detailed PKCS7 information, use 'build.sh --openssl' and run again.");
+}
+#endif
 
 static void format_blob_magic(uint32_t magic, char *formatted) {
     switch(magic) {
