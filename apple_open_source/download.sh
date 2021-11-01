@@ -2,6 +2,11 @@
 # Download apple open source tools.
 set -e
 
+if [ "$0" != "./download.sh" ]; then
+    echo "Run this script inside apple_open_source directory."
+    exit 1
+fi
+
 CCTOOLS_URL="https://opensource.apple.com/tarballs/cctools/cctools-973.0.1.tar.gz"
 LD64_URL="https://opensource.apple.com/tarballs/ld64/ld64-609.tar.gz"
 DYLD_URL="https://opensource.apple.com/tarballs/dyld/dyld-851.27.tar.gz"
