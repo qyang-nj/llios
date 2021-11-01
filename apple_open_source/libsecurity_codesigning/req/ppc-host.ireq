@@ -1,0 +1,4 @@
+#
+# Suggested internal host requirement for (only) ppc Mach-O code
+#
+anchor apple and identifier com.apple.translate		// Rosetta

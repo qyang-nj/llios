@@ -1,0 +1,109 @@
+#!/usr/bin/python
+#
+# gkhandmake - manually create a recorded snippet
+#
+# gkhandmake path type source outputfile
+#
+import sys
+import os
+import signal
+import errno
+import subprocess
+import plistlib
+
+
+#
+# Usage and fail
+#
+def usage():
+	print >>sys.stderr, "Usage: %s program specfile outputfile" % sys.argv[0]
+	sys.exit(2)
+
+def fail(whatever):
+	print >>sys.stderr, "%s: %s" % (sys.argv[0], whatever)
+	sys.exit(1)
+
+
+#
+# Argument processing
+#
+if len(sys.argv) != 4:
+	usage()
+path=os.path.abspath(sys.argv[1])
+specfile=sys.argv[2]
+outputfile = sys.argv[3]
+type=1	# always execution
+
+
+#
+# If the output file already exists, bail
+#
+if os.path.exists(outputfile):
+	fail("already exists: %s" % outputfile)
+
+
+#
+# We'll let the detached signature live in case we need to inspect it
+#
+sigpath = "/tmp/%s.dsig" % os.path.basename(path.strip('/'))
+
+
+#
+# Generate an adhoc detached signature with the given resource specification
+#
+
+display = subprocess.check_call(["/usr/bin/codesign",
+	"--sign", "-",
+	"--detached", sigpath,
+	"--resource-rules", specfile,
+	path
+])
+
+
+#
+# Now verify it so we can extract the cdhash
+#
+display = subprocess.Popen(["/usr/bin/codesign",
+	"--display", "--verbose=3",
+	"--detached", sigpath,
+	path
+], stderr=subprocess.PIPE)
+(stdout, stderr) = display.communicate()
+
+cdhash = None
+for line in stderr.split('\n'):
+	if line.startswith("CDHash="):
+		cdhash = line[7:]
+		break
+if cdhash is None:
+	fail("no cdhash in generated signature?!")
+
+
+#
+# Pack up a single (detached) signature as a snippet
+# under the given path
+#
+with open(sigpath, "r") as sigfile:
+	sigdata = sigfile.read()
+auth = { }
+sigs = { }
+
+auth[path] = dict(
+	type=type,
+	path=path,
+	status=9,
+	cdhash=cdhash
+)
+
+sigs[path] = dict(
+	type=type,
+	path=path,
+	signature=plistlib.Data(sigdata)
+)
+gkedict = dict(
+	authority = auth,
+	signatures = sigs
+)
+plistlib.writePlist(gkedict, outputfile)
+
+sys.exit(0)

@@ -1,0 +1,18 @@
+#!/usr/bin/python
+#
+# gklist - report Gatekeeper MessageTracer data since last reset
+#
+# mtdebug --reset
+#  ... exercise Gatekeeper ...
+# gklist
+#
+import os
+import plistlib
+
+
+data = os.popen("mtdebug --plist", "r")
+for mt in plistlib.readPlistFromString(data.read()):
+	if mt["com.apple.message.domain"] == "com.apple.security.assessment.outcome":
+		outcome = mt["com.apple.message.signature"]
+		id = mt["com.apple.message.signature2"]
+		print outcome, "--", id
