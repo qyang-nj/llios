@@ -37,14 +37,16 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
 
         printf("  Blob %d: type: %#07x, offset: %-7d, magic: %s\n", i, blob_type, blob_offset, magic_name);
 
+        if (args.verbose <= 1) {
+            continue;
+        }
+
         if (magic == CSMAGIC_CODEDIRECTORY) {
             CS_CodeDirectory *code_directory = (void *)super_blob + blob_offset;
             print_code_directory(code_directory);
         } else if (magic == CSMAGIC_EMBEDDED_ENTITLEMENTS) {
             CS_GenericBlob *generic_blob = (void *)super_blob + blob_offset;
-            if (args.verbose > 1) {
-                printf("%.*s\n\n", ntohl(generic_blob->length), generic_blob->data);
-            }
+            printf("%.*s\n\n", ntohl(generic_blob->length), generic_blob->data);
         } else if (magic == CSMAGIC_REQUIREMENTS) {
             CS_SuperBlob *req_super_blob = (void *)super_blob + blob_offset;
             for (int j = 0; j < ntohl(req_super_blob->count); ++j) {
@@ -56,10 +58,8 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
             }
             printf("\n");
         } else if (magic == CSMAGIC_BLOBWRAPPER) {
-            if (args.verbose > 1) {
-                CS_GenericBlob *generic_blob = (void *)super_blob + blob_offset;
-                print_pkcs7((const unsigned char *)generic_blob->data, ntohl(generic_blob->length));
-            }
+            CS_GenericBlob *generic_blob = (void *)super_blob + blob_offset;
+            print_pkcs7((const unsigned char *)generic_blob->data, ntohl(generic_blob->length));
         }
     }
 }

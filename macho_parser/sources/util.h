@@ -10,7 +10,7 @@ int read_uleb128(const uint8_t *p, uint64_t *out);
 // If the string contains '\n', replace with literal "\n".
 void format_string(char *str, char *formatted);
 
-// Format a binary buffer to hex
+// Hex dump a binary buffer.
 void format_hex(void *buffer, size_t size, char *formatted);
 
 #endif /* UTIL_H */
