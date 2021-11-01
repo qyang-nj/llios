@@ -1,4 +1,6 @@
 #!/bin/bash
+# Usage: build.sh --openssl
+#   --openssl    Build with OpenSSL library, enabling printing more details of code signature.
 set -e
 
 OPT_OPENSSL=0
