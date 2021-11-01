@@ -1,5 +1,23 @@
 #!/bin/bash
+# Usage: build.sh --openssl
+#   --openssl    Build with OpenSSL library, enabling printing more details of code signature.
 set -e
 
-srcs=$(ls sources/*.c)
-clang -o parser $srcs
+OPT_OPENSSL=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --openssl)
+            OPT_OPENSSL=1
+            shift
+            ;;
+    esac
+done
+
+CFLAGS=""
+
+if [ "$OPT_OPENSSL" == 1 ]; then
+    CFLAGS="$CFLAGS -lssl -lcrypto -L/usr/local/opt/openssl/lib -D OPENSSL"
+fi
+
+SRCS=$(ls sources/*.c)
+clang -o parser -framework CoreFoundation -framework Security $CFLAGS $SRCS
