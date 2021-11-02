@@ -1,15 +1,15 @@
 # LC_CODE_SIGNATURE
-After code signing, the `LC_CODE_SIGNATURE` load command will be appended to the mach-o binary. Since code signing is the last step of the building (you can't change anything after signing), this load command is always the last one and is always at the end of a binary.
+Code signing is required for installing or distributing an iOS app. After signing, a `LC_CODE_SIGNATURE` load command will be appended to the mach-o binary. Since code signing is the last step of the build process (you can't alter anything after signing), this load command is always at the end of a binary.
 
 `LC_CODE_SIGNATURE` is inside `__LINKEDIT` segment and uses the generic `linkedit_data_command`, which merely specifies an area (offset and size) in the file. The actual format is defined in `cs_blobs.h` ([kern/cs_blobs.h](../apple_open_source/xnu/osfmk/kern/cs_blobs.h)).
 
-The full parsing logic can be found at `code_signature.c` (macho_parser/sources/code_signature.c). You can use macho parser to see the content.
+The full parsing logic can be found at `code_signature.c` ([macho_parser/sources/code_signature.c](sources/code_signature.c)). You can use macho parser to see the content.
 ```
 parser -c LC_CODE_SIGNATURE -vvv {app_binary}
 ```
 
 ## Super Blob
-The code signature begins with a super blob, which specifies a list of other blobs. All the blobs have a magic number, which define the type. The most common super blob magic of an iOS app is `CSMAGIC_EMBEDDED_SIGNATURE`, which indicates the signature is embedded in the app binary.
+The code signature begins with a super blob, which specifies a list of other blobs. All the blobs have a magic number, which basically means the type of the blob. The most common super blob magic for an iOS app is `CSMAGIC_EMBEDDED_SIGNATURE`, which indicates the signature is embedded in the app binary.
 ``` c
 typedef struct __SC_SuperBlob {
     uint32_t magic;                         /* magic number */
@@ -111,7 +111,7 @@ From above, the signing requirements of Airbnb app are:
 * anchor apple generic
     * The certificate chain must lead to an Apple root.
 * certificate leaf[subject.CN] = "iPhone Distribution: Airbnb, Inc. (xxxxxxxxxx)"
-    * The leaf (signing) certificate must be Airbnb iPhone Distribution.
+    * The leaf (signing) certificate must be for Airbnb iPhone Distribution.
 * certificate 1[field.1.2.840.113635.100.6.2.1]
     * The certificate that issues the leaf certificate must have filed `1.2.840.113635.100.6.2.1`. This is saying it has to be Apple Worldwide Developer Relations Certification Authority.
 
@@ -129,7 +129,7 @@ Since it's just plain ASCII text, parsing this blob is simply print it out.
 $ codesign -d --entitlements - Airbnb.app/Airbnb
 ```
 
-### New on macOS 12.0
+### New on macOS 12.0 (Monterey)
 Starting with macOS 12.0, code signing uses `--generate-entitlement-der` by default, which "converts the supplied entitlements XML data to DER and embed the entitlements as both XML and DER in the signature."
 
 More info is on the Apple doc, [Using the Latest Code Signature Format](https://developer.apple.com/documentation/xcode/using-the-latest-code-signature-format).
