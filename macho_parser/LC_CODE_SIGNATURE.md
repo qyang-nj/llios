@@ -3,7 +3,10 @@ After code signing, the `LC_CODE_SIGNATURE` load command will be appended to the
 
 `LC_CODE_SIGNATURE` is inside `__LINKEDIT` segment and uses the generic `linkedit_data_command`, which merely specifies an area (offset and size) in the file. The actual format is defined in `cs_blobs.h` ([kern/cs_blobs.h](../apple_open_source/xnu/osfmk/kern/cs_blobs.h)).
 
-The full parsing logic can be found at `code_signature.c` (macho_parser/sources/code_signature.c)
+The full parsing logic can be found at `code_signature.c` (macho_parser/sources/code_signature.c). You can use macho parser to see the content.
+```
+parser -c LC_CODE_SIGNATURE -vvv {app_binary}
+```
 
 ## Super Blob
 The code signature begins with a super blob, which specifies a list of other blobs. All the blobs have a magic number, which define the type. The most common super blob magic of an iOS app is `CSMAGIC_EMBEDDED_SIGNATURE`, which indicates the signature is embedded in the app binary.
@@ -75,7 +78,7 @@ You may wonder what those negative slots (-1 to -7) from above snippet are. They
 
 The app binary isn't the only thing in the app bundle. There are Info.plist and lots of other files, called resources. Each special slot stores the hash of specific thing.
 > -1: Hash of bundle Info.plist
-> -2: Hash of embeded code signing requirements (described later)
+> -2: Hash of embedded code signing requirements (described later)
 > -3: Hash of `_CodeSignature/CodeResources`
 > -4: App specific hash (usually not used)
 > -5: Hash of entitlement embedded in the code signature (described later)
@@ -93,16 +96,47 @@ SHA256(Airbnb.app/_CodeSignature/CodeResources)= a9f055b782361af718a647a0ad2018f
 ```
 
 ## Requirement Blob
-Apple's code signing is more than just hashing. We can specify other requirements, like what the app id is and what certificate is required. Apple designed [code signing requirement language](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html)
+Apple's code signing is more than just hashing. We can specify other requirements, like what the app id is and what certificate is required. The requirements are specified by [code signing requirement language](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) and encoded with op codes defined in `requirement.h` ([libsecurity_codesigning/lib/requirement.h](../apple_open_source/apple_open_source/libsecurity_codesigning/lib/requirement.h)). The hash of this blob is stored in `slot[-2]`.
+
+The `Security.framework` provides the method `SecRequirementCopyString` to decompile the op codes to a human readable string. We can use `codesign` to check the requirements.
+
 ```
 $ codesign -d -r- Airbnb.app/Airbnb
 designated => identifier "com.airbnb.app" and anchor apple generic and certificate leaf[subject.CN] = "iPhone Distribution: Airbnb, Inc. (xxxxxxxxxx)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */
 ```
 
-## Entitlement(s) Blob
-The entitlements are capabilities encoded in a plist file.
+From above, the signing requirements of Airbnb app are:
+* identifier "com.airbnb.app"
+    * The signing identifier is exactly "com.airbnb.app".
+* anchor apple generic
+    * The certificate chain must lead to an Apple root.
+* certificate leaf[subject.CN] = "iPhone Distribution: Airbnb, Inc. (xxxxxxxxxx)"
+    * The leaf (signing) certificate must be Airbnb iPhone Distribution.
+* certificate 1[field.1.2.840.113635.100.6.2.1]
+    * The certificate that issues the leaf certificate must have filed `1.2.840.113635.100.6.2.1`. This is saying it has to be Apple Worldwide Developer Relations Certification Authority.
 
-one blob, multiple blobs
+These are default requirements. Most iOS app should have similar ones.
+
+## Entitlement(s) Blob
+The entitlements are capabilities encoded in a plist file. The entire content is embedded in entitlements blob in plain text.
+
+There two types of entitlement blob: single entitlement blob (`CSMAGIC_REQUIREMENT`) and multiple entitlement blob (`CSMAGIC_REQUIREMENTS`). The multiple entitlements blob is actually a super blob.
+
+Since it's just plain ASCII text, parsing this blob is simply print it out.
+
+``` bash
+# Show the embedded entitlement
+$ codesign -d --entitlements - Airbnb.app/Airbnb
+```
+
+### New on macOS 12.0
+Starting with macOS 12.0, code signing uses `--generate-entitlement-der` by default, which "converts the supplied entitlements XML data to DER and embed the entitlements as both XML and DER in the signature."
+
+More info is on the Apple doc, [Using the Latest Code Signature Format](https://developer.apple.com/documentation/xcode/using-the-latest-code-signature-format).
 
 ## Signature Blob
-The signature, also known as Blob Wrapper, is where all the cryptographic stuff is, including certificates, signer info and more. This blob
+The signature, also known as Blob Wrapper, is where all the cryptographic stuff is, including certificates, signer info and more. This blob uses the PKCS7 defined in [rfc5652](https://datatracker.ietf.org/doc/html/rfc5652).
+
+Honestly, I spent quite some time on this, but it's still over my head. Luckily, we can print the content in a human readable string, simply using `PKCS7_print_ctx` provided by openssl. This allows us peak what's inside this blob.
+
+
