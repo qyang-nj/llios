@@ -1,9 +1,9 @@
 # LC_CODE_SIGNATURE
 Code signing is an essential part of build process. It is required for installing and distributing an iOS app. After signing, the `LC_CODE_SIGNATURE` load command is appended to the mach-o binary. Since code signing is the last step of the build process (you shouldn't alter anything after signing), this load command is always at the end of a binary.
 
-`LC_CODE_SIGNATURE` lives inside `__LINKEDIT` segment and uses the generic `linkedit_data_command`, which merely specifies an area (offset and size) in the file. The actual format is defined in `cs_blobs.h` ([kern/cs_blobs.h](../apple_open_source/xnu/osfmk/kern/cs_blobs.h)).
+`LC_CODE_SIGNATURE` lives inside `__LINKEDIT` segment and uses the generic `linkedit_data_command`, which merely specifies an area (offset and size) in the file. The actual format is defined in `cs_blobs.h` ([kern/cs_blobs.h](../../apple_open_source/xnu/osfmk/kern/cs_blobs.h)).
 
-I have implemented the parsing logic in my [macho parser](.). Check out `code_signature.c` ([macho_parser/sources/code_signature.c](sources/code_signature.c)) for the full code.
+I have implemented the parsing logic in my [macho parser](..). Check out `code_signature.c` ([macho_parser/sources/code_signature.c](../sources/code_signature.c)) for the full code.
 ```
 parser -c LC_CODE_SIGNATURE -vvv {app_binary}
 ```
@@ -115,7 +115,7 @@ The hash of the entire blob, including `CS_CodeDirectory` struct, slots and spec
 Through the chain-of-trust, every bit in the app is eventually verified by Apple. Each page and resource are hashed into slots. Slots are hashed to CDHash. CDHash is encrypted by a private key and the corresponding public key is certified by Apple.
 
 ## Requirement Blob
-Apple's code signing is more than just hashing. We can enforce other requirements, like what the app id is and what certificate is required. The requirements are specified by [code signing requirement language](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) and encoded with op codes defined in `requirement.h` ([libsecurity_codesigning/lib/requirement.h](../apple_open_source/apple_open_source/libsecurity_codesigning/lib/requirement.h)). The hash of this blob is stored in `slot[-2]`.
+Apple's code signing is more than just hashing. We can enforce other requirements, like what the app id is and what certificate is required. The requirements are specified by [code signing requirement language](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) and encoded with op codes defined in `requirement.h` ([libsecurity_codesigning/lib/requirement.h](../../apple_open_source/apple_open_source/libsecurity_codesigning/lib/requirement.h)). The hash of this blob is stored in `slot[-2]`.
 
 The `Security.framework` provides the method `SecRequirementCopyString` to decompile the op codes to a human readable string. We can use `codesign` command to output the requirements.
 
