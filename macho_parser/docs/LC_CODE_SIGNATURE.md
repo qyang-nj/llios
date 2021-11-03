@@ -46,8 +46,8 @@ typedef struct __CodeDirectory {
 } CS_CodeDirectory
 ```
 
-### Slots
-A slot stores a hash value of one page. `hashOffset` specifies where the first slot is and `nCodeSlots` specifies the number of slots. We can use `codesign` to examine the hash of every page.
+### Code Slots
+A code slot stores a hash value of one page. `hashOffset` specifies where the first slot is and `nCodeSlots` specifies the number of slots. We can use `codesign` to examine the hash of every page.
 ```
 $ codesign -d -vvvvvv Airbnb.app/Airbnb
 ...
@@ -79,14 +79,14 @@ You may wonder what those negative slots (-1 to -7) are. They are special slots.
 
 The app binary isn't the only thing in the app bundle. There are Info.plist and lots of other files, a.k.a resources. Each special slot stores the hash of specific thing.
 
-> -1: Hash of bundle Info.plist
-> -2: Hash of embedded code signing requirements (described later)
-> -3: Hash of `_CodeSignature/CodeResources`
-> -4: App specific hash (usually not used)
-> -5: Hash of entitlement embedded in the code signature (described later)
+> -1: Hash of bundle Info.plist\
+> -2: Hash of embedded code signing requirements (described later)\
+> -3: Hash of `_CodeSignature/CodeResources`\
+> -4: App specific hash (usually not used)\
+> -5: Hash of entitlement embedded in the code signature (described later)\
 > -6/-7: They're not defined in the recent open source cs_blobs.h. My guess is that it's related to the new macOS 12.0 entitlement format change (see below).
 
-A little more on `_CodeSignature/CodeResources`, it's a plist text file, so you can view the content in a text editor. The file stores the hash of each resource file in the app bundle.
+A little more on `_CodeSignature/CodeResources`, it's a plist xml file, so you can view the content in any text editor. The file stores the hash of each resource file in the app bundle.
 ```
 $ cat Airbnb.app/_CodeSignature/CodeResources
     ...
@@ -97,7 +97,7 @@ $ cat Airbnb.app/_CodeSignature/CodeResources
     </dict>
     ...
 ```
-Same as slots, we can verify special slots by running sha256.
+Same as code slots, we can verify special slots by running sha256.
 
 ``` bash
 # The hash of Info.plist is in slot[-1]
