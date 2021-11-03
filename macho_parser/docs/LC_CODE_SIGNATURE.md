@@ -127,7 +127,7 @@ designated => identifier "com.airbnb.app" and anchor apple generic and certifica
 From above, the signing requirements of Airbnb app are:
 * `identifier "com.airbnb.app"` - The signing identifier is exactly "com.airbnb.app".
 * `anchor apple generic` - The certificate chain must lead to an Apple root.
-* `certificate leaf[subject.CN`]` = "iPhone Distribution: Airbnb, Inc. (xxxxxxxxxx)" - The leaf (signing) certificate must be Airbnb Distribution.
+* `certificate leaf[subject.CN] = "iPhone Distribution: Airbnb, Inc. (xxxxxxxxxx)"` - The leaf (signing) certificate must be Airbnb Distribution.
 * `certificate 1[field.1.2.840.113635.100.6.2.1]` - The certificate that issues the leaf certificate must have filed `1.2.840.113635.100.6.2.1`, which means it has to be Apple Worldwide Developer Relations Certification Authority.
 
 These are default requirements. Most iOS app should have similar ones.
