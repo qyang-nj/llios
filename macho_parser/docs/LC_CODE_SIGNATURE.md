@@ -112,12 +112,12 @@ SHA256(Airbnb.app/_CodeSignature/CodeResources)= a9f055b782361af718a647a0ad2018f
 ### CDHash
 The hash of the entire blob, including `CS_CodeDirectory` struct, slots and special slots, is called Code Directory Hash (CDHash). This is the ultimate hash of the whole app bundle.
 
-Through the chain-of-trust, every bit in the app is eventually verified by Apple. Each page and resource are hashed into slots. Slots are hashed to CDHash. CDHash is encrypted by a private key and the corresponding public key is certified by Apple.
+Each page and resource are hashed into slots. Slots are hashed to CDHash. CDHash is encrypted by a private key and the corresponding public key is certified by Apple. Through the chain-of-trust, every bit in the app is eventually verified by Apple.
 
 ## Requirement Blob
-Apple's code signing is more than just hashing. We can enforce other requirements, like what the app id is and what certificate is required. The requirements are specified by [code signing requirement language](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) and encoded with op codes defined in `requirement.h` ([libsecurity_codesigning/lib/requirement.h](../../apple_open_source/apple_open_source/libsecurity_codesigning/lib/requirement.h)). The hash of this blob is stored in `slot[-2]`.
+Apple's code signing is more than just hashing. We can enforce other requirements, like what the app id is and what certificate is required. The requirements are specified by [code signing requirement language](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) and encoded with op codes defined in `requirement.h` ([libsecurity_codesigning/lib/requirement.h](../../apple_open_source/libsecurity_codesigning/lib/requirement.h)). The hash of this blob is stored in `slot[-2]`.
 
-The `Security.framework` provides the method `SecRequirementCopyString` to decompile the op codes to a human readable string. We can use `codesign` command to output the requirements.
+The `Security.framework` provides `SecRequirementCopyString` method to decompile the op codes to a human readable string. We can also use `codesign` command to output the requirements.
 
 ```
 $ codesign -d -r- Airbnb.app/Airbnb
@@ -125,14 +125,10 @@ designated => identifier "com.airbnb.app" and anchor apple generic and certifica
 ```
 
 From above, the signing requirements of Airbnb app are:
-* identifier "com.airbnb.app"
-    * The signing identifier is exactly "com.airbnb.app".
-* anchor apple generic
-    * The certificate chain must lead to an Apple root.
-* certificate leaf[subject.CN] = "iPhone Distribution: Airbnb, Inc. (xxxxxxxxxx)"
-    * The leaf (signing) certificate must be Airbnb Distribution.
-* certificate 1[field.1.2.840.113635.100.6.2.1]
-    * The certificate that issues the leaf certificate must have filed `1.2.840.113635.100.6.2.1`, which means it has to be Apple Worldwide Developer Relations Certification Authority.
+* `identifier "com.airbnb.app"` - The signing identifier is exactly "com.airbnb.app".
+* `anchor apple generic` - The certificate chain must lead to an Apple root.
+* `certificate leaf[subject.CN`]` = "iPhone Distribution: Airbnb, Inc. (xxxxxxxxxx)" - The leaf (signing) certificate must be Airbnb Distribution.
+* `certificate 1[field.1.2.840.113635.100.6.2.1]` - The certificate that issues the leaf certificate must have filed `1.2.840.113635.100.6.2.1`, which means it has to be Apple Worldwide Developer Relations Certification Authority.
 
 These are default requirements. Most iOS app should have similar ones.
 
