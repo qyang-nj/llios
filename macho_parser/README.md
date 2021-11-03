@@ -357,6 +357,9 @@ Previously, to differentiate a binary that is built for macOS or iOS simulator (
 
 Another intersting thing is that the version number is encoded in a 32-bit integer (16 bits for major version, 8 bits for minor version and 8 bits for patch version), so **the maximum of minor version is 15**. This is probably why Apple decided to set macOS version from 10.15 (Catalina) straight to 11 (Big Sur), after being version 10.x for about twenty years.
 
+## LC_CODE_SIGNATURE
+[LC_CODE_SIGNATURE](docs/LC_CODE_SIGNATURE.md)
+
 ## Other
 ### `+load` in ObjC
 The MachO that has Objective-C code will have two sections, `(__DATA_CONST,__objc_classlist)` and `(__DATA_CONST,__objc_nlclslist)`. `__objc_classlist` includes the addresses of all ObjC classes, while `__objc_nlclslist` contains only *non-lazy* classes. [Non-lazy classes are classes that have `+load` method](https://github.com/opensource-apple/objc4/blob/cd5e62a5597ea7a31dccef089317abb3a661c154/runtime/objc-runtime-new.mm#L2806~L2812) and will be loaded at launch time.
