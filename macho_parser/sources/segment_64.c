@@ -57,7 +57,7 @@ static void parse_section(void *base, struct section_64 sect) {
 
     printf("\n");
 
-    if (args.verbose == 0) {
+    if (args.verbosity == 0) {
         return;
     }
 

@@ -30,7 +30,6 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
     // so we need to use ntohl to covert byte order from network to host.
     format_blob_magic(ntohl(super_blob->magic), magic_name);
     printf("SuperBlob: magic: %s, length: %d, count: %d\n", magic_name, ntohl(super_blob->length), ntohl(super_blob->count));
-
     for (int i = 0; i < ntohl(super_blob->count); ++i) {
         uint32_t blob_type = ntohl(super_blob->index[i].type);
         uint32_t blob_offset = ntohl(super_blob->index[i].offset);
@@ -41,17 +40,18 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
 
         printf("  Blob %d: type: %#07x, offset: %d, magic: %s, length: %d\n", i, blob_type, blob_offset, magic_name, ntohl(blob->length));
 
-        if (args.verbose <= 1) {
-            continue;
-        }
-
         if (magic == CSMAGIC_CODEDIRECTORY) {
-            CS_CodeDirectory *cd_blob = (void *)super_blob + blob_offset;
-            print_code_directory(cd_blob);
+            if (args.show_code_direcotry) {
+                CS_CodeDirectory *cd_blob = (void *)super_blob + blob_offset;
+                print_code_directory(cd_blob);
+            }
         } else if (magic == CSMAGIC_EMBEDDED_ENTITLEMENTS) {
-            CS_GenericBlob *ent_blob = (void *)super_blob + blob_offset;
-            printf("%.*s\n\n", ntohl(ent_blob->length), ent_blob->data);
+            if (args.show_entitlement) {
+                CS_GenericBlob *ent_blob = (void *)super_blob + blob_offset;
+                printf("%.*s\n\n", ntohl(ent_blob->length), ent_blob->data);
+            }
         } else if (magic == CSMAGIC_REQUIREMENTS) {
+            if (args.verbosity < 2) { continue; }
             CS_SuperBlob *req_super_blob = (void *)super_blob + blob_offset;
             for (int j = 0; j < ntohl(req_super_blob->count); ++j) {
                 uint32_t req_blob_offset = ntohl(req_super_blob->index[j].offset);
@@ -62,8 +62,10 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
             }
             printf("\n");
         } else if (magic == CSMAGIC_BLOBWRAPPER) {
-            CS_GenericBlob *blob_wrapper = (void *)super_blob + blob_offset;
-            print_pkcs7((const unsigned char *)blob_wrapper->data, ntohl(blob_wrapper->length));
+            if (args.show_blob_wrapper) {
+                CS_GenericBlob *blob_wrapper = (void *)super_blob + blob_offset;
+                print_pkcs7((const unsigned char *)blob_wrapper->data, ntohl(blob_wrapper->length));
+            }
         }
     }
 }
@@ -130,7 +132,7 @@ static void print_code_directory(CS_CodeDirectory *code_directory) {
         printf("    Slot[%3d] : %s\n", -i, hash);
     }
 
-    int max_number = args.verbose > 2 ? slot_size : (slot_size > 10 ? 10 : slot_size);
+    int max_number = args.no_truncate ? slot_size : (slot_size > 10 ? 10 : slot_size);
 
     for (int i = 0; i < max_number; ++i) {
         bzero(hash, sizeof(hash));
@@ -138,7 +140,7 @@ static void print_code_directory(CS_CodeDirectory *code_directory) {
         printf("    Slot[%3d] : %s\n", i, hash);
     }
 
-    if (args.verbose <= 2 && slot_size > 10) {
+    if (!args.no_truncate && slot_size > 10) {
         printf("        ... %d more ...\n", slot_size - 10);
     }
     printf("\n");

@@ -2,33 +2,77 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
+
 #include "argument.h"
 
 struct argument args;
 
+static struct option longopts[] = {
+    {"command", required_argument, NULL, 'c'},
+    {"verbose", no_argument, NULL, 'v'},
+    {"no-truncate", no_argument, &(args.no_truncate), 1},
+    {"code-signature", no_argument, &(args.show_code_signature), 1},
+    {"cs", no_argument, &(args.show_code_signature), 1},
+    {"code-directory", no_argument, &(args.show_code_direcotry), 1},
+    {"cd", no_argument, &(args.show_code_direcotry), 1},
+    {"entitlement", no_argument, &(args.show_entitlement), 1},
+    {"ent", no_argument, &(args.show_entitlement), 1},
+    {"blob-wrapper", no_argument, &(args.show_blob_wrapper), 1},
+    {"help", no_argument, NULL, 'h'},
+    {NULL, 0, NULL, 0}
+};
+
+void usage() {
+    puts("Usage: macho_parser [options] macho_file");
+    puts("    -c, --command LOAD_COMMAND           show specific load command");
+    puts("    -v, --verbose                        can be used multiple times to increase verbose level");
+    puts("        --no-truncate                    do not truncate even the content is long");
+    puts("    -h, --help                           show this help message");
+    puts("");
+    puts("Code Signature Options:");
+    puts("    --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'");
+    puts("    --cd,  --code-directory              show Code Directory");
+    puts("    --ent, --entitlement                 show the embedded entitlement");
+    puts("           --blob-wrapper                show the blob wrapper (signature blob)");
+}
+
 void parse_arguments(int argc, char **argv) {
     int opt = 0;
-    while((opt = getopt(argc, argv, "sc:v")) != -1) {
-        switch(opt)
-        {
-            case 's':
-                args.short_desc = true;
-                break;
+    while ((opt = getopt_long(argc, argv, "c:shv", longopts, NULL)) != -1) {
+        switch(opt) {
             case 'c':
                 args.commands[args.command_count++] = string_to_load_command(optarg);
                 break;
             case 'v':
-                // increase verbose level if multiple -v is provided
-                args.verbose++;
+                args.verbosity++;
+                break;
+            case 'h':
+                usage();
+                exit(0);
+            case 0:
+                // all long options that don't have short options
                 break;
             case '?':
-                fprintf(stderr, "Unknow option: %c.\n", optopt);
+                // unrecognized option
                 exit(1);
         }
     }
 
     if (optind < argc) {
         args.file_name = argv[optind];
+    } else {
+        puts("Error: missing a macho file.");
+        exit(1);
+    }
+
+    if (args.show_code_signature || args.show_code_direcotry || args.show_entitlement || args.show_blob_wrapper) {
+        args.commands[args.command_count++] = string_to_load_command("LC_CODE_SIGNATURE");
+    }
+
+    if (args.command_count > 0) {
+        // Increase the verbosity if one or more command is specified.
+        args.verbosity += 1;
     }
 }
 

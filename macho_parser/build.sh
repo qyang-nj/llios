@@ -20,4 +20,4 @@ if [ "$OPT_OPENSSL" == 1 ]; then
 fi
 
 SRCS=$(ls sources/*.c)
-clang -o parser -framework CoreFoundation -framework Security $CFLAGS $SRCS
+clang -o macho_parser -framework CoreFoundation -framework Security $CFLAGS $SRCS

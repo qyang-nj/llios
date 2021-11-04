@@ -1,17 +1,22 @@
-# Mach-O Format
-This is **not** a complete reference of Mach-O format.
-
-## Mach-O Parser
-To learn the Mach-O format, no way is better than building a parser from scratch. It helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, etc.
+# Mach-O Parser
+To learn the Mach-O format, no way is better than building a parser from scratch. This helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, `codesign` etc.
 
 #### Usage
-To build the parser, run `./build.sh`.
+To build the parser, run `./build.sh --openssl`. (Openssl is not required if not parsing code signature.)
 
 ```
-parser [-s] [-c <cmd>] <mach-o file>
+$ ./macho_parser -h
+Usage: macho_parser [options] macho_file
+    -c, --command LOAD_COMMAND           show specific load command
+    -v, --verbose                        can be used multiple times to increase verbose level
+        --no-truncate                    do not truncate even the content is long
+    -h, --help                           show this help message
 
-       -s         short description (one line per a load command)
-       -c <cmd>   only show specified load command
+Code Signature Options:
+    --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'
+    --cd,  --code-directory              show Code Directory
+    --ent, --entitlement                 show the embedded entitlement
+           --blob-wrapper                show the blob wrapper (signature blob)
 ```
 
 #### Sample
@@ -19,7 +24,7 @@ This directory also includes a sample that demonstrates how source code ends up 
 
 ```
 $ ./build_sample.sh
-$ ./parser -s sample.out
+$ ./macho_parser sample.out
 LC_SEGMENT_64        cmdsize: 72     segname: __PAGEZERO       fileoff: 0x00000000 filesize: 0            (fileend: 0x00000000)
 LC_SEGMENT_64        cmdsize: 712    segname: __TEXT           fileoff: 0x00000000 filesize: 16384        (fileend: 0x00004000)
 LC_SEGMENT_64        cmdsize: 552    segname: __DATA_CONST     fileoff: 0x00004000 filesize: 16384        (fileend: 0x00008000)
@@ -358,7 +363,7 @@ Previously, to differentiate a binary that is built for macOS or iOS simulator (
 Another intersting thing is that the version number is encoded in a 32-bit integer (16 bits for major version, 8 bits for minor version and 8 bits for patch version), so **the maximum of minor version is 15**. This is probably why Apple decided to set macOS version from 10.15 (Catalina) straight to 11 (Big Sur), after being version 10.x for about twenty years.
 
 ## LC_CODE_SIGNATURE
-[LC_CODE_SIGNATURE](docs/LC_CODE_SIGNATURE.md)
+> The format of LC_CODE_SIGNATURE is described [here](docs/LC_CODE_SIGNATURE.md).
 
 ## Other
 ### `+load` in ObjC

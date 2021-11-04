@@ -6,16 +6,17 @@
 
 // command line argument
 struct argument {
-    // -s: show a short one-line description for each load command
-    bool short_desc;
-    // -v: verbose level
-    int verbose;
-    // -c <cmd>: show specified command
-    unsigned int commands[12];
-    // the number of specified commands
-    int command_count;
-    // filename of the mach-o file
     char *file_name;
+    int verbosity;
+    unsigned int commands[12];
+    int command_count;
+    int no_truncate;
+
+    // code signature options
+    int show_code_signature;
+    int show_code_direcotry;
+    int show_entitlement;
+    int show_blob_wrapper;
 };
 
 // global variable that holds command line arguments
