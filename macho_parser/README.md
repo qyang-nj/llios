@@ -8,10 +8,18 @@ To learn the Mach-O format, no way is better than building a parser from scratch
 To build the parser, run `./build.sh`.
 
 ```
-parser [-s] [-c <cmd>] <mach-o file>
+$ ./macho_parser -h
+Usage: macho_parser [options] macho_file
+    -c, --command LOAD_COMMAND           show specific load command
+    -v, --verbose                        can be used multiple times to increase verbose level
+        --no-truncate                    do not truncate even the content is long
+    -h, --help                           show this help message
 
-       -s         short description (one line per a load command)
-       -c <cmd>   only show specified load command
+Code Signature Options:
+    --cs, --code-signature               equivalent to '--command LC_CODE_SIGNATURE'
+    --cd, --code-directory               show Code Directory in LC_CODE_SIGNATURE
+    --ent, --entitlement                 show the entitlement embedded in LC_CODE_SIGNATURE
+    --blob-wrapper                       show the blob wrapper (signature blob) in LC_CODE_SIGNATURE
 ```
 
 #### Sample

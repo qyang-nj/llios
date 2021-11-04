@@ -5,7 +5,7 @@ Code signing is an essential part of build process. It is required for installin
 
 I have implemented the parsing logic in my [macho parser](..). Check out `code_signature.c` ([macho_parser/sources/code_signature.c](../sources/code_signature.c)) for the full code.
 ```
-parser -c LC_CODE_SIGNATURE -vvv {app_binary}
+macho_parser --code-signature [--code-directory] [--entitlement] [--blob-wrapper] [-v] {app_binary}
 ```
 
 ## Super Blob

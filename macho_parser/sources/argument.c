@@ -25,14 +25,14 @@ static struct option longopts[] = {
 
 void usage() {
     puts("Usage: macho_parser [options] macho_file");
-    puts("    -c, --command LOAD_COMMAND           show specific load comand");
+    puts("    -c, --command LOAD_COMMAND           show specific load command");
     puts("    -v, --verbose                        can be used multiple times to increase verbose level");
     puts("        --no-truncate                    do not truncate even the content is long");
     puts("    -h, --help                           show this help message");
     puts("");
     puts("Code Signature Options:");
-    puts("    --cs, --code-signature               equivalent to '--comand LC_CODE_SIGNATURE'");
-    puts("    --cd, --code-directory               show Code Direcotry in LC_CODE_SIGNATURE");
+    puts("    --cs, --code-signature               equivalent to '--command LC_CODE_SIGNATURE'");
+    puts("    --cd, --code-directory               show Code Directory in LC_CODE_SIGNATURE");
     puts("    --ent, --entitlement                 show the entitlement embedded in LC_CODE_SIGNATURE");
     puts("    --blob-wrapper                       show the blob wrapper (signature blob) in LC_CODE_SIGNATURE");
 }
