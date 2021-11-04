@@ -1,11 +1,8 @@
-# Mach-O Format
-This is **not** a complete reference of Mach-O format.
-
-## Mach-O Parser
-To learn the Mach-O format, no way is better than building a parser from scratch. It helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, etc.
+# Mach-O Parser
+To learn the Mach-O format, no way is better than building a parser from scratch. This helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, `codesign` etc.
 
 #### Usage
-To build the parser, run `./build.sh`.
+To build the parser, run `./build.sh --openssl`. (Openssl is not required if not parsing code signature.)
 
 ```
 $ ./macho_parser -h
@@ -16,10 +13,10 @@ Usage: macho_parser [options] macho_file
     -h, --help                           show this help message
 
 Code Signature Options:
-    --cs, --code-signature               equivalent to '--command LC_CODE_SIGNATURE'
-    --cd, --code-directory               show Code Directory in LC_CODE_SIGNATURE
-    --ent, --entitlement                 show the entitlement embedded in LC_CODE_SIGNATURE
-    --blob-wrapper                       show the blob wrapper (signature blob) in LC_CODE_SIGNATURE
+    --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'
+    --cd,  --code-directory              show Code Directory
+    --ent, --entitlement                 show the embedded entitlement
+           --blob-wrapper                show the blob wrapper (signature blob)
 ```
 
 #### Sample
@@ -27,7 +24,7 @@ This directory also includes a sample that demonstrates how source code ends up 
 
 ```
 $ ./build_sample.sh
-$ ./parser -s sample.out
+$ ./macho_parser sample.out
 LC_SEGMENT_64        cmdsize: 72     segname: __PAGEZERO       fileoff: 0x00000000 filesize: 0            (fileend: 0x00000000)
 LC_SEGMENT_64        cmdsize: 712    segname: __TEXT           fileoff: 0x00000000 filesize: 16384        (fileend: 0x00004000)
 LC_SEGMENT_64        cmdsize: 552    segname: __DATA_CONST     fileoff: 0x00004000 filesize: 16384        (fileend: 0x00008000)

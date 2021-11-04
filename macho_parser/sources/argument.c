@@ -31,10 +31,10 @@ void usage() {
     puts("    -h, --help                           show this help message");
     puts("");
     puts("Code Signature Options:");
-    puts("    --cs, --code-signature               equivalent to '--command LC_CODE_SIGNATURE'");
-    puts("    --cd, --code-directory               show Code Directory in LC_CODE_SIGNATURE");
-    puts("    --ent, --entitlement                 show the entitlement embedded in LC_CODE_SIGNATURE");
-    puts("    --blob-wrapper                       show the blob wrapper (signature blob) in LC_CODE_SIGNATURE");
+    puts("    --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'");
+    puts("    --cd,  --code-directory              show Code Directory");
+    puts("    --ent, --entitlement                 show the embedded entitlement");
+    puts("           --blob-wrapper                show the blob wrapper (signature blob)");
 }
 
 void parse_arguments(int argc, char **argv) {
