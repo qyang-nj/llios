@@ -2,7 +2,7 @@
 Random stuff about lower level iOS
 
 ## Topics
-* [Macho Parser](./macho_parser) - study note of Mach-O format
+* [Mach-O Parser](./macho_parser) - writing a Mach-O format parser while learning it
     * [LC_CODE_SIGNATURE](./macho_parser/docs/LC_CODE_SIGNATURE.md) - code signing and code signature format
 * Dynamic Linking
     * [How does dynamic linking works](./dynamic_linking)
