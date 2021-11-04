@@ -29,11 +29,6 @@ void parse_source_version(void *base, struct source_version_command *cmd);
 int main(int argc, char **argv) {
     parse_arguments(argc, argv);
 
-    if (args.file_name == NULL) {
-        puts("Usage: parser [-s] [-c <cmd>] <mach-o file>");
-        return 1;
-    }
-
     int fd;
     struct stat sb;
 
