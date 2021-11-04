@@ -11,7 +11,7 @@ void parse_dyld_info(void *base, struct dyld_info_command *dyld_info_cmd) {
     const char *name = (dyld_info_cmd->cmd == LC_DYLD_INFO_ONLY ? "LC_DYLD_INFO_ONLY" : "LC_DYLD_INFO");
     printf("%-20s cmdsize: %-6u export_size: %d\n", name, dyld_info_cmd->cmdsize, dyld_info_cmd->export_size);
 
-    if (args.verbose == 0) { return; }
+    if (args.verbosity == 0) { return; }
 
     printf("    rebase_off   : %-10d   rebase_size   : %d\n", dyld_info_cmd->rebase_off, dyld_info_cmd->rebase_size);
     printf("    bind_off     : %-10d   bind_size     : %d\n", dyld_info_cmd->bind_off, dyld_info_cmd->bind_size);

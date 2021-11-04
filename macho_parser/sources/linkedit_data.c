@@ -13,7 +13,7 @@ void parse_linkedit_data(void *base, struct linkedit_data_command *linkedit_data
         command_name(linkedit_data_cmd->cmd), linkedit_data_cmd->cmdsize,
         linkedit_data_cmd->dataoff, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
 
-    if (args.verbose == 0) { return; }
+    if (args.verbosity == 0) { return; }
 
     if (linkedit_data_cmd->cmd == LC_FUNCTION_STARTS) {
         parse_function_starts(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
@@ -59,7 +59,7 @@ static char *command_name(uint32_t cmd) {
 }
 
 static void parse_function_starts(void *base, uint32_t dataoff, uint32_t datasize) {
-    if (!args.verbose) { return; }
+    if (!args.verbosity) { return; }
 
     uint8_t *func_starts = base + dataoff;
 

@@ -13,13 +13,13 @@ void parse_symbol_table(void *base, struct symtab_command *symtab_cmd) {
         "LC_SYMTAB", symtab_cmd->cmdsize, symtab_cmd->symoff, symtab_cmd->nsyms,
         symtab_cmd->nsyms * sizeof(struct nlist_64), symtab_cmd->stroff, symtab_cmd->strsize);
 
-    if (args.verbose == 0) { return; }
+    if (args.verbosity == 0) { return; }
 
     void *sym_table = base + symtab_cmd->symoff;
     void *str_table = base + symtab_cmd->stroff;
 
     int nsyms = symtab_cmd->nsyms;
-    int max_number = args.verbose == 1 ? (nsyms > 10 ? 10 : nsyms) : nsyms;
+    int max_number = args.verbosity == 1 ? (nsyms > 10 ? 10 : nsyms) : nsyms;
 
     for (int i = 0; i < max_number; ++i) {
         char formatted_n_type[256];
@@ -42,7 +42,7 @@ void parse_symbol_table(void *base, struct symtab_command *symtab_cmd) {
             i, formatted_value, formatted_n_type, formatted_n_desc, symbol);
     }
 
-    if (args.verbose == 1 && nsyms > 10) {
+    if (args.verbosity == 1 && nsyms > 10) {
         printf("        ... %d more ...\n", nsyms - 10);
     }
 }
