@@ -363,7 +363,7 @@ Previously, to differentiate a binary that is built for macOS or iOS simulator (
 Another intersting thing is that the version number is encoded in a 32-bit integer (16 bits for major version, 8 bits for minor version and 8 bits for patch version), so **the maximum of minor version is 15**. This is probably why Apple decided to set macOS version from 10.15 (Catalina) straight to 11 (Big Sur), after being version 10.x for about twenty years.
 
 ## LC_CODE_SIGNATURE
-[LC_CODE_SIGNATURE](docs/LC_CODE_SIGNATURE.md)
+> The format of LC_CODE_SIGNATURE is described [here](docs/LC_CODE_SIGNATURE.md).
 
 ## Other
 ### `+load` in ObjC
