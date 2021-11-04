@@ -1,4 +1,6 @@
 # LC_SYMTAB
+A symbol is the name of an address.
+
 ``` c
 struct symtab_command {
     uint32_t cmd;        /* LC_SYMTAB */
@@ -8,7 +10,34 @@ struct symtab_command {
     uint32_t stroff;     /* string table offset */
     uint32_t strsize;    /* string table size in bytes */
 };
+```
 
+Symbol table contains a list of `nlist` and a string table. Both are part of `__LINKEDIT`. The string table here are exclusively used for symbols. Don't confuse it with `__cstring` section, which is part of `__TEXT`.
+
+## String Table
+Technically string table is not a table. It's simple area where a bunch of strings live.
+
+```
+$ ./macho_parser -c LC_SYMTAB sample.out
+LC_SYMTAB            cmdsize: 24     symoff: 49640   nsyms: 41   (symsize: 656)   stroff: 50336   strsize: 648
+
+$ xxd -s 50336 -l 648 -c 24 sample.out
+0000c4a0: 2000 5f4f 424a 435f 434c 4153 535f 245f 5369 6d70 6c65 436c   ._OBJC_CLASS_$_SimpleCl
+0000c4b8: 6173 7300 5f4f 424a 435f 4d45 5441 434c 4153 535f 245f 5369  ass._OBJC_METACLASS_$_Si
+0000c4d0: 6d70 6c65 436c 6173 7300 5f5f 6d68 5f65 7865 6375 7465 5f68  mpleClass.__mh_execute_h
+0000c4e8: 6561 6465 7200 5f63 5f63 6f6e 7374 7275 6374 6f72 5f66 756e  eader._c_constructor_fun
+0000c500: 6374 696f 6e00 5f63 5f75 7365 645f 6675 6e63 7469 6f6e 005f  ction._c_used_function._
+0000c518: 635f 7765 616b 5f69 6d70 6f72 745f 6675 6e63 7469 6f6e 005f  c_weak_import_function._
+0000c530: 6d61 696e 005f 4e53 4c6f 6700 5f4f 424a 435f 434c 4153 535f  main._NSLog._OBJC_CLASS_
+0000c548: 245f 4e53 4f62 6a65 6374 005f 4f42 4a43 5f4d 4554 4143 4c41  $_NSObject._OBJC_METACLA
+0000c560: 5353 5f24 5f4e 534f 626a 6563 7400 5f5f 5f43 4643 6f6e 7374  SS_$_NSObject.___CFConst
+0000c578: 616e 7453 7472 696e 6743 6c61 7373 5265 6665 7265 6e63 6500  antStringClassReference.
+......
+```
+
+
+## Symbol Table
+```c
 struct nlist_64 {
     union {
         uint32_t n_strx;  /* index into the string table */
@@ -19,8 +48,6 @@ struct nlist_64 {
     uint64_t n_value;     /* value of this symbol (or stab offset) */
 };
 ```
-
-Symbol table contains a list of `nlist` and a string table. Both are part of `__LINKEDIT`. The string table here are exclusively used for symbols. Don't confuse it with `__cstring` section, which is part of `__TEXT`.
 
 ### n_type
 ```
@@ -53,7 +80,9 @@ Enabled by `__attribute__((constructor))`. It tells the linker (`ld`) to keep th
 #### N_WEAK_REF
 Enabled by `__attribute__((weak))`. It tells dynamic loader (`dyld`) if the symbol cannot be found at runtime, set NULL to its address.
 
-# Two Level Namespace
+
+
+## Two Level Namespace
 The linker enables the two-level namespace option (`-twolevel_namespace`) by default. It can be disabled by `-flat_namespace` option. The first level of the two-level namespace is the name of the library that contains the symbol, and the second is the name of the symbol. Once enabled, the macho header has `MH_TWOLEVEL` flag set. Each undefined symbols will record its library information by `LIBRARY_ORDINAL` in `nlist.n_desc`.
 
 Two major benefits of two-level namespace:
