@@ -119,7 +119,24 @@ This load command is only used by `dyld` at runtime. The information here can in
 A deep dive of exported info is at "[exported_symbol](../exported_symbol)".
 
 ## LC_SYMTAB
-> The details of `LC_SYMTAB` is [here](docs/LC_SYMTAB.md).
+```
+$ ./macho_parser sample.out --command LC_SYMTAB --no-truncate
+LC_SYMTAB            cmdsize: 24     symoff: 49640   nsyms: 41   (symsize: 656)   stroff: 50336   strsize: 648
+    0   : 0000000100003f00  [N_SECT]  +[SimpleClass load]
+    1   : 0000000100008020  [N_SECT]  __OBJC_$_CLASS_METHODS_SimpleClass
+    2   : 0000000100008040  [N_SECT]  __OBJC_METACLASS_RO_$_SimpleClass
+    3   : 0000000100008088  [N_SECT]  __OBJC_CLASS_RO_$_SimpleClass
+    4   : 0000000100008120  [N_SECT]  __dyld_private
+    5   : 0000000000000000  [N_STAB(0x60)]  /Users/qingyang/Projects/llios/macho_parser/sample/
+    ...
+    36  :                   [N_EXT N_UNDF]  __objc_empty_cache  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(5)]
+    37  :                   [N_EXT N_UNDF]  _c_extern_weak_function  [UNDEFINED_NON_LAZY N_WEAK_REF LIBRARY_ORDINAL(254)]
+    38  :                   [N_EXT N_UNDF]  _my_dylib_func  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(1)]
+    39  :                   [N_EXT N_UNDF]  _printf  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(2)]
+    40  :                   [N_EXT N_UNDF]  dyld_stub_binder  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(2)]
+```
+
+ The details of `LC_SYMTAB` is [here](docs/LC_SYMTAB.md).
 
 ## LC_DYSYMTAB
 ``` c

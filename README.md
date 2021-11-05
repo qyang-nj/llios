@@ -3,7 +3,7 @@ Random stuff about lower level iOS
 
 ## Topics
 * [Mach-O Parser](./macho_parser) - writing a Mach-O format parser while learning it
-    * [LC_SYMTAB](./macho_parser/docs/LC_SYMTAB.md) -symbol table
+    * [LC_SYMTAB](./macho_parser/docs/LC_SYMTAB.md) - symbol table
     * [LC_CODE_SIGNATURE](./macho_parser/docs/LC_CODE_SIGNATURE.md) - code signing and code signature format
 * Dynamic Linking
     * [How does dynamic linking works](./dynamic_linking)
