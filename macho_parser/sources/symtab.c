@@ -19,7 +19,7 @@ void parse_symbol_table(void *base, struct symtab_command *symtab_cmd) {
     void *str_table = base + symtab_cmd->stroff;
 
     int nsyms = symtab_cmd->nsyms;
-    int max_number = args.no_truncate ? (nsyms > 10 ? 10 : nsyms) : nsyms;
+    int max_number = args.no_truncate ? nsyms : (nsyms > 10 ? 10 : nsyms);
 
     for (int i = 0; i < max_number; ++i) {
         char formatted_n_type[256];

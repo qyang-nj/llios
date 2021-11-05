@@ -1,7 +1,10 @@
 # LC_SYMTAB
-A symbol is the name of an address.
+In terms of programming, symbols are just the names of memory addresses. The names of class, method and global variables eventually are compiled into symbols and associated addresses. `LC_SYMTAB` is the load command that stores all the symbols of a Mach-O binary. We usually use `nm` to examine `LC_SYMTAB`.
+
+`LC_SYMTAB`, living in `__LINKEDIT` segment, has two parts: a string table and a symbol table.
 
 ``` c
+// LC_SYMTAB structure
 struct symtab_command {
     uint32_t cmd;        /* LC_SYMTAB */
     uint32_t cmdsize;    /* sizeof(struct symtab_command) */
@@ -12,10 +15,10 @@ struct symtab_command {
 };
 ```
 
-Symbol table contains a list of `nlist` and a string table. Both are part of `__LINKEDIT`. The string table here are exclusively used for symbols. Don't confuse it with `__cstring` section, which is part of `__TEXT`.
-
 ## String Table
-Technically string table is not a table. It's simple area where a bunch of strings live.
+Technically string table is not a table. It's simply an area where a bunch of strings live. It is exclusively used for symbols. Don't confuse it with `__cstring` section, which is part of `__TEXT`.
+
+We can hex dump this area to see its content. `\0` is the string terminator also the divider.
 
 ```
 $ ./macho_parser -c LC_SYMTAB sample.out
@@ -35,8 +38,9 @@ $ xxd -s 50336 -l 648 -c 24 sample.out
 ......
 ```
 
-
 ## Symbol Table
+A symbol table contains a list of `nlist`, which has its own header file [`nlist.h`](../../apple_open_source/xnu/EXTERNAL_HEADERS/mach-o/nlist.h). Each `nlist` has a symbol name (actually an index into the string table), an address and other attributes.
+
 ```c
 struct nlist_64 {
     union {
@@ -49,7 +53,14 @@ struct nlist_64 {
 };
 ```
 
+### n_strx
+A `nlist` doesn't directly contain a string. Instead, it has an index pointing to the string table. This is the symbol name.
+
+### n_value
+It is just the address. Please note undefined symbol doesn't have an address, because the address is defined elsewhere.
+
 ### n_type
+The format of `n_type`:
 ```
 0000 0000
 ─┬─│ ─┬─│
@@ -60,6 +71,7 @@ struct nlist_64 {
 ```
 
 ### n_desc
+The format of `n_desc`:
 ```
 0000 0000 0000 0000
 ────┬──── ││││  ─┬─
@@ -71,23 +83,22 @@ struct nlist_64 {
     └─ LIBRARY_ORDINAL (used by two-level namespace)
 ```
 
-#### REFERENCE_TYPE
+##### REFERENCE_TYPE
 I'm not sure how exactly the `REFERENCE_TYPE` is used. My understanding is that global variables are non-lazy bound and functions are lazily bound (see [dynamic linking](https://github.com/qyang-nj/llios/tree/main/dynamic_linking)). However, those function symbols are `REFERENCE_FLAG_UNDEFINED_NON_LAZY`. That's why I'm confused.
 
-#### N_NO_DEAD_STRIP
+##### N_NO_DEAD_STRIP
 Enabled by `__attribute__((constructor))`. It tells the linker (`ld`) to keep this symbol even it's not used. It exits in object files (`MH_OBJECT`). Read more about [dead code elimination](https://github.com/qyang-nj/llios/tree/main/dce).
 
-#### N_WEAK_REF
+##### N_WEAK_REF
 Enabled by `__attribute__((weak))`. It tells dynamic loader (`dyld`) if the symbol cannot be found at runtime, set NULL to its address.
 
-
+##### LIBRARY_ORDINAL
+The index of the library which defines the symbol. See below "Two Level Namespace".
 
 ## Two Level Namespace
-The linker enables the two-level namespace option (`-twolevel_namespace`) by default. It can be disabled by `-flat_namespace` option. The first level of the two-level namespace is the name of the library that contains the symbol, and the second is the name of the symbol. Once enabled, the macho header has `MH_TWOLEVEL` flag set. Each undefined symbols will record its library information by `LIBRARY_ORDINAL` in `nlist.n_desc`.
+The linker enables [the two-level namespace](http://mirror.informatimago.com/next/developer.apple.com/releasenotes/DeveloperTools/TwoLevelNamespaces.html) (`-twolevel_namespace`) by default. It can be disabled by `-flat_namespace` option. The first level of the two-level namespace is the name of the library that contains the symbol, and the second is the name of the symbol. Once enabled, the macho header has `MH_TWOLEVEL` flag set. Each undefined symbol records its library information in `LIBRARY_ORDINAL` of `nlist.n_desc`.
 
-Two major benefits of two-level namespace:
+There are two major benefits of two-level namespace:
 * avoid symbol conflict from different libraries
 * accelerate symbol lookup at runtime
 
-##### Learn more
-[Mac OS X Developer Release Notes: Two-Level Namespace Executables](http://mirror.informatimago.com/next/developer.apple.com/releasenotes/DeveloperTools/TwoLevelNamespaces.html)
