@@ -120,7 +120,7 @@ A deep dive of exported info is at "[exported_symbol](../exported_symbol)".
 
 ## LC_SYMTAB
 ```
-$ ./macho_parser sample.out --command LC_SYMTAB --no-truncate
+$ ./macho_parser --command LC_SYMTAB --no-truncate sample.out
 LC_SYMTAB            cmdsize: 24     symoff: 49640   nsyms: 41   (symsize: 656)   stroff: 50336   strsize: 648
     0   : 0000000100003f00  [N_SECT]  +[SimpleClass load]
     1   : 0000000100008020  [N_SECT]  __OBJC_$_CLASS_METHODS_SimpleClass
