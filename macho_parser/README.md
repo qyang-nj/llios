@@ -2,7 +2,7 @@
 To learn the Mach-O format, no way is better than building a parser from scratch. This helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, `codesign` etc.
 
 #### Usage
-To build the parser, run `./build.sh --openssl`. (Openssl is not required if not parsing code signature.)
+To build the parser, run `./build.sh --openssl`. (OpenSSL is not required if not parsing code signature.)
 
 ```
 $ ./macho_parser -h
@@ -119,69 +119,24 @@ This load command is only used by `dyld` at runtime. The information here can in
 A deep dive of exported info is at "[exported_symbol](../exported_symbol)".
 
 ## LC_SYMTAB
-``` c
-struct symtab_command {
-    uint32_t cmd;        /* LC_SYMTAB */
-    uint32_t cmdsize;    /* sizeof(struct symtab_command) */
-    uint32_t symoff;     /* symbol table offset */
-    uint32_t nsyms;      /* number of symbol table entries */
-    uint32_t stroff;     /* string table offset */
-    uint32_t strsize;    /* string table size in bytes */
-};
-
-struct nlist_64 {
-    union {
-        uint32_t n_strx;  /* index into the string table */
-    } n_un;
-    uint8_t n_type;       /* type flag, see below */
-    uint8_t n_sect;       /* section number or NO_SECT */
-    uint16_t n_desc;      /* see <mach-o/stab.h> */
-    uint64_t n_value;     /* value of this symbol (or stab offset) */
-};
+```
+$ ./macho_parser --command LC_SYMTAB --no-truncate sample.out
+LC_SYMTAB            cmdsize: 24     symoff: 49640   nsyms: 41   (symsize: 656)   stroff: 50336   strsize: 648
+    0   : 0000000100003f00  [N_SECT]  +[SimpleClass load]
+    1   : 0000000100008020  [N_SECT]  __OBJC_$_CLASS_METHODS_SimpleClass
+    2   : 0000000100008040  [N_SECT]  __OBJC_METACLASS_RO_$_SimpleClass
+    3   : 0000000100008088  [N_SECT]  __OBJC_CLASS_RO_$_SimpleClass
+    4   : 0000000100008120  [N_SECT]  __dyld_private
+    5   : 0000000000000000  [N_STAB(0x60)]  /Users/qingyang/Projects/llios/macho_parser/sample/
+    ...
+    36  :                   [N_EXT N_UNDF]  __objc_empty_cache  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(5)]
+    37  :                   [N_EXT N_UNDF]  _c_extern_weak_function  [UNDEFINED_NON_LAZY N_WEAK_REF LIBRARY_ORDINAL(254)]
+    38  :                   [N_EXT N_UNDF]  _my_dylib_func  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(1)]
+    39  :                   [N_EXT N_UNDF]  _printf  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(2)]
+    40  :                   [N_EXT N_UNDF]  dyld_stub_binder  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(2)]
 ```
 
-Symbol table contains a list of `nlist` and a string table. Both are part of `__LINKEDIT`. The string table here are exclusively used for symbols. Don't confuse it with `__cstring` section, which is part of `__TEXT`.
-
-### n_type
-```
-0000 0000
-─┬─│ ─┬─│
- │ │  │ └─ N_EXT (external symbol)
- │ │  └─ N_TYPE (N_UNDF, N_ABS, N_SECT, N_PBUD, N_INDR)
- │ └─ N_PEXT (private external symbol)
- └─ N_STAB (debugging symbol)
-```
-
-### n_desc
-```
-0000 0000 0000 0000
-────┬──── ││││  ─┬─
-    │     ││││   └─ REFERENCE_TYPE (used by undefined symbols)
-    │     │││└─ REFERENCED_DYNAMICALLY
-    │     ││└─ NO_DEAD_STRIP
-    │     │└─ N_WEAK_REF
-    │     └─ N_WEAK_DEF
-    └─ LIBRARY_ORDINAL (used by two-level namespace)
-```
-
-#### REFERENCE_TYPE
-I'm not sure how exactly the `REFERENCE_TYPE` is used. My understanding is that global variables are non-lazy bound and functions are lazily bound (see [dynamic linking](https://github.com/qyang-nj/llios/tree/main/dynamic_linking)). However, those function symbols are `REFERENCE_FLAG_UNDEFINED_NON_LAZY`. That's why I'm confused.
-
-#### N_NO_DEAD_STRIP
-Enabled by `__attribute__((constructor))`. It tells the linker (`ld`) to keep this symbol even it's not used. It exits in object files (`MH_OBJECT`). Read more about [dead code elimination](https://github.com/qyang-nj/llios/tree/main/dce).
-
-#### N_WEAK_REF
-Enabled by `__attribute__((weak))`. It tells dynamic loader (`dyld`) if the symbol cannot be found at runtime, set NULL to its address.
-
-### Two Level Namespace
-The linker enables the two-level namespace option (`-twolevel_namespace`) by default. It can be disabled by `-flat_namespace` option. The first level of the two-level namespace is the name of the library that contains the symbol, and the second is the name of the symbol. Once enabled, the macho header has `MH_TWOLEVEL` flag set. Each undefined symbols will record its library information by `LIBRARY_ORDINAL` in `nlist.n_desc`.
-
-Two major benefits of two-level namespace:
-* avoid symbol conflict from different libraries
-* accelerate symbol lookup at runtime
-
-##### Learn more
-[Mac OS X Developer Release Notes: Two-Level Namespace Executables](http://mirror.informatimago.com/next/developer.apple.com/releasenotes/DeveloperTools/TwoLevelNamespaces.html)
+ The details of `LC_SYMTAB` is [here](docs/LC_SYMTAB.md).
 
 ## LC_DYSYMTAB
 ``` c
@@ -363,7 +318,7 @@ Previously, to differentiate a binary that is built for macOS or iOS simulator (
 Another intersting thing is that the version number is encoded in a 32-bit integer (16 bits for major version, 8 bits for minor version and 8 bits for patch version), so **the maximum of minor version is 15**. This is probably why Apple decided to set macOS version from 10.15 (Catalina) straight to 11 (Big Sur), after being version 10.x for about twenty years.
 
 ## LC_CODE_SIGNATURE
-> The format of LC_CODE_SIGNATURE is described [here](docs/LC_CODE_SIGNATURE.md).
+> The format of `LC_CODE_SIGNATURE` is described [here](docs/LC_CODE_SIGNATURE.md).
 
 ## Other
 ### `+load` in ObjC

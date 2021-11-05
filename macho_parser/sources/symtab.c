@@ -19,7 +19,7 @@ void parse_symbol_table(void *base, struct symtab_command *symtab_cmd) {
     void *str_table = base + symtab_cmd->stroff;
 
     int nsyms = symtab_cmd->nsyms;
-    int max_number = args.verbosity == 1 ? (nsyms > 10 ? 10 : nsyms) : nsyms;
+    int max_number = args.no_truncate ? nsyms : (nsyms > 10 ? 10 : nsyms);
 
     for (int i = 0; i < max_number; ++i) {
         char formatted_n_type[256];
@@ -38,25 +38,31 @@ void parse_symbol_table(void *base, struct symtab_command *symtab_cmd) {
             sprintf(formatted_value, "%s", "                ");
         }
 
-        printf("    %-4d: %s  %s %s   %s\n",
-            i, formatted_value, formatted_n_type, formatted_n_desc, symbol);
+        printf("    %-4d: %s  %s  %s  %s\n",
+            i, formatted_value, formatted_n_type, symbol, formatted_n_desc);
     }
 
-    if (args.verbosity == 1 && nsyms > 10) {
+    if (!args.no_truncate&& nsyms > 10) {
         printf("        ... %d more ...\n", nsyms - 10);
     }
 }
 
 static void format_n_type(uint8_t n_type, char *formatted) {
-    sprintf(formatted, "[n_type:%02x", n_type);
+    strcpy(formatted, "");
+
     if (n_type & N_EXT) {
+        // global symbols
         strcat(formatted, " N_EXT");
     }
     if (n_type & N_PEXT) {
+        // private external symbols
         strcat(formatted, " N_PEXT");
     }
     if (n_type & N_STAB) {
-        strcat(formatted, " N_STAB");
+        // debugging symbols
+        char stab[16];
+        sprintf(stab, " N_STAB(%#02x)", n_type & N_STAB);
+        strcat(formatted, stab);
     }
 
     switch (n_type & N_TYPE) {
@@ -77,11 +83,13 @@ static void format_n_type(uint8_t n_type, char *formatted) {
             break;
     }
     strcat(formatted, "]");
+
+    formatted[0] = '[';
 }
 
 
 static void format_n_desc(uint8_t n_type, uint16_t n_desc, char *formatted) {
-    sprintf(formatted, "[n_desc:0x%04x", n_desc);
+    strcpy(formatted, "");
 
     if ((n_type & N_TYPE) == N_UNDF) {
         switch (n_desc & REFERENCE_TYPE) {
@@ -125,5 +133,8 @@ static void format_n_desc(uint8_t n_type, uint16_t n_desc, char *formatted) {
         sprintf(formatted + strlen(formatted), " LIBRARY_ORDINAL(%d)", library_ordinal);
     }
 
-    strcat(formatted, "]");
+    if (strlen(formatted) > 0) {
+        strcat(formatted, "]");
+        formatted[0] = '[';
+    }
 }
