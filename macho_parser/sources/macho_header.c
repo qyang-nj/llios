@@ -24,18 +24,18 @@ static void format_magic(uint32_t magic, char *name);
 static void format_cpu_type(cpu_type_t cputype, char *name);
 static void format_file_type(uint32_t filetype, char *name);
 
-struct load_cmd_info parse_header(void *base) {
+struct mach_header_64 *parse_mach_header(void *base) {
     uint32_t magic = read_magic(base, 0);
     int mach_header_offset = 0;
 
     if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
         struct fat_header header = read_fat_header(base, NEEDS_SWAP(magic));
+        struct fat_arch *fat_archs = read_fat_archs(base, header, NEEDS_SWAP(magic));
+
         if (show_header()) {
             print_fat_header(magic, header);
+            print_fat_archs(fat_archs, header.nfat_arch);
         }
-
-        struct fat_arch *fat_archs = read_fat_archs(base, header, NEEDS_SWAP(magic));
-        print_fat_archs(fat_archs, header.nfat_arch);
 
         for (int i = 0; i < header.nfat_arch; ++i) {
             // locate the first 64-bit arch
@@ -44,6 +44,8 @@ struct load_cmd_info parse_header(void *base) {
                 break;
             }
         }
+
+        free(fat_archs);
     }
 
     magic = read_magic(base, mach_header_offset);
@@ -59,10 +61,7 @@ struct load_cmd_info parse_header(void *base) {
         print_mach_header(header);
     }
 
-    struct load_cmd_info lcinfo;
-    lcinfo.count = header.ncmds;
-    lcinfo.offset = mach_header_offset + sizeof(struct mach_header_64);
-    return lcinfo;
+    return (struct mach_header_64 *)(base + mach_header_offset);
 }
 
 static uint32_t read_magic(void *filebase, int offset) {
@@ -79,7 +78,10 @@ static struct fat_header read_fat_header(void *base, bool needs_swap) {
 }
 
 static struct fat_arch *read_fat_archs(void *base, struct fat_header header, bool needs_swap) {
-    struct fat_arch *archs = base + sizeof(header);
+    size_t archs_size = sizeof(struct fat_arch) * header.nfat_arch;
+    struct fat_arch *archs = malloc(archs_size);
+    memcpy(archs, base + sizeof(header), archs_size);
+
     if (needs_swap) {
         swap_fat_arch(archs, header.nfat_arch, NX_UnknownByteOrder);
     }

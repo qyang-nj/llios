@@ -9,6 +9,7 @@
 struct argument args;
 
 static struct option longopts[] = {
+    {"help", no_argument, NULL, 'h'},
     {"command", required_argument, NULL, 'c'},
     {"verbose", no_argument, NULL, 'v'},
     {"no-truncate", no_argument, &(args.no_truncate), 1},
@@ -19,7 +20,11 @@ static struct option longopts[] = {
     {"entitlement", no_argument, &(args.show_entitlement), 1},
     {"ent", no_argument, &(args.show_entitlement), 1},
     {"blob-wrapper", no_argument, &(args.show_blob_wrapper), 1},
-    {"help", no_argument, NULL, 'h'},
+    {"dysymtab", no_argument, &(args.show_dysymtab), 1},
+    {"local", no_argument, &(args.show_local), 1},
+    {"extdef", no_argument, &(args.show_extdef), 1},
+    {"undef", no_argument, &(args.show_undef), 1},
+    {"indirect", no_argument, &(args.show_indirect), 1},
     {NULL, 0, NULL, 0}
 };
 
@@ -35,6 +40,13 @@ void usage() {
     puts("    --cd,  --code-directory              show Code Directory");
     puts("    --ent, --entitlement                 show the embedded entitlement");
     puts("           --blob-wrapper                show the blob wrapper (signature blob)");
+    puts("");
+    puts("Dynamic Symbol Table Options:");
+    puts("    --dysymtab                           equivalent to '--command LC_DYSYMTAB'");
+    puts("    --local                              show local symbols");
+    puts("    --extdef                             show externally (public) defined symbols");
+    puts("    --undef                              show undefined symbols");
+    puts("    --indirect                           show indirect symbol table");
 }
 
 void parse_arguments(int argc, char **argv) {
@@ -68,6 +80,10 @@ void parse_arguments(int argc, char **argv) {
 
     if (args.show_code_signature || args.show_code_direcotry || args.show_entitlement || args.show_blob_wrapper) {
         args.commands[args.command_count++] = string_to_load_command("LC_CODE_SIGNATURE");
+    }
+
+    if (args.show_dysymtab || args.show_local || args. show_extdef || args.show_undef || args.show_indirect) {
+        args.commands[args.command_count++] = string_to_load_command("LC_DYSYMTAB");
     }
 
     if (args.command_count > 0) {

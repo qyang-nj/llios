@@ -17,6 +17,13 @@ struct argument {
     int show_code_direcotry;
     int show_entitlement;
     int show_blob_wrapper;
+
+    // dynamic symbol table options
+    int show_dysymtab;
+    int show_local;
+    int show_extdef;
+    int show_undef;
+    int show_indirect;
 };
 
 // global variable that holds command line arguments

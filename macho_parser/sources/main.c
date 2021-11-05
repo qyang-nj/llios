@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    struct load_cmd_info lcinfo = parse_header(base);
-    parse_load_commands(base, lcinfo.offset, lcinfo.count);
+    struct mach_header_64 *mach_header = parse_mach_header(base);
+    parse_load_commands((void *)mach_header, sizeof(struct mach_header_64), mach_header->ncmds);
 
     munmap(base, sb.st_size);
     return 0;
