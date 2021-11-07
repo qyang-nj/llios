@@ -86,3 +86,6 @@ address            index name
 
 **INDIRECT_SYMBOL_LOCAL**
 There are two special values in the indirect symbol table (`INDIRECT_SYMBOL_LOCAL` and `INDIRECT_SYMBOL_ABS`). It seems there is a way to have an indirect symbol for a local defined symbols. As the index is a special value, it's not pointing to any symbol in symbol table. *I'm not sure how and why a local defined symbol needs indirect symbol table.*
+
+## Others
+From `struct dysymtab_command`, we can see that `LC_DYSYMTAB` can also have a table of contents (toc), a module table (modtab), referenced symbol table (extrefsym), external relocation entries (extrel) and local relocation entries (locrel). However, based on my limited observation, I haven't seen any Mach-O binary actually has them. They are just zeros.
