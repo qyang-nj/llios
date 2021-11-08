@@ -5,7 +5,7 @@ To learn the Mach-O format, no way is better than building a parser from scratch
 To build the parser, run `./build.sh --openssl`. (OpenSSL is not required if not parsing code signature.)
 
 ```
-$ ./macho_parser -h
+$ ./macho_parser --help
 Usage: macho_parser [options] macho_file
     -c, --command LOAD_COMMAND           show specific load command
     -v, --verbose                        can be used multiple times to increase verbose level
@@ -17,6 +17,13 @@ Code Signature Options:
     --cd,  --code-directory              show Code Directory
     --ent, --entitlement                 show the embedded entitlement
            --blob-wrapper                show the blob wrapper (signature blob)
+
+Dynamic Symbol Table Options:
+    --dysymtab                           equivalent to '--command LC_DYSYMTAB'
+    --local                              show local symbols
+    --extdef                             show externally (public) defined symbols
+    --undef                              show undefined symbols
+    --indirect                           show indirect symbol table
 ```
 
 #### Sample
@@ -136,86 +143,48 @@ LC_SYMTAB            cmdsize: 24     symoff: 49640   nsyms: 41   (symsize: 656) 
     40  :                   [N_EXT N_UNDF]  dyld_stub_binder  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(2)]
 ```
 
- The details of `LC_SYMTAB` is [here](docs/LC_SYMTAB.md).
+The details of `LC_SYMTAB` is [here](docs/LC_SYMTAB.md).
 
 ## LC_DYSYMTAB
-``` c
-struct dysymtab_command { ... }
 ```
-This load command is used to support dynamic linking.
+./macho_parser --dysymtab --local --extdef --undef --indirect sample.out
+LC_DYSYMTAB          cmdsize: 80     nlocalsym: 25  nextdefsym: 7   nundefsym: 9   nindirectsyms: 10
+  ilocalsym     : 0           nlocalsym    : 25
+  iextdefsym    : 25          nextdefsym   : 7
+  iundefsym     : 32          nundefsym    : 9
+  tocoff        : 0x0         ntoc         : 0
+  modtaboff     : 0x0         nmodtab      : 0
+  extrefsymoff  : 0x0         nextrefsyms  : 0
+  indirectsymoff: 0x0000c478  nindirectsyms: 10
+  extreloff     : 0x0         nextrel      : 0
+  locreloff     : 0x0         nlocrel      : 0
 
-### Local symbols
-``` c
-struct dysymtab_command {
-    // ...
-    uint32_t ilocalsym;	/* index to local symbols */
-    uint32_t nlocalsym;	/* number of local symbols */
-    // ...
-};
-```
-The local symbols are used only for debugging. `ilocalsym` is the first index in the symbol table. From this structure, we can tell that **local symbols are consecutively listed in the symbol table**. So are external and undefined symbols.
+  Local symbols (ilocalsym 0, nlocalsym:25)
+    0   : 0000000100003f00  [N_SECT]  +[SimpleClass load]
+    1   : 0000000100008020  [N_SECT]  __OBJC_$_CLASS_METHODS_SimpleClass
+    2   : 0000000100008040  [N_SECT]  __OBJC_METACLASS_RO_$_SimpleClass
+    ...
 
-### Externally defined symbols
-``` c
-struct dysymtab_command {
-    // ...
-    uint32_t iextdefsym;/* index to externally defined symbols */
-    uint32_t nextdefsym;/* number of externally defined symbols */
-    // ...
-};
-```
+  Externally defined symbols (iextdefsym: 25, nextdefsym:7)
+    25  : 00000001000080f8  [N_EXT N_SECT]  _OBJC_CLASS_$_SimpleClass
+    26  : 00000001000080d0  [N_EXT N_SECT]  _OBJC_METACLASS_$_SimpleClass
+    27  : 0000000100000000  [N_EXT N_SECT]  __mh_execute_header  [REFERENCED_DYNAMICALLY]
+    ...
 
-### Undefined symbols
-``` c
-struct dysymtab_command {
-    // ...
-    uint32_t iundefsym;	/* index to undefined symbols */
-    uint32_t nundefsym;	/* number of undefined symbols */
-    // ...
-};
-```
+  Undefined symbols (iundefsym: 32, nundefsym:9)
+    32  : [N_EXT N_UNDF]  _NSLog  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(4)]
+    33  : [N_EXT N_UNDF]  _OBJC_CLASS_$_NSObject  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(5)]
+    34  : [N_EXT N_UNDF]  _OBJC_METACLASS_$_NSObject  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(5)]
+    ...
 
-### Indirect symbol table
-``` c
-struct dysymtab_command {
-    // ...
-    uint32_t indirectsymoff; /* file offset to the indirect symbol table */
-    uint32_t nindirectsyms;  /* number of indirect symbol table entries */
-    // ...
-};
-```
-The indirect symbol is an array of 32-bit values. Each value is an index to symbols in `SYMTAB`. It's used to record the symbol associated to the pointer in the `__stubs`,`__got` add `__la_symbol_ptr` sections. These sections uses `reserved1` to indicate the start position in the indirect table. The length usually is `struct section_64.size / sizeof(uintptr_t)`.
-``` c
-struct section_64
-    // ...
-    uint32_t reserved1; /* reserved (for offset or index) */
-    // ...
-};
+  Indirect symbol table (indirectsymoff: 0xc478, nindirectsyms: 10)
+    0  -> 32  : [N_EXT N_UNDF]  _NSLog  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(4)]
+    1  -> 37  : [N_EXT N_UNDF]  _c_extern_weak_function  [UNDEFINED_NON_LAZY N_WEAK_REF LIBRARY_ORDINAL(254)]
+    2  -> 38  : [N_EXT N_UNDF]  _my_dylib_func  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(1)]
+    ...
 ```
 
-For example, the symbol of the 3rd pointer in `__got` is (in pseudocode):
-```
-symbol_table[indirect_symbol_table[__got.section_64.reserved1 + (3 - 1)]]
-```
-
-In practice, we use `otool -Iv` to dump the indirect symbol table.
-```
-$ otool -I a.out
-a.out:
-Indirect symbols for (__TEXT,__stubs) 1 entries
-address            index name
-0x0000000100003f96     3 _lib_func
-Indirect symbols for (__DATA_CONST,__got) 2 entries
-address            index name
-0x0000000100004000     4 _lib_str
-0x0000000100004008     5 dyld_stub_binder
-Indirect symbols for (__DATA,__la_symbol_ptr) 1 entries
-address            index name
-0x0000000100008000     3 _lib_func
-```
-
-**INDIRECT_SYMBOL_LOCAL**
-There are two special values in the indirect symbol table (`INDIRECT_SYMBOL_LOCAL` and `INDIRECT_SYMBOL_ABS`). It seems there is a way to have an indirect symbol for a local defined symbols. As the index is a special value, it's not pointing to any symbol in symbol table. *I'm not sure how and why a local defined symbol needs indirect symbol table.*
+The details of `LC_SYMTAB` is [here](docs/LC_DYSYMTAB.md).
 
 ## LC_FUNCTION_STARTS
 This load command indicates a list of all fucntion addresses, which are encoded by a list of [ULEB128](https://en.wikipedia.org/wiki/LEB128) numbers. The first number is the first function's offset to `__TEXT`'s `vmaddr`. The following numbers are the offset to the previous address. (Detailed information can be found in the [`dyldinfo` source code](https://github.com/qyang-nj/llios/blob/49f0fab2f74f0ecb03ee9ae1f54953bc9ad86384/apple_open_source/ld64/src/other/dyldinfo.cpp#L2045-L2071)). In the example of our sample program, here is its `LC_FUNCTION_STARTS`.

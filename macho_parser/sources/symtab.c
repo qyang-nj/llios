@@ -22,29 +22,40 @@ void parse_symbol_table(void *base, struct symtab_command *symtab_cmd) {
     int max_number = args.no_truncate ? nsyms : (nsyms > 10 ? 10 : nsyms);
 
     for (int i = 0; i < max_number; ++i) {
-        char formatted_n_type[256];
-        char formatted_n_desc[256];
-
-        struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * i;
-        char *symbol = str_table + nlist->n_un.n_strx;
-
-        format_n_type(nlist->n_type, formatted_n_type);
-        format_n_desc(nlist->n_type, nlist->n_desc, formatted_n_desc);
-
-        char formatted_value[32];
-        if ((nlist->n_type & N_TYPE) != N_UNDF) {
-            sprintf(formatted_value, "%016llx", nlist->n_value);
-        } else {
-            sprintf(formatted_value, "%s", "                ");
-        }
-
-        printf("    %-4d: %s  %s  %s  %s\n",
-            i, formatted_value, formatted_n_type, symbol, formatted_n_desc);
+        print_symbol(2, base, symtab_cmd, i);
     }
 
     if (!args.no_truncate&& nsyms > 10) {
         printf("        ... %d more ...\n", nsyms - 10);
     }
+}
+
+void print_symbol(int indent, void *base, struct symtab_command *symtab_cmd, int index) {
+    if (index < 0 || index >= symtab_cmd->nsyms) {
+        puts("Error: %d is out of bounds of symtab.");
+        exit(0);
+    }
+
+    void *sym_table = base + symtab_cmd->symoff;
+    void *str_table = base + symtab_cmd->stroff;
+
+    char formatted_n_type[256];
+    char formatted_n_desc[256];
+
+    struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * index;
+    char *symbol = str_table + nlist->n_un.n_strx;
+
+    format_n_type(nlist->n_type, formatted_n_type);
+    format_n_desc(nlist->n_type, nlist->n_desc, formatted_n_desc);
+
+    char formatted_value[32] = {'\0'};
+    if ((nlist->n_type & N_TYPE) != N_UNDF) {
+        sprintf(formatted_value, "%016llx  ", nlist->n_value);
+    }
+
+    printf("%*s%-4d: %s%s  %s  %s\n",
+        indent, "", index, formatted_value, formatted_n_type, symbol, formatted_n_desc);
+
 }
 
 static void format_n_type(uint8_t n_type, char *formatted) {
