@@ -1,14 +1,14 @@
 #include <stdlib.h>
 #include <mach-o/nlist.h>
 
-#include "util.h"
+#include "load_command.h"
 #include "argument.h"
 #include "symtab.h"
 #include "dysymtab.h"
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
-static void load_symtab_cmd(void *base, struct symtab_command **symtab_cmd);
+static bool symtab_load_command(struct load_command *lcmd);
 static void print_symbols(void *base, struct symtab_command *symtab_cmd, int offset, int num);
 static void print_indirect_symbols(void *base, struct symtab_command *symtab_cmd, uint32_t *indirect_symtab, int size);
 
@@ -30,7 +30,7 @@ void parse_dynamic_symbol_table(void *base, struct dysymtab_command *dysymtab_cm
     printf("  locreloff     : 0x%-8x  nlocrel      : %d\n", dysymtab_cmd->locreloff, dysymtab_cmd->nlocrel);
     printf("\n");
 
-    struct symtab_command *symtab_cmd = (struct symtab_command *)get_load_command(base, LC_SYMTAB);
+    struct symtab_command *symtab_cmd = (struct symtab_command *)search_load_command(base, 0, symtab_load_command).lcmd;
 
     if (args.show_local) {
         printf("  Local symbols (ilocalsym %d, nlocalsym:%d)\n", dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
@@ -57,20 +57,8 @@ void parse_dynamic_symbol_table(void *base, struct dysymtab_command *dysymtab_cm
     }
 }
 
-
-static void load_symtab_cmd(void *base, struct symtab_command **symtab_cmd) {
-    struct mach_header_64 *header = base;
-    int offset = sizeof(struct mach_header_64);
-    for (int i = 0; i < header->ncmds; ++i) {
-        struct load_command *lcmd = base + offset;
-
-        if (lcmd->cmd == LC_SYMTAB) {
-            *symtab_cmd = base + offset;
-            return;
-        }
-
-        offset += lcmd->cmdsize;
-    }
+static bool symtab_load_command(struct load_command *lcmd) {
+    return lcmd->cmd == LC_SYMTAB;
 }
 
 static void print_symbols(void *base, struct symtab_command *symtab_cmd, int offset, int num) {

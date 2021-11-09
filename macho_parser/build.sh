@@ -29,4 +29,4 @@ if [ "$OPT_DEBUG" == 1 ]; then
 fi
 
 SRCS=$(ls sources/*.c)
-clang -o macho_parser -framework CoreFoundation -framework Security $CFLAGS $SRCS
+xcrun clang -o macho_parser -framework CoreFoundation -framework Security $CFLAGS $SRCS
