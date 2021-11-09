@@ -4,6 +4,7 @@
 #include "load_command.h"
 #include "argument.h"
 #include "chained_fixups.h"
+#include "symtab.h"
 #include "code_signature.h"
 
 #include "linkedit_data.h"
@@ -61,25 +62,39 @@ static char *command_name(uint32_t cmd) {
     return cmd_name;
 }
 
-static bool search_text_segment(struct load_command *lcmd) {
+static bool text_segment_load_command(struct load_command *lcmd) {
     return lcmd->cmd == LC_SEGMENT_64 && strcmp(((struct segment_command_64 *)lcmd)->segname, "__TEXT") == 0;
+}
+
+static bool symtab_load_command(struct load_command *lcmd) {
+    return lcmd->cmd == LC_SYMTAB;
 }
 
 static void parse_function_starts(void *base, uint32_t dataoff, uint32_t datasize) {
     if (!args.verbosity) { return; }
 
-    struct segment_command_64 *text_segment = (struct segment_command_64 *)search_load_command(base, 0, search_text_segment).lcmd;
+    struct segment_command_64 *text_segment = (struct segment_command_64 *)search_load_command(base, 0, text_segment_load_command).lcmd;
+    struct symtab_command *symtab_cmd = (struct symtab_command *)search_load_command(base, 0, symtab_load_command).lcmd;
 
     uint8_t *func_starts = base + dataoff;
 
     int i = 0;
     uint64_t address = text_segment->vmaddr;
+    int count = 0;
     while(func_starts[i] != 0 && i < datasize) {
+        if (count > 10 && !args.no_truncate) {
+            printf("    ... more ...\n");
+            break;
+        }
+
         uint64_t num = 0;
         i += read_uleb128(func_starts + i, &num);
-
         address += num;
-        printf("  %#llx\n", address);
+
+        char *symbol = lookup_symbol_by_address(address, base, symtab_cmd);
+        printf("  %#llx  %s\n", address, symbol);
+
+        count++;
     }
 }
 
