@@ -12,6 +12,8 @@ struct argument {
     int command_count;
     int no_truncate;
 
+    int show_build_version;
+
     // code signature options
     int show_code_signature;
     int show_code_direcotry;

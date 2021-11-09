@@ -13,6 +13,7 @@ static struct option longopts[] = {
     {"command", required_argument, NULL, 'c'},
     {"verbose", no_argument, NULL, 'v'},
     {"no-truncate", no_argument, &(args.no_truncate), 1},
+    {"build-version", no_argument, &(args.show_build_version), 1},
     {"code-signature", no_argument, &(args.show_code_signature), 1},
     {"cs", no_argument, &(args.show_code_signature), 1},
     {"code-directory", no_argument, &(args.show_code_direcotry), 1},
@@ -34,6 +35,8 @@ void usage() {
     puts("    -v, --verbose                        can be used multiple times to increase verbose level");
     puts("        --no-truncate                    do not truncate even the content is long");
     puts("    -h, --help                           show this help message");
+    puts("");
+    puts("    --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*");
     puts("");
     puts("Code Signature Options:");
     puts("    --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'");
@@ -78,12 +81,20 @@ void parse_arguments(int argc, char **argv) {
         exit(1);
     }
 
+    if (args.show_build_version) {
+        args.commands[args.command_count++] = LC_BUILD_VERSION;
+        args.commands[args.command_count++] = LC_VERSION_MIN_MACOSX;
+        args.commands[args.command_count++] = LC_VERSION_MIN_IPHONEOS;
+        args.commands[args.command_count++] = LC_VERSION_MIN_WATCHOS;
+        args.commands[args.command_count++] = LC_VERSION_MIN_TVOS;
+    }
+
     if (args.show_code_signature || args.show_code_direcotry || args.show_entitlement || args.show_blob_wrapper) {
-        args.commands[args.command_count++] = string_to_load_command("LC_CODE_SIGNATURE");
+        args.commands[args.command_count++] = LC_CODE_SIGNATURE;
     }
 
     if (args.show_dysymtab || args.show_local || args. show_extdef || args.show_undef || args.show_indirect) {
-        args.commands[args.command_count++] = string_to_load_command("LC_DYSYMTAB");
+        args.commands[args.command_count++] = LC_DYSYMTAB;
     }
 
     if (args.command_count > 0) {
