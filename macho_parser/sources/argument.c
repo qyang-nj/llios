@@ -36,7 +36,7 @@ void usage() {
     puts("        --no-truncate                    do not truncate even the content is long");
     puts("    -h, --help                           show this help message");
     puts("");
-    puts("    --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*");
+    puts("    --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*'");
     puts("");
     puts("Code Signature Options:");
     puts("    --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'");

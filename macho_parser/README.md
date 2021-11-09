@@ -12,6 +12,8 @@ Usage: macho_parser [options] macho_file
         --no-truncate                    do not truncate even the content is long
     -h, --help                           show this help message
 
+    --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*'
+
 Code Signature Options:
     --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'
     --cd,  --code-directory              show Code Directory
@@ -266,6 +268,11 @@ struct rpath_command {
 The only meaningful thing that `LC_RPATH` has is a filepath. Dynamic linker will use that to replace `@rpath` in the dylib install name to search the dylib file. We can pass multiple `-rpath <path>` to the static linker, and each one results in a `LC_RPATH` is the final binary.
 
 ## LC_BUILD_VERSION
+```
+$ ./macho_parser --build-version sample.out
+LC_BUILD_VERSION     cmdsize: 32     platform: MACOS   minos: 12.0.0   sdk: 12.0.0
+    tool:  LD   version: 711.0.0
+```
 The details of `LC_BUILD_VERSION` is [here](docs/LC_BUILD_VERSION.md).
 
 ## LC_CODE_SIGNATURE
