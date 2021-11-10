@@ -189,6 +189,16 @@ LC_DYSYMTAB          cmdsize: 80     nlocalsym: 25  nextdefsym: 7   nundefsym: 9
 The details of `LC_SYMTAB` is [here](docs/LC_DYSYMTAB.md).
 
 ## LC_FUNCTION_STARTS
+```
+./macho_parser -c LC_FUNCTION_STARTS sample.out
+LC_FUNCTION_STARTS   cmdsize: 16     dataoff: 0xc1e0 (49632)   datasize: 8
+  0x100003e70  _c_constructor_function
+  0x100003e80  _c_used_function
+  0x100003e90  _c_weak_import_function
+  0x100003ea0  _main
+  0x100003f00  +[SimpleClass load]
+```
+The details of `LC_FUNCTION_STARTS` is [here](docs/LC_FUNCTION_STARTS.md).
 
 ## LC_MAIN
 ``` c

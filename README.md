@@ -6,6 +6,7 @@ Random stuff about lower level iOS
     * [LC_SYMTAB](./macho_parser/docs/LC_SYMTAB.md) - symbol table
     * [LC_DYSYMTAB](./macho_parser/docs/LC_DYSYMTAB.md) - dynamic symbol table
     * [LC_BUILD_VERSION](./macho_parser/docs/LC_BUILD_VERSION.md)
+    * [LC_FUNCTION_STARTS](./macho_parser/docs/LC_FUNCTION_STARTS.md)
     * [LC_CODE_SIGNATURE](./macho_parser/docs/LC_CODE_SIGNATURE.md) - code signing and code signature format
 * Dynamic Linking
     * [How does dynamic linking works](./dynamic_linking)
