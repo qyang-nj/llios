@@ -34,7 +34,5 @@ $ xcrun dyldinfo -function_starts sample.out
 0x100003F00   +[SimpleClass load]
 ```
 
-
-
 ## More
 [Symbolication: Beyond the basics](https://developer.apple.com/videos/play/wwdc2021/10211/), starting at 14:22.
