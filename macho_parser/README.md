@@ -189,30 +189,16 @@ LC_DYSYMTAB          cmdsize: 80     nlocalsym: 25  nextdefsym: 7   nundefsym: 9
 The details of `LC_SYMTAB` is [here](docs/LC_DYSYMTAB.md).
 
 ## LC_FUNCTION_STARTS
-This load command indicates a list of all fucntion addresses, which are encoded by a list of [ULEB128](https://en.wikipedia.org/wiki/LEB128) numbers. The first number is the first function's offset to `__TEXT`'s `vmaddr`. The following numbers are the offset to the previous address. (Detailed information can be found in the [`dyldinfo` source code](https://github.com/qyang-nj/llios/blob/49f0fab2f74f0ecb03ee9ae1f54953bc9ad86384/apple_open_source/ld64/src/other/dyldinfo.cpp#L2045-L2071)). In the example of our sample program, here is its `LC_FUNCTION_STARTS`.
 ```
-$ otool -l sample.out | grep LC_FUNCTION_STARTS -A3
-      cmd LC_FUNCTION_STARTS
-  cmdsize 16
-  dataoff 49632
- datasize 8
-
-$ xxd -s 49632 -l 8 sample.out
-0000c1e0: f07c 1010 1060 0000
+./macho_parser -c LC_FUNCTION_STARTS sample.out
+LC_FUNCTION_STARTS   cmdsize: 16     dataoff: 0xc1e0 (49632)   datasize: 8
+  0x100003e70  _c_constructor_function
+  0x100003e80  _c_used_function
+  0x100003e90  _c_weak_import_function
+  0x100003ea0  _main
+  0x100003f00  +[SimpleClass load]
 ```
-These are a sequence of ULEB128-encoded numbers: 0x3e70, 0x10, 0x10, 0x10, 0x60. Since `vmaddr` of `__TEXT` is 0x100000000, the function addresses are
-```
-0x100003E70   (0x100000000 + 0x3e70)
-0x100003E80   (0x100003E70 + 0x10)
-0x100003E90   (0x100003E80 + 0x10)
-0x100003EA0   (0x100003EA0 + 0x10)
-0x100003F00   (0x100003E80 + 0x60)
-```
-
-The function starts are only addresses, no function names. We can use `dyldinfo -function_starts` to dump the function addresses, which will also look up symbol table to get function names. To strip this section, pass `-no_function_starts` to `ld`.
-
-##### Learn more
-[Symbolication: Beyond the basics](https://developer.apple.com/videos/play/wwdc2021/10211/), starting at 14:22.
+The details of `LC_FUNCTION_STARTS` is [here](docs/LC_FUNCTION_STARTS.md).
 
 ## LC_MAIN
 ``` c

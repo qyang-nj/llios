@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#include "macho_header.h"
 #include "util.h"
 
 int read_uleb128(const uint8_t *p, uint64_t *out) {
@@ -37,21 +36,4 @@ void format_hex(void *buffer, size_t size, char *formatted) {
     for (int i = 0; i < size; ++i) {
         sprintf(formatted + i * 2, "%02x", *((uint8_t *)buffer + i));
     }
-}
-
-struct load_command *get_load_command(void *base, uint32_t type) {
-    struct mach_header_64 *mach_header = parse_mach_header(base);
-
-    int offset = sizeof(struct mach_header_64);
-    for (int i = 0; i < mach_header->ncmds; ++i) {
-        struct load_command *lcmd = base + offset;
-
-        if (lcmd->cmd == type) {
-            return lcmd;
-        }
-
-        offset += lcmd->cmdsize;
-    }
-
-    return NULL;
 }

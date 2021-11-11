@@ -55,7 +55,24 @@ void print_symbol(int indent, void *base, struct symtab_command *symtab_cmd, int
 
     printf("%*s%-4d: %s%s  %s  %s\n",
         indent, "", index, formatted_value, formatted_n_type, symbol, formatted_n_desc);
+}
 
+char *lookup_symbol_by_address(uint64_t address, void *base, struct symtab_command *symtab_cmd) {
+    void *sym_table = base + symtab_cmd->symoff;
+    void *str_table = base + symtab_cmd->stroff;
+
+    // This logic can be optimized if the symbols are sorted by its address.
+    for (int i = 0; i < symtab_cmd->nsyms; ++i) {
+        struct nlist_64 *nlist = sym_table + sizeof(struct nlist_64) * i;
+        if (nlist->n_value == address) {
+            char *symbol = str_table + nlist->n_un.n_strx;
+            if (strlen(symbol) > 0) {
+                return symbol;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 static void format_n_type(uint8_t n_type, char *formatted) {
