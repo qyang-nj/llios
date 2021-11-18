@@ -16,6 +16,7 @@ static struct option longopts[] = {
     {"segments", no_argument, &(args.show_segments), 1},
     {"section", required_argument, NULL, 's'},
     {"build-version", no_argument, &(args.show_build_version), 1},
+    {"dylibs", no_argument, &(args.show_dylibs), 1},
     {"code-signature", no_argument, &(args.show_code_signature), 1},
     {"cs", no_argument, &(args.show_code_signature), 1},
     {"code-directory", no_argument, &(args.show_code_direcotry), 1},
@@ -40,6 +41,7 @@ void usage() {
     puts("");
     puts("    --segments                           equivalent to '--comand LC_SEGMENT_64");
     puts("    --section INDEX                      show the section at INDEX");
+    puts("    --dylibs                             show dylib related commands");
     puts("    --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*'");
     puts("");
     puts("Code Signature Options:");
@@ -94,6 +96,13 @@ void parse_arguments(int argc, char **argv) {
         if (args.section_count > 0) {
             args.verbosity += 1;
         }
+    }
+
+    if (args.show_dylibs) {
+        args.commands[args.command_count++] = LC_ID_DYLIB;
+        args.commands[args.command_count++] = LC_LOAD_DYLIB;
+        args.commands[args.command_count++] = LC_LOAD_WEAK_DYLIB;
+        args.commands[args.command_count++] = LC_REEXPORT_DYLIB;
     }
 
     if (args.show_build_version) {
