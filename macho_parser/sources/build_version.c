@@ -5,7 +5,6 @@
 
 static void get_tool_name(uint32_t tool, char *tool_name);
 static void get_platform_name(uint32_t platform, char *platform_name);
-static void get_version_string(uint32_t version, char *version_string);
 
 void parse_build_version(void *base, struct build_version_command *build_version_cmd) {
     char platform_name[128];
@@ -13,8 +12,8 @@ void parse_build_version(void *base, struct build_version_command *build_version
     char sdk_string[128];
 
     get_platform_name(build_version_cmd->platform, platform_name);
-    get_version_string(build_version_cmd->minos, minos_string);
-    get_version_string(build_version_cmd->sdk, sdk_string);
+    format_version_string(build_version_cmd->minos, minos_string);
+    format_version_string(build_version_cmd->sdk, sdk_string);
 
     printf("%-20s cmdsize: %-6u platform: %s   minos: %s   sdk: %s\n", "LC_BUILD_VERSION",
         build_version_cmd->cmdsize,
@@ -33,7 +32,7 @@ void parse_build_version(void *base, struct build_version_command *build_version
             + i * sizeof(struct build_tool_version);
 
         get_tool_name(tool_version->tool, tool_name);
-        get_version_string(tool_version->version, tool_version_string);
+        format_version_string(tool_version->version, tool_version_string);
 
         printf ("    tool:  %s   version: %s\n", tool_name, tool_version_string);
     }
@@ -50,12 +49,20 @@ void parse_version_min(void *base, struct version_min_command *version_min_cmd) 
 
     char version_string[128];
     char sdk_version[128];
-    get_version_string(version_min_cmd->version, version_string);
-    get_version_string(version_min_cmd->sdk, sdk_version);
+    format_version_string(version_min_cmd->version, version_string);
+    format_version_string(version_min_cmd->sdk, sdk_version);
 
     printf("%-20s cmdsize: %-6u version: %s   sdk: %s\n",
         cmd_name, version_min_cmd->cmdsize,
         version_string, sdk_version);
+}
+
+void format_version_string(uint32_t version, char *version_string) {
+    int patch = (version & 0xFF);
+    int minor = (version & 0xFF00) >> 8;
+    int major = (version & 0xFFFF0000) >> 16;
+
+    sprintf(version_string, "%d.%d.%d", major, minor, patch);
 }
 
 static void get_platform_name(uint32_t platform, char *platform_name) {
@@ -72,14 +79,6 @@ static void get_platform_name(uint32_t platform, char *platform_name) {
         case PLATFORM_DRIVERKIT: strcpy(platform_name, "PLATFORM_DRIVERKIT"); break;
         default: strcpy(platform_name, "UNKNOWN"); break;
     }
-}
-
-static void get_version_string(uint32_t version, char *version_string) {
-    int patch = (version & 0xFF);
-    int minor = (version & 0xFF00) >> 8;
-    int major = (version & 0xFFFF0000) >> 16;
-
-    sprintf(version_string, "%d.%d.%d", major, minor, patch);
 }
 
 static void get_tool_name(uint32_t tool, char *tool_name) {

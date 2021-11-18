@@ -14,6 +14,7 @@
 #include "symtab.h"
 #include "dysymtab.h"
 #include "dyld_info.h"
+#include "dylib.h"
 #include "linkedit_data.h"
 #include "build_version.h"
 
@@ -21,7 +22,6 @@ void parse_load_commands(void *base, int offset, uint32_t);
 void parse_dylinker(void *base, struct dylinker_command *);
 void parse_entry_point(void *base, struct entry_point_command *);
 void parse_linker_option(void *base, struct linker_option_command *);
-void parse_dylib(void *base, struct dylib_command *);
 void parse_rpath(void *base, struct rpath_command *);
 void parse_uuid(void *base, struct uuid_command *cmd);
 void parse_source_version(void *base, struct source_version_command *cmd);
@@ -82,6 +82,7 @@ void parse_load_commands(void *base, int offset, uint32_t ncmds) {
             case LC_ID_DYLIB:
             case LC_LOAD_DYLIB:
             case LC_LOAD_WEAK_DYLIB:
+            case LC_REEXPORT_DYLIB:
                 parse_dylib(base, (struct dylib_command *)lcmd);
                 break;
             case LC_RPATH:
@@ -148,18 +149,6 @@ void parse_linker_option(void *base, struct linker_option_command *cmd) {
 
     printf("%-20s cmdsize: %-6u count: %d   %s\n", "LC_LINKER_OPTION", cmd->cmdsize, cmd->count, options);
     free(options);
-}
-
-void parse_dylib(void *base, struct dylib_command *cmd) {
-    char *cmd_name = "";
-    if (cmd->cmd == LC_ID_DYLIB) {
-        cmd_name = "LC_ID_DYLIB";
-    } else if (cmd->cmd == LC_LOAD_DYLIB) {
-        cmd_name = "LC_LOAD_DYLIB";
-    } else if (cmd->cmd == LC_LOAD_WEAK_DYLIB) {
-        cmd_name = "LC_LOAD_WEAK_DYLIB";
-    }
-    printf("%-20s cmdsize: %-6u %s\n", cmd_name, cmd->cmdsize, (char *)cmd + cmd->dylib.name.offset);
 }
 
 void parse_rpath(void *base, struct rpath_command *cmd) {

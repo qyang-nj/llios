@@ -10,4 +10,6 @@ void parse_build_version(void *base, struct build_version_command *build_version
 // parse LC_VERSION_MIN_MACOSX, LC_VERSION_MIN_IPHONEOS, LC_VERSION_MIN_WATCHOS, LC_VERSION_MIN_TVOS
 void parse_version_min(void *base, struct version_min_command *version_min_cmd);
 
+void format_version_string(uint32_t version, char *version_string);
+
 #endif /* BUILD_VERSION_H */
