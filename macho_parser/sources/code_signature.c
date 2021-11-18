@@ -194,7 +194,7 @@ static void format_blob_magic(uint32_t magic, char *formatted) {
 static void format_hash_type(uint8_t hash_type, char *formatted) {
     switch(hash_type) {
         case CS_HASHTYPE_SHA1: strcpy(formatted, "SHA1"); break;
-        case CS_HASHTYPE_SHA256: strcpy(formatted, "SHA246"); break;
+        case CS_HASHTYPE_SHA256: strcpy(formatted, "SHA256"); break;
         case CS_HASHTYPE_SHA256_TRUNCATED: strcpy(formatted, "SHA256_TRUNCATED"); break;
         case CS_HASHTYPE_SHA384: strcpy(formatted, "SHA384"); break;
         default: sprintf(formatted, "UNKNOWN(%#08x)", hash_type);

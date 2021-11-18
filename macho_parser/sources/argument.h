@@ -13,6 +13,9 @@ struct argument {
     int no_truncate;
 
     int show_build_version;
+    int show_segments;
+    int section_count;
+    int sections[12];
 
     // code signature options
     int show_code_signature;
@@ -37,10 +40,12 @@ void parse_arguments(int argc, char **argv);
 // convert a string to the load command number, "LC_SYMTAB" -> 0x2 (LC_SYMTAB)
 unsigned int string_to_load_command(char *cmd_str);
 
+// whether to show header
+bool show_header();
+
 // whether to show a command
 bool show_command(unsigned int cmd);
 
-// whether to show header
-bool show_header();
+bool show_section(int section);
 
 #endif /* ARGUMENT_H */

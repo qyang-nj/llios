@@ -37,3 +37,15 @@ void format_hex(void *buffer, size_t size, char *formatted) {
         sprintf(formatted + i * 2, "%02x", *((uint8_t *)buffer + i));
     }
 }
+
+void format_size(uint64_t size_in_byte, char *formatted) {
+    if (size_in_byte < 1024) {
+        sprintf(formatted, "%lluB", size_in_byte);
+    } else if (size_in_byte / 1024 < 1024) {
+        sprintf(formatted, "%.2fKB", (double)size_in_byte / 1024 );
+    } else if (size_in_byte / 1024 / 1204 < 1024) {
+        sprintf(formatted, "%.2fMB", (double)size_in_byte / 1024 / 1024);
+    } else {
+        sprintf(formatted, "%.2fGB", (double)size_in_byte / 1024 / 1024 / 1024);
+    }
+}

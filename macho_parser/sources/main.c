@@ -49,6 +49,8 @@ int main(int argc, char **argv) {
 }
 
 void parse_load_commands(void *base, int offset, uint32_t ncmds) {
+    int section_index = 0;
+
     for (int i = 0; i < ncmds; ++i) {
         struct load_command *lcmd = base + offset;
 
@@ -59,7 +61,8 @@ void parse_load_commands(void *base, int offset, uint32_t ncmds) {
 
         switch (lcmd->cmd) {
             case LC_SEGMENT_64:
-                parse_segment(base, (struct segment_command_64 *)lcmd);
+                parse_segment(base, (struct segment_command_64 *)lcmd, section_index);
+                section_index += ((struct segment_command_64 *)lcmd)->nsects;
                 break;
             case LC_SYMTAB:
                 parse_symbol_table(base, (struct symtab_command *)lcmd);

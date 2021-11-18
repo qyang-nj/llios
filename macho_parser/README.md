@@ -49,55 +49,34 @@ LC_LOAD_DYLIB        cmdsize: 56     /usr/lib/libobjc.A.dylib
 LC_RPATH             cmdsize: 24     build
 ```
 
-## LC_SEGMENT_64
-``` c
-struct segment_command_64 {     /* for 64-bit architectures */
-    uint32_t    cmd;            /* LC_SEGMENT_64 */
-    uint32_t    cmdsize;        /* includes sizeof section_64 structs */
-    char        segname[16];    /* segment name */
-    uint64_t    vmaddr;         /* memory address of this segment */
-    uint64_t    vmsize;         /* memory size of this segment */
-    uint64_t    fileoff;        /* file offset of this segment */
-    uint64_t    filesize;       /* amount to map from the file */
-    vm_prot_t   maxprot;        /* maximum VM protection */
-    vm_prot_t   initprot;       /* initial VM protection */
-    uint32_t    nsects;         /* number of sections in segment */
-    uint32_t    flags;          /* flags */
-};
+## [LC_SEGMENT_64](docs/LC_SEGMENT_64.md)
+
 ```
-A `LC_SEGMENT_64` defines a segment, which basically is a chunk of continuous space that will be `mmap`'d to the memory. Most segments are well-known, like `__TEXT` and `__DATA`. Besides their names, the key different among segments is the memory protection mode (`initprot` and `maxprot`).
-
-### __PAGEZERO
-`__PAGEZERO` segment has zero size on disk but 4GB in VM. Its main purpose is to trap NULL dereference, causing segment fault.
-
-### __TEXT
-`__TEXT` segment is where the executable code is. Thus it's readable (`VM_PROT_READ`) and executable (`VM_PROT_EXECUTE`), but not writable (`VM_PROT_WRITE`).
-
-### __DATA
-`__DATA` segment is readable and writable, which makes it useful for mutable data. Fox example, lay binding (`__la_symbol_ptr`).
-
-#### __la_symbol_ptr
-Lazy Symbol Pointer. It's used for lazy binding during [dynamic linking](../dynamic_linking).
-
-### __DATA_CONST
-`__DATA_CONST` segment stores constant data, some of which needs to be initialized. At the time of `mmap`, `__DATA_CONST`, same as `__DATA`, is readable and writable. Once initialized, `dyld` will change this segment to just readable via `mprotect`. Then it becomes real constant. One of use cases for this is the non-lazy biding (`__got`).
-
-#### __got
-Global Offset Table. See [dynamic linking](../dynamic_linking).
-
-#### __mod_init_func
-This is the section that contains of a list of function pointers, which will [be executed by `dyld`](https://github.com/opensource-apple/dyld/blob/3f928f32597888c5eac6003b9199d972d49857b5/src/ImageLoaderMachO.cpp#L1815~L1847) before `main`. Those are functions with `__attribute__((constructor))` and they will affect the app launch time.
-
-Once we have the function pointer address, we can use `atos` to query the function name.
+$ ./macho_parser --segments sample.out
+LC_SEGMENT_64        cmdsize: 72     segname: __PAGEZERO     file: 0x00000000-0x00000000 0B         vm: 0x000000000-0x100000000 4.00GB    prot: 0/0
+LC_SEGMENT_64        cmdsize: 712    segname: __TEXT         file: 0x00000000-0x00004000 16.00KB    vm: 0x100000000-0x100004000 16.00KB   prot: 5/5
+   0: 0x100003e70-0x100003f27 183B        (__TEXT,__text)                   type: S_REGULAR  offset: 15984
+   1: 0x100003f28-0x100003f40 24B         (__TEXT,__stubs)                  type: S_SYMBOL_STUBS  offset: 16168   reserved1:  6
+   2: 0x100003f40-0x100003f7a 58B         (__TEXT,__stub_helper)            type: S_REGULAR  offset: 16192
+   3: 0x100003f7a-0x100003f9b 33B         (__TEXT,__cstring)                type: S_CSTRING_LITERALS  offset: 16250
+   4: 0x100003f9b-0x100003fa7 12B         (__TEXT,__objc_classname__TEXT)   type: S_CSTRING_LITERALS  offset: 16283
+   5: 0x100003fa7-0x100003fac 5B          (__TEXT,__objc_methname)          type: S_CSTRING_LITERALS  offset: 16295
+   6: 0x100003fac-0x100003fb4 8B          (__TEXT,__objc_methtype)          type: S_CSTRING_LITERALS  offset: 16300
+   7: 0x100003fb4-0x100003ffc 72B         (__TEXT,__unwind_info)            type: S_REGULAR  offset: 16308
+LC_SEGMENT_64        cmdsize: 552    segname: __DATA_CONST   file: 0x00004000-0x00008000 16.00KB    vm: 0x100004000-0x100008000 16.00KB   prot: 3/3
+   8: 0x100004000-0x100004010 16B         (__DATA_CONST,__got)              type: S_NON_LAZY_SYMBOL_POINTERS  offset: 16384   reserved1:  4
+   9: 0x100004010-0x100004018 8B          (__DATA_CONST,__mod_init_func)    type: S_MOD_INIT_FUNC_POINTERS  offset: 16400
+  10: 0x100004018-0x100004038 32B         (__DATA_CONST,__cfstring)         type: S_REGULAR  offset: 16408
+  11: 0x100004038-0x100004040 8B          (__DATA_CONST,__objc_classlist__DATA_CONST)  type: S_REGULAR  offset: 16440
+  12: 0x100004040-0x100004048 8B          (__DATA_CONST,__objc_nlclslist__DATA_CONST)  type: S_REGULAR  offset: 16448
+  13: 0x100004048-0x100004050 8B          (__DATA_CONST,__objc_imageinfo__DATA_CONST)  type: S_REGULAR  offset: 16456
+LC_SEGMENT_64        cmdsize: 392    segname: __DATA         file: 0x00008000-0x0000c000 16.00KB    vm: 0x100008000-0x10000c000 16.00KB   prot: 3/3
+  14: 0x100008000-0x100008020 32B         (__DATA,__la_symbol_ptr)          type: S_LAZY_SYMBOL_POINTERS  offset: 32768   reserved1:  6
+  15: 0x100008020-0x1000080d0 176B        (__DATA,__objc_const)             type: S_REGULAR  offset: 32800
+  16: 0x1000080d0-0x100008120 80B         (__DATA,__objc_data)              type: S_REGULAR  offset: 32976
+  17: 0x100008120-0x100008128 8B          (__DATA,__data)                   type: S_REGULAR  offset: 33056
+LC_SEGMENT_64        cmdsize: 72     segname: __LINKEDIT     file: 0x0000c000-0x0000c728 1.79KB     vm: 0x10000c000-0x100010000 16.00KB   prot: 1/1
 ```
-> xcrun atos -o sample/sample 0x100003f20
-c_constructor_function (in sample) + 0
-```
-
-⚠️ Please note that ObjC's `+load` methods will also be executed before `main`, but uses a different mechanism. See below "+load in ObjC" section.
-
-## __LINKEDIT
-`__LINKEDIT` segment contains data that's used by the linker. Unlike other segments, this one doesn't have sections. Its contents are described by other load commands.
 
 ## LC_DYLD_INFO_ONLY
 ``` c
@@ -127,7 +106,7 @@ This load command is only used by `dyld` at runtime. The information here can in
 ### Export Info
 A deep dive of exported info is at "[exported_symbol](../exported_symbol)".
 
-## LC_SYMTAB
+## [LC_SYMTAB](docs/LC_SYMTAB.md)
 ```
 $ ./macho_parser --command LC_SYMTAB --no-truncate sample.out
 LC_SYMTAB            cmdsize: 24     symoff: 49640   nsyms: 41   (symsize: 656)   stroff: 50336   strsize: 648
@@ -145,11 +124,9 @@ LC_SYMTAB            cmdsize: 24     symoff: 49640   nsyms: 41   (symsize: 656) 
     40  :                   [N_EXT N_UNDF]  dyld_stub_binder  [UNDEFINED_NON_LAZY LIBRARY_ORDINAL(2)]
 ```
 
-The details of `LC_SYMTAB` is [here](docs/LC_SYMTAB.md).
-
-## LC_DYSYMTAB
+## [LC_DYSYMTAB](docs/LC_DYSYMTAB.md)
 ```
-./macho_parser --dysymtab --local --extdef --undef --indirect sample.out
+$ ./macho_parser --dysymtab --local --extdef --undef --indirect sample.out
 LC_DYSYMTAB          cmdsize: 80     nlocalsym: 25  nextdefsym: 7   nundefsym: 9   nindirectsyms: 10
   ilocalsym     : 0           nlocalsym    : 25
   iextdefsym    : 25          nextdefsym   : 7
@@ -186,11 +163,9 @@ LC_DYSYMTAB          cmdsize: 80     nlocalsym: 25  nextdefsym: 7   nundefsym: 9
     ...
 ```
 
-The details of `LC_SYMTAB` is [here](docs/LC_DYSYMTAB.md).
-
-## LC_FUNCTION_STARTS
+## [LC_FUNCTION_STARTS](docs/LC_FUNCTION_STARTS.md)
 ```
-./macho_parser -c LC_FUNCTION_STARTS sample.out
+$ ./macho_parser -c LC_FUNCTION_STARTS sample.out
 LC_FUNCTION_STARTS   cmdsize: 16     dataoff: 0xc1e0 (49632)   datasize: 8
   0x100003e70  _c_constructor_function
   0x100003e80  _c_used_function
@@ -198,7 +173,6 @@ LC_FUNCTION_STARTS   cmdsize: 16     dataoff: 0xc1e0 (49632)   datasize: 8
   0x100003ea0  _main
   0x100003f00  +[SimpleClass load]
 ```
-The details of `LC_FUNCTION_STARTS` is [here](docs/LC_FUNCTION_STARTS.md).
 
 ## LC_MAIN
 ``` c
@@ -253,27 +227,63 @@ struct rpath_command {
 
 The only meaningful thing that `LC_RPATH` has is a filepath. Dynamic linker will use that to replace `@rpath` in the dylib install name to search the dylib file. We can pass multiple `-rpath <path>` to the static linker, and each one results in a `LC_RPATH` is the final binary.
 
-## LC_BUILD_VERSION
+## [LC_BUILD_VERSION](docs/LC_BUILD_VERSION.md)
 ```
 $ ./macho_parser --build-version sample.out
 LC_BUILD_VERSION     cmdsize: 32     platform: MACOS   minos: 12.0.0   sdk: 12.0.0
     tool:  LD   version: 711.0.0
 ```
-The details of `LC_BUILD_VERSION` is [here](docs/LC_BUILD_VERSION.md).
 
-## LC_CODE_SIGNATURE
-> The format of `LC_CODE_SIGNATURE` is described [here](docs/LC_CODE_SIGNATURE.md).
+## [LC_CODE_SIGNATURE](docs/LC_CODE_SIGNATURE.md)
+```
+$ ./macho_parser --code-signature --code-directory --entitlement --blob-wrapper -v SampleApp.app/SampleApp
+LC_CODE_SIGNATURE    cmdsize: 16     dataoff: 0x214e0 (136416)   datasize: 20384
+SuperBlob: magic: CSMAGIC_EMBEDDED_SIGNATURE, length: 7162, count: 5
+  Blob 0: type: 0000000, offset: 52, magic: CSMAGIC_CODEDIRECTORY, length: 1430
+    version      : 0x20400
+    flags        : 0
+    hashOffset   : 342
+    identOffset  : 88
+    nSpecialSlots: 7
+    nCodeSlots   : 34
+    codeLimit    : 136416
+    hashSize     : 32
+    hashType     : SHA256
+    platform     : 0
+    pageSize     : 4096
+    identity     : me.qyang.SampleApp
+    CDHash       : 353b6287288167ddfab1b0dff6d628d774045e941be05d6960662da3d1878ee3
 
-## Other
-### `+load` in ObjC
-The MachO that has Objective-C code will have two sections, `(__DATA_CONST,__objc_classlist)` and `(__DATA_CONST,__objc_nlclslist)`. `__objc_classlist` includes the addresses of all ObjC classes, while `__objc_nlclslist` contains only *non-lazy* classes. [Non-lazy classes are classes that have `+load` method](https://github.com/opensource-apple/objc4/blob/cd5e62a5597ea7a31dccef089317abb3a661c154/runtime/objc-runtime-new.mm#L2806~L2812) and will be loaded at launch time.
+    Slot[ -7] : e7f1d4635ba1128f12935ec8659106d194ef48e907e3750a5263bdfc62b268f0
+    Slot[ -6] : 0000000000000000000000000000000000000000000000000000000000000000
+    Slot[ -5] : 5c605b825812dc227e5162acba5f8af22b61b330c703397b4586f266e4534fe9
+    Slot[ -4] : 0000000000000000000000000000000000000000000000000000000000000000
+    ...
 
-**How `+load` is executed during startup?**
-1. dyld calls [_objc_init](https://github.com/opensource-apple/objc4/blob/cd5e62a5597ea7a31dccef089317abb3a661c154/runtime/objc-os.mm#L803~L831), where [a notification is registered when an image is loaded](https://github.com/opensource-apple/objc4/blob/cd5e62a5597ea7a31dccef089317abb3a661c154/runtime/objc-os.mm#L830).
-2. In the notification callback, [load_images](https://github.com/opensource-apple/objc4/blob/cd5e62a5597ea7a31dccef089317abb3a661c154/runtime/objc-runtime-new.mm#L2157~L2193), it [calls the load methods](https://github.com/opensource-apple/objc4/blob/cd5e62a5597ea7a31dccef089317abb3a661c154/runtime/objc-loadmethod.mm#L306~L365) in that image.
+  Blob 1: type: 0x00002, offset: 1482, magic: CSMAGIC_REQUIREMENTS, length: 188
+    Requirement[0]: offset: 20, length: 168
+      identifier "me.qyang.SampleApp" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: yangq.nj@gmail.com (J5K827UFE4)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */
 
-The difference between `+load` and `__mod_init_func` is that the former guarantees [certain order of execution](https://developer.apple.com/documentation/objectivec/nsobject/1418815-load?language=objc), while the latter doesn't.
+  Blob 2: type: 0x00005, offset: 1670, magic: CSMAGIC_EMBEDDED_ENTITLEMENTS, length: 495
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>application-identifier</key>
+        <string>YK72VSF9J6.me.qyang.SampleApp</string>
+        ...
+</dict>
+</plist>
 
-##### Learn more
-* [Objective-C: What is a lazy class?](https://stackoverflow.com/a/15318325/3056242)
-* [What did Runtime do during the startup of Runtime objc4-779.1 App?](https://programmer.group/what-did-runtime-do-during-the-startup-of-runtime-objc4-779.1-app.html)
+  Blob 3: type: 0x00007, offset: 2165, magic: UNKNOWN(0xfade7172), length: 205
+  Blob 4: type: 0x10000, offset: 2370, magic: CSMAGIC_BLOBWRAPPER, length: 4792
+    PKCS7:
+      type: pkcs7-signedData (1.2.840.113549.1.7.2)
+      d.sign:
+        version: 1
+        md_algs:
+            algorithm: sha256 (2.16.840.1.101.3.4.2.1)
+            parameter: NULL
+   ...
+```
+

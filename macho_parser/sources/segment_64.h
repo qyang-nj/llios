@@ -3,6 +3,6 @@
 
 #include <mach-o/loader.h>
 
-void parse_segment(void *base, struct segment_command_64 *seg_cmd);
+void parse_segment(void *base, struct segment_command_64 *seg_cmd, int segment_index);
 
 #endif /* SEGMENT_64_H */

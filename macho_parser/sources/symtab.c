@@ -75,6 +75,10 @@ char *lookup_symbol_by_address(uint64_t address, void *base, struct symtab_comma
     return NULL;
 }
 
+bool is_symtab_load_command(struct load_command *lcmd) {
+    return lcmd->cmd == LC_SYMTAB;
+}
+
 static void format_n_type(uint8_t n_type, char *formatted) {
     strcpy(formatted, "");
 

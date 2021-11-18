@@ -13,6 +13,8 @@ static struct option longopts[] = {
     {"command", required_argument, NULL, 'c'},
     {"verbose", no_argument, NULL, 'v'},
     {"no-truncate", no_argument, &(args.no_truncate), 1},
+    {"segments", no_argument, &(args.show_segments), 1},
+    {"section", required_argument, NULL, 's'},
     {"build-version", no_argument, &(args.show_build_version), 1},
     {"code-signature", no_argument, &(args.show_code_signature), 1},
     {"cs", no_argument, &(args.show_code_signature), 1},
@@ -36,6 +38,8 @@ void usage() {
     puts("        --no-truncate                    do not truncate even the content is long");
     puts("    -h, --help                           show this help message");
     puts("");
+    puts("    --segments                           equivalent to '--comand LC_SEGMENT_64");
+    puts("    --section INDEX                      show the section at INDEX");
     puts("    --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*'");
     puts("");
     puts("Code Signature Options:");
@@ -54,7 +58,7 @@ void usage() {
 
 void parse_arguments(int argc, char **argv) {
     int opt = 0;
-    while ((opt = getopt_long(argc, argv, "c:shv", longopts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:s:hv", longopts, NULL)) != -1) {
         switch(opt) {
             case 'c':
                 args.commands[args.command_count++] = string_to_load_command(optarg);
@@ -65,6 +69,9 @@ void parse_arguments(int argc, char **argv) {
             case 'h':
                 usage();
                 exit(0);
+            case 's':
+                args.sections[args.section_count++] = atoi(optarg);
+                break;
             case 0:
                 // all long options that don't have short options
                 break;
@@ -79,6 +86,14 @@ void parse_arguments(int argc, char **argv) {
     } else {
         puts("Error: missing a macho file.");
         exit(1);
+    }
+
+    if (args.show_segments || args.section_count > 0) {
+        args.commands[args.command_count++] = LC_SEGMENT_64;
+
+        if (args.section_count > 0) {
+            args.verbosity += 1;
+        }
     }
 
     if (args.show_build_version) {
@@ -142,6 +157,10 @@ unsigned int string_to_load_command(char *cmd_str) {
     exit(1);
 }
 
+bool show_header() {
+    return args.command_count == 0;
+}
+
 bool show_command(unsigned int cmd) {
     if (args.command_count == 0) {
         // if no command is specified, show all commands.
@@ -158,6 +177,18 @@ bool show_command(unsigned int cmd) {
     return show;
 }
 
-bool show_header() {
-    return args.command_count == 0;
+bool show_section(int section) {
+    if (args.section_count == 0) {
+        // if no command is specified, show all sections
+        return true;
+    }
+
+    bool show = false;
+    for (int i = 0; i < args.section_count; ++i) {
+        if (args.sections[i] == section) {
+            show = true;
+            break;
+        }
+    }
+    return show;
 }
