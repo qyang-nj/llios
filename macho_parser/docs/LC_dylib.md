@@ -25,17 +25,29 @@ An install name is actually a filepath embedded within a dynamic library. It tel
 
 The install name is a property of the dylib itself, so all the binaries linked against the same dylib contain the same search path. For example, `libswiftCore.dylib` has an install name "/usr/lib/swift/libswiftCore.dylib". When a binary links against `libswiftCore.dylib`, the linker will add `LC_LOAD_DYLIB` command, whose the content is "/usr/lib/swift/libswiftCore.dylib", to the binary. At runtime, the dynamic linker will look for `libswiftCore.dylib` at "/usr/lib/swift/".
 
-The absolute path works for pre-installed system dylibs, but it won't work with a 3rd party dylib. One way to work around this is to use `@rpath`, which let the dylib user to customize the search path (see `LC_RPATH` section below).
+The absolute path works for pre-installed system dylibs, but does not for a 3rd party one. They Mach-O way to work around this is to use some magic tokens.
+* `@executable_path`: a placeholder for the executable path.
+* `@loader_path`: a placeholder for the path of whatever causes the dylib to load. It can be an executable or a dylib.
+* `@rpath`: a placeholder for the most flexible search path. (see `LC_RPATH` section below)
 
 ##### Learn more
 [Linking and Install Names](https://www.mikeash.com/pyblog/friday-qa-2009-11-06-linking-and-install-names.html)
 
 ## LC_LOAD_DYLIB / LC_LOAD_WEAK_DYLIB
-Each `LC_LOAD_DYLIB` and `LC_LOAD_WEAK_DYLIB` stores an install name of a dylib which is used by the binary. The binary can be an executable or another dylib.
+Each `LC_LOAD_DYLIB` stores an install name of a dylib which is required by the binary. The binary can be an executable or another dylib. If the dylib cannot be found at runtime, the app will crash on launch.
 
-`LC_LOAD_DYLIB` indicates the dylib is required. If the dylib cannot be found at runtime, the app will crash on launch. Conversely, `LC_LOAD_WEAK_DYLIB` indicates the dylib is optional. The app should handle the case when a weak dylib is missing.
+## LC_LOAD_WEAK_DYLIB
+Very similar to `LC_LOAD_DYLIB`, the only difference is that the dylib is weak (a.k.a optional). The app should handle the case when a weak dylib is missing.
 
 ## LC_REEXPORT_DYLIB
+This is used for umbrella or facade library, which is not common in iOS app but is extensively used in the system libraries. For instance, `Foundation` re-exports `libobjc` and `CoreFoundation`. As an app binary, it only need to link against `Foundation` and is able to use APIs from `libobjc` and `CoreFoundation` for free.
+
+```
+$ ./macho_parser Foundation.framework/Foundation --dylibs
+LC_REEXPORT_DYLIB    cmdsize: 56     /usr/lib/libobjc.A.dylib
+LC_REEXPORT_DYLIB    cmdsize: 96     /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation
+...
+```
 
 ## LC_RPATH
 ``` c
@@ -46,5 +58,7 @@ struct rpath_command {
 };
 ```
 
-The only meaningful thing that `LC_RPATH` has is a filepath. Dynamic linker will use that to replace `@rpath` in the dylib install name to search the dylib file. We can pass multiple `-rpath <path>` to the static linker, and each one results in a `LC_RPATH` is the final binary.
+The most important field of `LC_RPATH` is the file path, which is used to replace `@rpath` in the dylib install name. We can pass multiple `-rpath <path>` to the static linker, and each one results in a `LC_RPATH` load command in the final binary. For example, the `foo.dylib` has install name "@rpath/foo.dylib" and the binary has two rpaths,  "/path/to/a/" and "/path/to/b/". At launch time, `dyld` looks for `foo.dylib` at "/path/to/a/" first, then "/path/to/b/".
+
+Using `@rpath` and `LC_RPATH` together enables the user to put the dylibs virtually anywhere.
 
