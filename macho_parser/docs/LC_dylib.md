@@ -1,5 +1,5 @@
 # LC_*_DYLIB and LC_RPATH
-There are a few load commands that are used to support dynamic linking. Those are commands with suffix `DYLIB`, as well as command `LC_RPATH`.
+There are several load commands that are used to support dynamic linking. Those are commands with suffix `DYLIB`, as well as command `LC_RPATH`.
 
 All `LC_*_DYLIB` commands uses the same `struct dylib_command` and `struct dylib`.
 ``` c
@@ -21,7 +21,7 @@ struct dylib {
 `LC_ID_DYLIB` only exists in dynamic libraries (.dylib), whose mach-o type is `MH_DYLIB`. This command stores the install name of the dylib.
 
 ### Install name
-An install name is actually a filepath embedded within a dynamic library. It tells the dynamic linker (`dyld`) where that library can be found at runtime. To specify the install name, we can pass `-install_name <path>` to the static linker (`ld`) at build time. For an existing library, we can use `install_name_tool` to change it.
+An install name is actually a filepath embedded in a dynamic library. It tells the dynamic linker (`dyld`) where that library can be found at runtime. To specify the install name, we can pass `-install_name <path>` to the static linker (`ld`) at build time. For an existing library, we can use `install_name_tool` to change it.
 
 The install name is a property of the dylib itself, so all the binaries linked against the same dylib contain the same search path. For example, `libswiftCore.dylib` has an install name "/usr/lib/swift/libswiftCore.dylib". When a binary links against `libswiftCore.dylib`, the linker will add `LC_LOAD_DYLIB` command, whose the content is "/usr/lib/swift/libswiftCore.dylib", to the binary. At runtime, the dynamic linker will look for `libswiftCore.dylib` at "/usr/lib/swift/".
 
