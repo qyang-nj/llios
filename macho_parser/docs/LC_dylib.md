@@ -23,7 +23,7 @@ struct dylib {
 ### Install name
 An install name is actually a filepath embedded in a dynamic library. It tells the dynamic linker (`dyld`) where that library can be found at runtime. To specify the install name, we can pass `-install_name <path>` to the static linker (`ld`) at build time. For an existing library, we can use `install_name_tool` to change it.
 
-The install name is a property of the dylib itself, so all the binaries linked against the same dylib contain the same search path. For example, `libswiftCore.dylib` has an install name "/usr/lib/swift/libswiftCore.dylib". When a binary links against `libswiftCore.dylib`, the linker will add `LC_LOAD_DYLIB` command, whose the content is "/usr/lib/swift/libswiftCore.dylib", to the binary. At runtime, the dynamic linker will look for `libswiftCore.dylib` at "/usr/lib/swift/".
+**The install name is a property of the dylib itself**, so all the binaries linked against the same dylib contain the same search path. For example, `libswiftCore.dylib` has an install name "/usr/lib/swift/libswiftCore.dylib". When a binary links against `libswiftCore.dylib`, the linker will add `LC_LOAD_DYLIB` command, whose the content is "/usr/lib/swift/libswiftCore.dylib", to the binary. At runtime, the dynamic linker will look for `libswiftCore.dylib` at "/usr/lib/swift/".
 
 The absolute path works for pre-installed system dylibs, but does not for a 3rd party one. They Mach-O way to work around this is to use some magic tokens.
 * `@executable_path`: a placeholder for the executable path.
@@ -33,14 +33,14 @@ The absolute path works for pre-installed system dylibs, but does not for a 3rd 
 ##### Learn more
 [Linking and Install Names](https://www.mikeash.com/pyblog/friday-qa-2009-11-06-linking-and-install-names.html)
 
-## LC_LOAD_DYLIB / LC_LOAD_WEAK_DYLIB
+## LC_LOAD_DYLIB
 Each `LC_LOAD_DYLIB` stores an install name of a dylib which is required by the binary. The binary can be an executable or another dylib. If the dylib cannot be found at runtime, the app will crash on launch.
 
 ## LC_LOAD_WEAK_DYLIB
 Very similar to `LC_LOAD_DYLIB`, the only difference is that the dylib is weak (a.k.a optional). The app should handle the case when a weak dylib is missing.
 
 ## LC_REEXPORT_DYLIB
-This is used for umbrella or facade library, which is not common in iOS app but is extensively used in the system libraries. For instance, `Foundation` re-exports `libobjc` and `CoreFoundation`. As an app binary, it only need to link against `Foundation` and is able to use APIs from `libobjc` and `CoreFoundation` for free.
+This is used for umbrella or facade library, which is not common in iOS app but is extensively used in the system libraries. For instance, `Foundation` re-exports `libobjc` and `CoreFoundation`. As an app binary, it only needs to link against `Foundation` and is able to use APIs from `libobjc` and `CoreFoundation` for free.
 
 ```
 $ ./macho_parser Foundation.framework/Foundation --dylibs
