@@ -6,6 +6,7 @@ Random stuff about lower level iOS
     * [LC_SEGMENT_64](./macho_parser/docs/LC_SEGMENT_64.md) - segments and sections
     * [LC_SYMTAB](./macho_parser/docs/LC_SYMTAB.md) - symbol table
     * [LC_DYSYMTAB](./macho_parser/docs/LC_DYSYMTAB.md) - dynamic symbol table
+    * [LC_DYLD_INFO(_ONLY)](./macho_parser/docs/LC_DYLD_INFO.md) - information for dyld
     * [LC_BUILD_VERSION](./macho_parser/docs/LC_BUILD_VERSION.md) - platform requirements
     * [LC_FUNCTION_STARTS](./macho_parser/docs/LC_FUNCTION_STARTS.md) - function addresses
     * [LC_*_DYLIB and LC_RPATH](./macho_parser/docs/LC_dylib.md) - dylib related load commands

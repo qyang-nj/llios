@@ -2,6 +2,7 @@
 #define LOAD_COMMAND_H
 
 #include <stdbool.h>
+#include <mach-o/loader.h>
 
 #ifdef __cplusplus
 std::vector<struct load_command *> parseLoadCommands(uint8_t *Base, int offset, uint32_t ncmds);

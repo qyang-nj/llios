@@ -17,6 +17,7 @@ static struct option longopts[] = {
     {"section", required_argument, NULL, 's'},
     {"build-version", no_argument, &(args.show_build_version), 1},
     {"dylibs", no_argument, &(args.show_dylibs), 1},
+
     {"code-signature", no_argument, &(args.show_code_signature), 1},
     {"cs", no_argument, &(args.show_code_signature), 1},
     {"code-directory", no_argument, &(args.show_code_direcotry), 1},
@@ -24,11 +25,20 @@ static struct option longopts[] = {
     {"entitlement", no_argument, &(args.show_entitlement), 1},
     {"ent", no_argument, &(args.show_entitlement), 1},
     {"blob-wrapper", no_argument, &(args.show_blob_wrapper), 1},
+
     {"dysymtab", no_argument, &(args.show_dysymtab), 1},
     {"local", no_argument, &(args.show_local), 1},
     {"extdef", no_argument, &(args.show_extdef), 1},
     {"undef", no_argument, &(args.show_undef), 1},
     {"indirect", no_argument, &(args.show_indirect), 1},
+
+    {"dyld-info", no_argument, &(args.show_dyld_info), 1},
+    {"rebase", no_argument, &(args.show_rebase), 1},
+    {"bind", no_argument, &(args.show_bind), 1},
+    {"weak-bind", no_argument, &(args.show_weak_bind), 1},
+    {"lazy-bind", no_argument, &(args.show_lazy_bind), 1},
+    {"export", no_argument, &(args.show_export), 1},
+    {"opcode", no_argument, &(args.show_opcode), 1},
     {NULL, 0, NULL, 0}
 };
 
@@ -56,6 +66,15 @@ void usage() {
     puts("    --extdef                             show externally (public) defined symbols");
     puts("    --undef                              show undefined symbols");
     puts("    --indirect                           show indirect symbol table");
+    puts("");
+    puts("Dyld Info Options:");
+    puts("    --dyld-info                          equivalent to '--command LC_DYLD_INFO(_ONLY)'");
+    puts("    --rebase                             show rebase info");
+    puts("    --bind                               show binding info");
+    puts("    --weak-bind                          show weak binding info");
+    puts("    --lazy-bind                          show lazy binding info");
+    puts("    --export                             show export trie");
+    puts("    --opcode                             show the raw opcode instead of a table");
 }
 
 void parse_arguments(int argc, char **argv) {
@@ -119,6 +138,11 @@ void parse_arguments(int argc, char **argv) {
 
     if (args.show_dysymtab || args.show_local || args. show_extdef || args.show_undef || args.show_indirect) {
         args.commands[args.command_count++] = LC_DYSYMTAB;
+    }
+
+    if (args.show_dyld_info || args.show_rebase || args.show_bind || args.show_weak_bind || args.show_lazy_bind || args.show_export) {
+        args.commands[args.command_count++] = LC_DYLD_INFO;
+        args.commands[args.command_count++] = LC_DYLD_INFO_ONLY;
     }
 
     if (args.command_count > 0) {
