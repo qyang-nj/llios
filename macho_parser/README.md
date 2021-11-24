@@ -12,6 +12,9 @@ Usage: macho_parser [options] macho_file
         --no-truncate                    do not truncate even the content is long
     -h, --help                           show this help message
 
+    --segments                           equivalent to '--comand LC_SEGMENT_64
+    --section INDEX                      show the section at INDEX
+    --dylibs                             show dylib related commands
     --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*'
 
 Code Signature Options:
@@ -26,6 +29,7 @@ Dynamic Symbol Table Options:
     --extdef                             show externally (public) defined symbols
     --undef                              show undefined symbols
     --indirect                           show indirect symbol table
+
 ```
 
 #### Sample
@@ -190,42 +194,21 @@ struct entry_point_command {
 ##### Learn more
 [Auto Linking on iOS & macOS](https://milen.me/writings/auto-linking-on-ios-and-macos/)
 
-## LC_ID_DYLIB / LC_LOAD_DYLIB / LC_LOAD_WEAK_DYLIB
-``` c
-struct dylib_command {
-    uint32_t     cmd;       /* LC_ID_DYLIB, LC_LOAD_{,WEAK_}DYLIB, LC_REEXPORT_DYLIB */
-    uint32_t     cmdsize;   /* includes pathname string */
-    struct dylib dylib;     /* the library identification */
-};
-
-struct dylib {
-    union lc_str  name;             /* library's path name */
-    uint32_t timestamp;             /* library's build time stamp */
-    uint32_t current_version;       /* library's current version number */
-    uint32_t compatibility_version; /* library's compatibility vers number*/
-};
+## [LC_*_DYLIB](docs/LC_dylib.md)
+```
+$ ./macho_parser --dylibs sample.out
+LC_LOAD_DYLIB        cmdsize: 48     @rpath/my_dylib.dylib
+LC_LOAD_DYLIB        cmdsize: 56     /usr/lib/libSystem.B.dylib
+LC_LOAD_DYLIB        cmdsize: 104    /System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+LC_LOAD_DYLIB        cmdsize: 96     /System/Library/Frameworks/Foundation.framework/Versions/C/Foundation
+LC_LOAD_DYLIB        cmdsize: 56     /usr/lib/libobjc.A.dylib
 ```
 
-All these `LC_*_DYLIB` commands use the same `dylib_command` struct. `LC_ID_DYLIB` exists in the dynamic library (`MH_DYLIB`), and `LC_LOAD_DYLIB` and `LC_LOAD_WEAK_DYLIB` are in the binary (could be any macho-o type) that links dynamic libraries.
-
-### Install name
-The most important field of `struct dylib` is `name`, library's path name, aka, install name. An install name is just a filepath embedded within a dynamic library which tells the linker where that library can be found at runtime. To specify the install name, we pass `-install_name <path>` to the static linker at build time. For an existing library, we can use `install_name_tool` to change it.
-
-It's worth noting that install name is a property of the dylib itself, so all the binaries linked against the same dylib contain the same install name. One way to work around this is to use `@rpath`, which let the dylib user to customize the search path (see `LC_RPATH` section below).
-
-##### Learn more
-[Linking and Install Names](https://www.mikeash.com/pyblog/friday-qa-2009-11-06-linking-and-install-names.html)
-
-## LC_RPATH
-``` c
-struct rpath_command {
-    uint32_t	 cmd;		/* LC_RPATH */
-    uint32_t	 cmdsize;	/* includes string */
-    union lc_str path;		/* path to add to run path */
-};
+## [LC_RPATH](docs/LC_dylib.md)
 ```
-
-The only meaningful thing that `LC_RPATH` has is a filepath. Dynamic linker will use that to replace `@rpath` in the dylib install name to search the dylib file. We can pass multiple `-rpath <path>` to the static linker, and each one results in a `LC_RPATH` is the final binary.
+$ ./macho_parser --command LC_RPATH sample.out
+LC_RPATH             cmdsize: 24     build
+```
 
 ## [LC_BUILD_VERSION](docs/LC_BUILD_VERSION.md)
 ```

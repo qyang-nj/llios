@@ -16,6 +16,7 @@ struct argument {
     int show_segments;
     int section_count;
     int sections[12];
+    int show_dylibs;
 
     // code signature options
     int show_code_signature;
