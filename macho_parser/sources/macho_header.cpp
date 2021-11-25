@@ -4,17 +4,19 @@
 #include <mach-o/fat.h>
 #include <mach-o/swap.h>
 
+extern "C" {
 #include "util.h"
 #include "argument.h"
+}
 
 #include "macho_header.h"
 
 #define NEEDS_SWAP(magic) (magic == FAT_CIGAM || magic == FAT_CIGAM_64 || magic == MH_CIGAM || magic == MH_CIGAM_64)
 
-static uint32_t read_magic(void *base, int offset);
-static struct fat_header read_fat_header(void *base, bool needs_swap);
-static struct fat_arch *read_fat_archs(void *base, struct fat_header header, bool needs_swap);
-static struct mach_header_64 read_mach_header(void *base, uint64_t offset);
+static uint32_t read_magic(uint8_t *base, int offset);
+static struct fat_header read_fat_header(uint8_t *base, bool needs_swap);
+static struct fat_arch *read_fat_archs(uint8_t *base, struct fat_header header, bool needs_swap);
+static struct mach_header_64 read_mach_header(uint8_t *base, uint64_t offset);
 
 static void print_fat_header(uint32_t magic, struct fat_header header);
 static void print_fat_archs(struct fat_arch *archs, int nfat_arch);
@@ -24,7 +26,7 @@ static void format_magic(uint32_t magic, char *name);
 static void format_cpu_type(cpu_type_t cputype, char *name);
 static void format_file_type(uint32_t filetype, char *name);
 
-struct mach_header_64 *parse_mach_header(void *base) {
+struct mach_header_64 *parse_mach_header(uint8_t *base) {
     uint32_t magic = read_magic(base, 0);
     int mach_header_offset = 0;
 
@@ -64,12 +66,12 @@ struct mach_header_64 *parse_mach_header(void *base) {
     return (struct mach_header_64 *)(base + mach_header_offset);
 }
 
-static uint32_t read_magic(void *filebase, int offset) {
+static uint32_t read_magic(uint8_t *filebase, int offset) {
     uint32_t magic = *(uint32_t *)(filebase + offset);
     return magic;
 }
 
-static struct fat_header read_fat_header(void *base, bool needs_swap) {
+static struct fat_header read_fat_header(uint8_t *base, bool needs_swap) {
     struct fat_header header = *(struct fat_header *)base;
     if (needs_swap) {
         swap_fat_header(&header, NX_UnknownByteOrder);
@@ -77,9 +79,9 @@ static struct fat_header read_fat_header(void *base, bool needs_swap) {
     return header;
 }
 
-static struct fat_arch *read_fat_archs(void *base, struct fat_header header, bool needs_swap) {
+static struct fat_arch *read_fat_archs(uint8_t *base, struct fat_header header, bool needs_swap) {
     size_t archs_size = sizeof(struct fat_arch) * header.nfat_arch;
-    struct fat_arch *archs = malloc(archs_size);
+    struct fat_arch *archs = (struct fat_arch *)malloc(archs_size);
     memcpy(archs, base + sizeof(header), archs_size);
 
     if (needs_swap) {
@@ -88,7 +90,7 @@ static struct fat_arch *read_fat_archs(void *base, struct fat_header header, boo
     return archs;
 }
 
-static struct mach_header_64 read_mach_header(void *base, uint64_t offset) {
+static struct mach_header_64 read_mach_header(uint8_t *base, uint64_t offset) {
     struct mach_header_64 header = *(struct mach_header_64 *)(base + offset);
     return header;
 }

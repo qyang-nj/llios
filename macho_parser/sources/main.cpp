@@ -7,6 +7,9 @@
 #include <sys/stat.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#include <vector>
+
+extern "C" {
 #include "argument.h"
 #include "util.h"
 #include "macho_header.h"
@@ -17,14 +20,21 @@
 #include "dylib.h"
 #include "linkedit_data.h"
 #include "build_version.h"
+}
 
-void parse_load_commands(void *base, int offset, uint32_t);
+#include "macho_binary.h"
+
+static std::vector<struct load_command *> parse_load_commands(uint8_t *base, int offset, uint32_t ncmds);
+static void print_load_commands(uint8_t *base, std::vector<struct load_command *> all_load_commands);
+
 void parse_dylinker(void *base, struct dylinker_command *);
 void parse_entry_point(void *base, struct entry_point_command *);
 void parse_linker_option(void *base, struct linker_option_command *);
 void parse_rpath(void *base, struct rpath_command *);
 void parse_uuid(void *base, struct uuid_command *cmd);
 void parse_source_version(void *base, struct source_version_command *cmd);
+
+struct MachoBinary machoBinary;
 
 int main(int argc, char **argv) {
     parse_arguments(argc, argv);
@@ -35,27 +45,43 @@ int main(int argc, char **argv) {
     fd = open(args.file_name, O_RDONLY);
     fstat(fd, &sb);
 
-    void *base = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (base == MAP_FAILED) {
+    uint8_t *file_base = (uint8_t *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (file_base == MAP_FAILED) {
         fprintf(stderr, "Cannot read file %s\n", args.file_name);
         return 1;
     }
 
-    struct mach_header_64 *mach_header = parse_mach_header(base);
-    parse_load_commands((void *)mach_header, sizeof(struct mach_header_64), mach_header->ncmds);
+    struct mach_header_64 *mach_header = parse_mach_header(file_base);
+    // the base address of a specific arch slice
+    uint8_t *base = (uint8_t *)mach_header;
+    static std::vector<struct load_command *> all_load_commands = parse_load_commands(base, sizeof(struct mach_header_64), mach_header->ncmds);
+
+    machoBinary.base = base;
+    machoBinary.all_load_commands = all_load_commands;
+    // std::copy_if(all_load_commands.begin(), all_load_commands.end(), std::back_inserter(machoBinary.segment_commands), [](struct load_command * lcmd){return lcmd->cmd == LC_SEGMENT_64;} );
+
+    print_load_commands(base, all_load_commands);
 
     munmap(base, sb.st_size);
     return 0;
 }
 
-void parse_load_commands(void *base, int offset, uint32_t ncmds) {
+static std::vector<struct load_command *> parse_load_commands(uint8_t *base, int offset, uint32_t ncmds) {
+    std::vector<struct load_command *> all_load_commands;
+    for (int i = 0; i < ncmds; ++i) {
+        struct load_command *lcmd = (struct load_command *)(base + offset);
+        all_load_commands.push_back(lcmd);
+        offset += lcmd->cmdsize;
+    }
+    return all_load_commands;
+}
+
+static void print_load_commands(uint8_t *base, std::vector<struct load_command *> all_load_commands) {
     int section_index = 0;
 
-    for (int i = 0; i < ncmds; ++i) {
-        struct load_command *lcmd = base + offset;
+    for (struct load_command *lcmd : all_load_commands) {
 
         if (!show_command(lcmd->cmd)) {
-            offset += lcmd->cmdsize;
             continue;
         }
 
@@ -119,8 +145,6 @@ void parse_load_commands(void *base, int offset, uint32_t ncmds) {
             default:
                 printf("LC_(%x)\n", lcmd->cmd);
         }
-
-        offset += lcmd->cmdsize;
     }
 }
 
@@ -136,7 +160,7 @@ void parse_entry_point(void *base, struct entry_point_command *entry_point_cmd) 
 }
 
 void parse_linker_option(void *base, struct linker_option_command *cmd) {
-    char *options = calloc(1, cmd->cmdsize);
+    char *options = (char *)calloc(1, cmd->cmdsize);
     memcpy(options, (char *)cmd + sizeof(struct linker_option_command), cmd->cmdsize -  sizeof(struct linker_option_command));
 
     char *opt = options;
