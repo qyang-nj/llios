@@ -7,9 +7,11 @@
 #include <sys/stat.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#include <vector>
+
+extern "C" {
 #include "argument.h"
 #include "util.h"
-#include "macho_header.h"
 #include "segment_64.h"
 #include "symtab.h"
 #include "dysymtab.h"
@@ -17,14 +19,22 @@
 #include "dylib.h"
 #include "linkedit_data.h"
 #include "build_version.h"
+}
 
-void parse_load_commands(void *base, int offset, uint32_t);
+#include "macho_header.h"
+#include "macho_binary.h"
+#include "load_command.h"
+
+static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
+
 void parse_dylinker(void *base, struct dylinker_command *);
 void parse_entry_point(void *base, struct entry_point_command *);
 void parse_linker_option(void *base, struct linker_option_command *);
 void parse_rpath(void *base, struct rpath_command *);
 void parse_uuid(void *base, struct uuid_command *cmd);
 void parse_source_version(void *base, struct source_version_command *cmd);
+
+struct MachoBinary machoBinary;
 
 int main(int argc, char **argv) {
     parse_arguments(argc, argv);
@@ -35,34 +45,46 @@ int main(int argc, char **argv) {
     fd = open(args.file_name, O_RDONLY);
     fstat(fd, &sb);
 
-    void *base = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (base == MAP_FAILED) {
+    uint8_t *fileBase = (uint8_t *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (fileBase == MAP_FAILED) {
         fprintf(stderr, "Cannot read file %s\n", args.file_name);
         return 1;
     }
 
-    struct mach_header_64 *mach_header = parse_mach_header(base);
-    parse_load_commands((void *)mach_header, sizeof(struct mach_header_64), mach_header->ncmds);
+    struct mach_header_64 *machHeader = parseMachHeader(fileBase);
+    // the base address of a specific arch slice
+    uint8_t *base = (uint8_t *)machHeader;
+    static std::vector<struct load_command *> allLoadCommands = parseLoadCommands(base, sizeof(struct mach_header_64), machHeader->ncmds);
+
+    machoBinary.base = base;
+    machoBinary.allLoadCommands = allLoadCommands;
+
+    // filter segment commands
+    std::vector<struct load_command *> segmentCommands;
+    std::copy_if(allLoadCommands.begin(), allLoadCommands.end(), std::back_inserter(segmentCommands),
+        [](struct load_command * lcmd){ return lcmd->cmd == LC_SEGMENT_64; });
+    std::transform(segmentCommands.begin(), segmentCommands.end(), std::back_inserter(machoBinary.segmentCommands),
+        [](struct load_command * lcmd){ return (struct segment_command_64 *)lcmd; });
+
+    printLoadCommands(base, allLoadCommands);
 
     munmap(base, sb.st_size);
     return 0;
 }
 
-void parse_load_commands(void *base, int offset, uint32_t ncmds) {
-    int section_index = 0;
+static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands) {
+    int sectionIndex = 0;
 
-    for (int i = 0; i < ncmds; ++i) {
-        struct load_command *lcmd = base + offset;
+    for (struct load_command *lcmd : allLoadCommands) {
 
         if (!show_command(lcmd->cmd)) {
-            offset += lcmd->cmdsize;
             continue;
         }
 
         switch (lcmd->cmd) {
             case LC_SEGMENT_64:
-                parse_segment(base, (struct segment_command_64 *)lcmd, section_index);
-                section_index += ((struct segment_command_64 *)lcmd)->nsects;
+                parse_segment(base, (struct segment_command_64 *)lcmd, sectionIndex);
+                sectionIndex += ((struct segment_command_64 *)lcmd)->nsects;
                 break;
             case LC_SYMTAB:
                 parse_symbol_table(base, (struct symtab_command *)lcmd);
@@ -119,8 +141,6 @@ void parse_load_commands(void *base, int offset, uint32_t ncmds) {
             default:
                 printf("LC_(%x)\n", lcmd->cmd);
         }
-
-        offset += lcmd->cmdsize;
     }
 }
 
@@ -136,7 +156,7 @@ void parse_entry_point(void *base, struct entry_point_command *entry_point_cmd) 
 }
 
 void parse_linker_option(void *base, struct linker_option_command *cmd) {
-    char *options = calloc(1, cmd->cmdsize);
+    char *options = (char *)calloc(1, cmd->cmdsize);
     memcpy(options, (char *)cmd + sizeof(struct linker_option_command), cmd->cmdsize -  sizeof(struct linker_option_command));
 
     char *opt = options;

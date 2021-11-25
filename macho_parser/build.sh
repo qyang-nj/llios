@@ -21,12 +21,24 @@ done
 CFLAGS=""
 
 if [ "$OPT_OPENSSL" == 1 ]; then
-    CFLAGS="$CFLAGS -lssl -lcrypto -L/usr/local/opt/openssl/lib -D OPENSSL"
+    LDFLAGS="$LDFLAGS -lssl -lcrypto -L/usr/local/opt/openssl/lib -D OPENSSL"
 fi
 
 if [ "$OPT_DEBUG" == 1 ]; then
     CFLAGS="$CFLAGS -g"
 fi
 
-SRCS=$(ls sources/*.c)
-xcrun clang -o macho_parser -framework CoreFoundation -framework Security $CFLAGS $SRCS
+
+
+mkdir -p build/
+rm -f build/*.o
+
+for src in sources/*.cpp; do
+    xcrun clang++ --std=c++14 -c -o "build/$(basename $src).o" $CFLAGS $src
+done
+
+for src in sources/*.c; do
+    xcrun clang -c -o "build/$(basename $src).o" $CFLAGS $src
+done
+
+xcrun clang++ --std=c++14 -o macho_parser -framework CoreFoundation -framework Security $LDFLAGS build/*.o
