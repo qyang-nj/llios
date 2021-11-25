@@ -23,9 +23,9 @@ extern "C" {
 
 #include "macho_header.h"
 #include "macho_binary.h"
+#include "load_command.h"
 
-static std::vector<struct load_command *> parse_load_commands(uint8_t *base, int offset, uint32_t ncmds);
-static void print_load_commands(uint8_t *base, std::vector<struct load_command *> all_load_commands);
+static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
 
 void parse_dylinker(void *base, struct dylinker_command *);
 void parse_entry_point(void *base, struct entry_point_command *);
@@ -45,47 +45,37 @@ int main(int argc, char **argv) {
     fd = open(args.file_name, O_RDONLY);
     fstat(fd, &sb);
 
-    uint8_t *file_base = (uint8_t *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (file_base == MAP_FAILED) {
+    uint8_t *fileBase = (uint8_t *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (fileBase == MAP_FAILED) {
         fprintf(stderr, "Cannot read file %s\n", args.file_name);
         return 1;
     }
 
-    struct mach_header_64 *mach_header = parse_mach_header(file_base);
+    struct mach_header_64 *machHeader = parseMachHeader(fileBase);
     // the base address of a specific arch slice
-    uint8_t *base = (uint8_t *)mach_header;
-    static std::vector<struct load_command *> all_load_commands = parse_load_commands(base, sizeof(struct mach_header_64), mach_header->ncmds);
+    uint8_t *base = (uint8_t *)machHeader;
+    static std::vector<struct load_command *> allLoadCommands = parseLoadCommands(base, sizeof(struct mach_header_64), machHeader->ncmds);
 
     machoBinary.base = base;
-    machoBinary.all_load_commands = all_load_commands;
+    machoBinary.allLoadCommands = allLoadCommands;
 
     // filter segment commands
-    std::vector<struct load_command *> segment_commands;
-    std::copy_if(all_load_commands.begin(), all_load_commands.end(), std::back_inserter(segment_commands),
+    std::vector<struct load_command *> segmentCommands;
+    std::copy_if(allLoadCommands.begin(), allLoadCommands.end(), std::back_inserter(segmentCommands),
         [](struct load_command * lcmd){ return lcmd->cmd == LC_SEGMENT_64; });
-    std::transform(all_load_commands.begin(), all_load_commands.end(), std::back_inserter(machoBinary.segment_commands),
+    std::transform(segmentCommands.begin(), segmentCommands.end(), std::back_inserter(machoBinary.segmentCommands),
         [](struct load_command * lcmd){ return (struct segment_command_64 *)lcmd; });
 
-    print_load_commands(base, all_load_commands);
+    printLoadCommands(base, allLoadCommands);
 
     munmap(base, sb.st_size);
     return 0;
 }
 
-static std::vector<struct load_command *> parse_load_commands(uint8_t *base, int offset, uint32_t ncmds) {
-    std::vector<struct load_command *> all_load_commands;
-    for (int i = 0; i < ncmds; ++i) {
-        struct load_command *lcmd = (struct load_command *)(base + offset);
-        all_load_commands.push_back(lcmd);
-        offset += lcmd->cmdsize;
-    }
-    return all_load_commands;
-}
+static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands) {
+    int sectionIndex = 0;
 
-static void print_load_commands(uint8_t *base, std::vector<struct load_command *> all_load_commands) {
-    int section_index = 0;
-
-    for (struct load_command *lcmd : all_load_commands) {
+    for (struct load_command *lcmd : allLoadCommands) {
 
         if (!show_command(lcmd->cmd)) {
             continue;
@@ -93,8 +83,8 @@ static void print_load_commands(uint8_t *base, std::vector<struct load_command *
 
         switch (lcmd->cmd) {
             case LC_SEGMENT_64:
-                parse_segment(base, (struct segment_command_64 *)lcmd, section_index);
-                section_index += ((struct segment_command_64 *)lcmd)->nsects;
+                parse_segment(base, (struct segment_command_64 *)lcmd, sectionIndex);
+                sectionIndex += ((struct segment_command_64 *)lcmd)->nsects;
                 break;
             case LC_SYMTAB:
                 parse_symbol_table(base, (struct symtab_command *)lcmd);

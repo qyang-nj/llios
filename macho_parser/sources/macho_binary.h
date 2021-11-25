@@ -1,12 +1,12 @@
 #ifndef MACHO_BINARY_H
 #define MACHO_BINARY_H
 
-#include<vector>
+#include <vector>
 
 struct MachoBinary {
     uint8_t *base;
-    std::vector<struct load_command *> all_load_commands;
-    std::vector<struct segment_command_64 *> segment_commands;
+    std::vector<struct load_command *> allLoadCommands;
+    std::vector<struct segment_command_64 *> segmentCommands;
 };
 
 extern struct MachoBinary machoBinary;

@@ -4,6 +4,10 @@
 #include <stdbool.h>
 
 #ifdef __cplusplus
+std::vector<struct load_command *> parseLoadCommands(uint8_t *Base, int offset, uint32_t ncmds);
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 

@@ -26,7 +26,7 @@ static void format_magic(uint32_t magic, char *name);
 static void format_cpu_type(cpu_type_t cputype, char *name);
 static void format_file_type(uint32_t filetype, char *name);
 
-struct mach_header_64 *parse_mach_header(uint8_t *base) {
+struct mach_header_64 *parseMachHeader(uint8_t *base) {
     uint32_t magic = read_magic(base, 0);
     int mach_header_offset = 0;
 
