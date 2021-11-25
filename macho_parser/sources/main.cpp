@@ -12,7 +12,6 @@
 extern "C" {
 #include "argument.h"
 #include "util.h"
-#include "macho_header.h"
 #include "segment_64.h"
 #include "symtab.h"
 #include "dysymtab.h"
@@ -22,6 +21,7 @@ extern "C" {
 #include "build_version.h"
 }
 
+#include "macho_header.h"
 #include "macho_binary.h"
 
 static std::vector<struct load_command *> parse_load_commands(uint8_t *base, int offset, uint32_t ncmds);
