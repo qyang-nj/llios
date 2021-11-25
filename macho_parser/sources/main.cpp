@@ -58,7 +58,13 @@ int main(int argc, char **argv) {
 
     machoBinary.base = base;
     machoBinary.all_load_commands = all_load_commands;
-    // std::copy_if(all_load_commands.begin(), all_load_commands.end(), std::back_inserter(machoBinary.segment_commands), [](struct load_command * lcmd){return lcmd->cmd == LC_SEGMENT_64;} );
+
+    // filter segment commands
+    std::vector<struct load_command *> segment_commands;
+    std::copy_if(all_load_commands.begin(), all_load_commands.end(), std::back_inserter(segment_commands),
+        [](struct load_command * lcmd){ return lcmd->cmd == LC_SEGMENT_64; });
+    std::transform(all_load_commands.begin(), all_load_commands.end(), std::back_inserter(machoBinary.segment_commands),
+        [](struct load_command * lcmd){ return (struct segment_command_64 *)lcmd; });
 
     print_load_commands(base, all_load_commands);
 
