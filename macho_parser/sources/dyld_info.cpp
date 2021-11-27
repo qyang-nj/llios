@@ -90,6 +90,91 @@ void printDyldInfo(uint8_t *base, struct dyld_info_command *dyldInfoCmd) {
 }
 
 static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size) {
+    uint8_t *rebase = base + offset;
+    int i = 0;
+    uint64_t uleb = 0;
+    const int ptrSize = sizeof(void *);
+
+    int type = 0;
+    int segmentOrdinal = 0;
+    int segmentOffset = 0;
+
+    auto printTableRow = [&segmentOrdinal, &segmentOffset, &type, base]() {
+        struct segment_command_64 *segCmd = machoBinary.segmentCommands[segmentOrdinal];
+        uint64_t address = segCmd->vmaddr + segmentOffset;
+
+        struct section_64 *sect = machoBinary.getSectionByAddress(address);
+        char *sectName = NULL;
+        if (sect != NULL) {
+            sectName = sect->sectname;
+        }
+
+        std::string sectName2 = std::string(segCmd->segname) + "," + sectName;
+        printf("%-32s  0x%llX  ", sectName2.c_str(), address);
+
+        printf("%s  value(0x%08llX)\n", stringifyTypeImmForTable(type).c_str(),
+            *(uint64_t *)(base + segCmd->fileoff + segmentOffset));
+    };
+
+    while (i < size) {
+        uint8_t opcode = *(rebase + i) & REBASE_OPCODE_MASK;
+        uint8_t imm = *(rebase + i) & REBASE_IMMEDIATE_MASK;
+        ++i;
+
+        switch (opcode) {
+            case REBASE_OPCODE_DONE:
+                break;
+            case REBASE_OPCODE_SET_TYPE_IMM:
+                type = imm;
+                break;
+            case REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB: {
+                i += read_uleb128(rebase + i, &uleb);
+                segmentOrdinal = imm;
+                segmentOffset = uleb;
+                break;
+            }
+            case REBASE_OPCODE_ADD_ADDR_ULEB:
+                i += read_uleb128(rebase + i, &uleb);
+                segmentOffset += uleb;
+                break;
+            case REBASE_OPCODE_ADD_ADDR_IMM_SCALED:
+                segmentOffset += imm * ptrSize;
+                break;
+            case REBASE_OPCODE_DO_REBASE_IMM_TIMES:
+                for (int j = 0; j < imm; ++j) {
+                    printTableRow();
+                    segmentOffset += ptrSize;
+                }
+                break;
+            case REBASE_OPCODE_DO_REBASE_ULEB_TIMES:
+                i += read_uleb128(rebase + i, &uleb);
+                for (int j = 0; j < uleb; ++j) {
+                    printTableRow();
+                    segmentOffset += ptrSize;
+                }
+                break;
+            case REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB:
+                printTableRow();
+                i += read_uleb128(rebase + i, &uleb);
+                segmentOffset += uleb + ptrSize;
+                break;
+            case REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB: {
+                uint64_t count, skip;
+                i += read_uleb128(rebase + i, &count);
+                i += read_uleb128(rebase + i, &skip);
+                for (int j = 0; j < count; ++j) {
+                    printTableRow();
+                    segmentOffset += skip + ptrSize;
+                }
+                break;
+            }
+            default: {
+                char errMsg[32];
+                snprintf(errMsg, sizeof(errMsg), "Unknown Opcode (%#x)", opcode);
+                throw std::runtime_error(errMsg);
+            }
+        }
+    }
 }
 
 static void printRebaseOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
