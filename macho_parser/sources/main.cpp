@@ -15,7 +15,6 @@ extern "C" {
 #include "segment_64.h"
 #include "symtab.h"
 #include "dysymtab.h"
-#include "dyld_info.h"
 #include "dylib.h"
 #include "linkedit_data.h"
 #include "build_version.h"
@@ -24,6 +23,7 @@ extern "C" {
 #include "macho_header.h"
 #include "macho_binary.h"
 #include "load_command.h"
+#include "dyld_info.h"
 
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
 
@@ -112,7 +112,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 break;
             case LC_DYLD_INFO:
             case LC_DYLD_INFO_ONLY:
-                parse_dyld_info(base, (struct dyld_info_command *)lcmd);
+                printDyldInfo(base, (struct dyld_info_command *)lcmd);
                 break;
             case LC_CODE_SIGNATURE:
             case LC_FUNCTION_STARTS:

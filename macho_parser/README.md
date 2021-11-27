@@ -1,5 +1,5 @@
 # Mach-O Parser
-To learn the Mach-O format, no way is better than building a parser from scratch. This helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, `codesign` etc.
+To learn the Mach-O format, no way is better than building a parser from scratch. This helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, `dyldinfo`, `codesign` etc.
 
 #### Usage
 To build the parser, run `./build.sh --openssl`. (OpenSSL is not required if not parsing code signature.)
@@ -30,6 +30,14 @@ Dynamic Symbol Table Options:
     --undef                              show undefined symbols
     --indirect                           show indirect symbol table
 
+Dyld Info Options:
+    --dyld-info                          equivalent to '--command LC_DYLD_INFO(_ONLY)'
+    --rebase                             show rebase info
+    --bind                               show binding info
+    --weak-bind                          show weak binding info
+    --lazy-bind                          show lazy binding info
+    --export                             show export trie
+    --opcode                             show the raw opcode instead of a table
 ```
 
 #### Sample
@@ -82,33 +90,57 @@ LC_SEGMENT_64        cmdsize: 392    segname: __DATA         file: 0x00008000-0x
 LC_SEGMENT_64        cmdsize: 72     segname: __LINKEDIT     file: 0x0000c000-0x0000c728 1.79KB     vm: 0x10000c000-0x100010000 16.00KB   prot: 1/1
 ```
 
-## LC_DYLD_INFO_ONLY
-``` c
-struct dyld_info_command {
-    uint32_t cmd;            /* LC_DYLD_INFO or LC_DYLD_INFO_ONLY */
-    uint32_t cmdsize;        /* sizeof(struct dyld_info_command) */
-
-    uint32_t rebase_off;     /* file offset to rebase info  */
-    uint32_t rebase_size;    /* size of rebase info   */
-
-    uint32_t bind_off;       /* file offset to binding info   */
-    uint32_t bind_size;      /* size of binding info  */
-
-    uint32_t weak_bind_off;  /* file offset to weak binding info   */
-    uint32_t weak_bind_size; /* size of weak binding info  */
-
-    uint32_t lazy_bind_off;  /* file offset to lazy binding info */
-    uint32_t lazy_bind_size; /* size of lazy binding infs */
-
-    uint32_t export_off;     /* file offset to lazy binding info */
-    uint32_t export_size;    /* size of lazy binding infs */
-};
+## [LC_DYLD_INFO_ONLY](docs/LC_DYLD_INFO.md)
 ```
-
-This load command is only used by `dyld` at runtime. The information here can inspected by `xcrun dyldinfo (-rebase|-bind|-weak_bind|-lazy_bind|-export)`.
-
-### Export Info
-A deep dive of exported info is at "[exported_symbol](../exported_symbol)".
+$ ./macho_parser --dyld-info sample.out
+LC_DYLD_INFO_ONLY    cmdsize: 48     export_size: 192
+  rebase_off   : 49152        rebase_size   : 24
+  bind_off     : 49176        bind_size     : 184
+  weak_bind_off: 0            weak_bind_size: 0
+  lazy_bind_off: 49360        lazy_bind_size: 80
+  export_off   : 49440        export_size   : 192
+```
+### Bind / Lazy Bind / Weak Bind
+```
+$ ./macho_parser --bind sample.out
+  Binding Table:
+__DATA_CONST,__got        0x100004000  pointer  flat-namespace        addend(0)  _c_extern_weak_function (weak import)
+__DATA_CONST,__got        0x100004008  pointer  libSystem.B.dylib     addend(0)  dyld_stub_binder
+__DATA_CONST,__cfstring   0x100004018  pointer  CoreFoundation        addend(0)  ___CFConstantStringClassReference
+__DATA,__objc_data        0x100008100  pointer  libobjc.A.dylib       addend(0)  _OBJC_CLASS_$_NSObject
+__DATA,__objc_data        0x1000080D0  pointer  libobjc.A.dylib       addend(0)  _OBJC_METACLASS_$_NSObject
+__DATA,__objc_data        0x1000080D8  pointer  libobjc.A.dylib       addend(0)  _OBJC_METACLASS_$_NSObject
+__DATA,__objc_data        0x1000080E0  pointer  libobjc.A.dylib       addend(0)  __objc_empty_cache
+__DATA,__objc_data        0x100008108  pointer  libobjc.A.dylib       addend(0)  __objc_empty_cache
+```
+```
+$ ./macho_parser --bind --opcode sample.out
+  Binding Opcodes:
+0x0000 BIND_OPCODE_SET_DYLIB_SPECIAL_IMM (BIND_SPECIAL_DYLIB_FLAT_LOOKUP)
+0x0001 BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM (BIND_SYMBOL_FLAGS_WEAK_IMPORT, _c_extern_weak_function)
+0x001A BIND_OPCODE_SET_TYPE_IMM (BIND_TYPE_POINTER)
+0x001B BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB (2, 0x00000000) -- __DATA_CONST
+0x001D BIND_OPCODE_DO_BIND ()
+0x001E BIND_OPCODE_SET_DYLIB_ORDINAL_IMM (2) -- libSystem.B.dylib
+0x001F BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM (0, dyld_stub_binder)
+0x0031 BIND_OPCODE_DO_BIND ()
+...
+```
+### [Export](../exported_symbol/README.md)
+```
+$ ./macho_parser --export sample.out
+  Exported Symbols (Trie):
+  _
+    _mh_execute_header (data: 0000)
+    c_
+      constructor_function (data: 00f07c)
+      used_function (data: 00807d)
+      weak_import_function (data: 00907d)
+    main (data: 00a07d)
+    OBJC_
+      METACLASS_$_SimpleClass (data: 00d08102)
+      CLASS_$_SimpleClass (data: 00f88102)
+```
 
 ## [LC_SYMTAB](docs/LC_SYMTAB.md)
 ```

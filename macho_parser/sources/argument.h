@@ -30,6 +30,15 @@ struct argument {
     int show_extdef;
     int show_undef;
     int show_indirect;
+
+    // dyld info options
+    int show_dyld_info;
+    int show_rebase;
+    int show_bind;
+    int show_weak_bind;
+    int show_lazy_bind;
+    int show_export;
+    int show_opcode;
 };
 
 // global variable that holds command line arguments
