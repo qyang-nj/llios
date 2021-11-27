@@ -26,11 +26,13 @@ static void printExport(uint8_t *base, uint32_t exportOff, uint32_t exportSize);
 
 static int8_t convertSignedImm(uint8_t imm);
 static std::string getDylibName(int dylibOrdinal);
+static std::string stringifyRebaseTypeImmForOpcode(int type);
+static std::string stringifyRebaseTypeImmForTable(int type);
 static std::string stringifyDylibSpecial(int dylibSpecial);
 static std::string stringifySymbolFlagForOpcode(int flag);
 static std::string stringifySymbolFlagForTable(int flag);
-static std::string stringifyTypeImmForOpcode(int type);
-static std::string stringifyTypeImmForTable(int type);
+static std::string stringifyBindTypeImmForOpcode(int type);
+static std::string stringifyBindTypeImmForTable(int type);
 
 void printDyldInfo(uint8_t *base, struct dyld_info_command *dyldInfoCmd) {
     const char *name = (dyldInfoCmd->cmd == LC_DYLD_INFO_ONLY ? "LC_DYLD_INFO_ONLY" : "LC_DYLD_INFO");
@@ -112,7 +114,7 @@ static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size) {
         std::string sectName2 = std::string(segCmd->segname) + "," + sectName;
         printf("%-32s  0x%llX  ", sectName2.c_str(), address);
 
-        printf("%s  value(0x%08llX)\n", stringifyTypeImmForTable(type).c_str(),
+        printf("%s  value(0x%08llX)\n", stringifyRebaseTypeImmForTable(type).c_str(),
             *(uint64_t *)(base + segCmd->fileoff + segmentOffset));
     };
 
@@ -193,7 +195,7 @@ static void printRebaseOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
                 printf("REBASE_OPCODE_DONE\n");
                 break;
             case REBASE_OPCODE_SET_TYPE_IMM:
-                printf("REBASE_OPCODE_SET_TYPE_IMM (%d)\n", imm);
+                printf("REBASE_OPCODE_SET_TYPE_IMM (%s)\n", stringifyRebaseTypeImmForOpcode(imm).c_str());
                 break;
             case REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB: {
                 struct segment_command_64 *segCmd = machoBinary.segmentCommands[imm];
@@ -267,7 +269,7 @@ static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enu
 
         switch (bindType) {
             case regular:
-                printf("%s  %-20s  addend(%d)  %s %s\n", stringifyTypeImmForTable(type).c_str(),
+                printf("%s  %-20s  addend(%d)  %s %s\n", stringifyBindTypeImmForTable(type).c_str(),
                     getDylibName(dylibOrdinal).c_str(), addend, symbolName,
                     stringifySymbolFlagForTable(symbolFlag).c_str());
                 break;
@@ -276,7 +278,7 @@ static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enu
                 stringifySymbolFlagForTable(symbolFlag).c_str());
                 break;
             case weak:
-                printf("%s  addend(%d)  %s %s\n", stringifyTypeImmForTable(type).c_str(),
+                printf("%s  addend(%d)  %s %s\n", stringifyBindTypeImmForTable(type).c_str(),
                     addend, symbolName, stringifySymbolFlagForTable(symbolFlag).c_str());
                 break;
         }
@@ -394,7 +396,7 @@ static void printBindingOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
                 i += strlen((char *)bind + i) + 1;
                 break;
             case BIND_OPCODE_SET_TYPE_IMM:
-                printf("BIND_OPCODE_SET_TYPE_IMM (%s)\n", stringifyTypeImmForOpcode(imm).c_str());
+                printf("BIND_OPCODE_SET_TYPE_IMM (%s)\n", stringifyBindTypeImmForOpcode(imm).c_str());
                 break;
             case BIND_OPCODE_SET_ADDEND_SLEB:
                 i += read_sleb128(bind + i, &sleb);
@@ -511,7 +513,32 @@ static std::string stringifySymbolFlagForTable(int flag) {
     return std::string(formatted);
 }
 
-static std::string stringifyTypeImmForOpcode(int type) {
+static std::string stringifyRebaseTypeImmForOpcode(int type) {
+    switch(type) {
+        case REBASE_TYPE_POINTER:
+            return std::string("REBASE_TYPE_POINTER");
+        case REBASE_TYPE_TEXT_ABSOLUTE32:
+            return std::string("REBASE_TYPE_TEXT_ABSOLUTE32");
+        case REBASE_TYPE_TEXT_PCREL32:
+            return std::string("REBASE_TYPE_TEXT_PCREL32");
+    }
+    return std::string("unknown(") + std::to_string(type) + ")";
+}
+
+static std::string stringifyRebaseTypeImmForTable(int type) {
+    switch(type) {
+    case REBASE_TYPE_POINTER:
+        return std::string("pointer");
+    case REBASE_TYPE_TEXT_ABSOLUTE32:
+        return std::string("text_absolute32");
+    case REBASE_TYPE_TEXT_PCREL32:
+        return std::string("text_pcrel32");
+    }
+
+    return std::string("unknown(") + std::to_string(type) + ")";
+}
+
+static std::string stringifyBindTypeImmForOpcode(int type) {
     switch(type) {
         case BIND_TYPE_POINTER:
             return std::string("BIND_TYPE_POINTER");
@@ -523,7 +550,7 @@ static std::string stringifyTypeImmForOpcode(int type) {
     return std::string("unknown(") + std::to_string(type) + ")";
 }
 
-static std::string stringifyTypeImmForTable(int type) {
+static std::string stringifyBindTypeImmForTable(int type) {
     switch(type) {
     case BIND_TYPE_POINTER:
         return std::string("pointer");
