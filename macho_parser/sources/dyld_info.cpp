@@ -18,6 +18,8 @@ enum BindType {
     lazy,
 };
 
+static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size);
+static void printRebaseOpcodes(uint8_t *base, uint32_t offset, uint32_t size);
 static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enum BindType bindType);
 static void printBindingOpcodes(uint8_t *base, uint32_t offset, uint32_t size);
 static void printExport(uint8_t *base, uint32_t exportOff, uint32_t exportSize);
@@ -41,6 +43,16 @@ void printDyldInfo(uint8_t *base, struct dyld_info_command *dyldInfoCmd) {
     printf("  weak_bind_off: %-10d   weak_bind_size: %d\n", dyldInfoCmd->weak_bind_off, dyldInfoCmd->weak_bind_size);
     printf("  lazy_bind_off: %-10d   lazy_bind_size: %d\n", dyldInfoCmd->lazy_bind_off, dyldInfoCmd->lazy_bind_size);
     printf("  export_off   : %-10d   export_size   : %d\n", dyldInfoCmd->export_off, dyldInfoCmd->export_size);
+
+    if (args.show_rebase) {
+        if (args.show_opcode) {
+            printf("\n  Rebase Opcodes:\n");
+            printRebaseOpcodes(base, dyldInfoCmd->rebase_off, dyldInfoCmd->rebase_size);
+        } else {
+            printf("\n  Rebase Table:\n");
+            printRebaseTable(base, dyldInfoCmd->rebase_off, dyldInfoCmd->rebase_size);
+        }
+    }
 
     if (args.show_bind) {
         if (args.show_opcode) {
@@ -74,6 +86,68 @@ void printDyldInfo(uint8_t *base, struct dyld_info_command *dyldInfoCmd) {
 
     if (args.show_export) {
         printExport(base, dyldInfoCmd->export_off, dyldInfoCmd->export_size);
+    }
+}
+
+static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size) {
+}
+
+static void printRebaseOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
+    uint8_t *rebase = base + offset;
+    int i = 0;
+    uint64_t uleb = 0;
+
+    while (i < size) {
+        uint8_t opcode = *(rebase + i) & REBASE_OPCODE_MASK;
+        uint8_t imm = *(rebase + i) & REBASE_IMMEDIATE_MASK;
+        printf ("0x%04X ", i);
+        ++i;
+
+        switch (opcode) {
+            case REBASE_OPCODE_DONE:
+                printf("REBASE_OPCODE_DONE\n");
+                break;
+            case REBASE_OPCODE_SET_TYPE_IMM:
+                printf("REBASE_OPCODE_SET_TYPE_IMM (%d)\n", imm);
+                break;
+            case REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB: {
+                struct segment_command_64 *segCmd = machoBinary.segmentCommands[imm];
+                i += read_uleb128(rebase + i, &uleb);
+                printf("REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB (%d, 0x%08llx) -- %s\n",
+                     imm, uleb, segCmd->segname);
+                break;
+            }
+            case REBASE_OPCODE_ADD_ADDR_ULEB:
+                i += read_uleb128(rebase + i, &uleb);
+                printf("REBASE_OPCODE_ADD_ADDR_ULEB (0x%08llx)\n", uleb);
+                break;
+            case REBASE_OPCODE_ADD_ADDR_IMM_SCALED:
+                printf("REBASE_OPCODE_ADD_ADDR_IMM_SCALED (%d)\n", imm);
+                break;
+            case REBASE_OPCODE_DO_REBASE_IMM_TIMES:
+                printf("REBASE_OPCODE_DO_REBASE_IMM_TIMES (%d)\n", imm);
+                break;
+            case REBASE_OPCODE_DO_REBASE_ULEB_TIMES:
+                i += read_uleb128(rebase + i, &uleb);
+                printf("REBASE_OPCODE_DO_REBASE_ULEB_TIMES (%llu)\n", uleb);
+                break;
+            case REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB:
+                i += read_uleb128(rebase + i, &uleb);
+                printf("REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB (0x%08llx)\n", uleb);
+                break;
+            case REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB: {
+                uint64_t count, skip;
+                i += read_uleb128(rebase + i, &count);
+                i += read_uleb128(rebase + i, &skip);
+                printf("REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB (count: %llu, skip: %llu)\n", uleb, skip);
+                break;
+            }
+            default: {
+                char errMsg[32];
+                snprintf(errMsg, sizeof(errMsg), "Unknown Opcode (%#x)", opcode);
+                throw std::runtime_error(errMsg);
+            }
+        }
     }
 }
 
@@ -222,7 +296,7 @@ static void printBindingOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
                 break;
             case BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB:
                 i += read_uleb128(bind + i, &uleb);
-                printf("BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB (%d) -- %s\n",
+                printf("BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB (%llu) -- %s\n",
                     uleb, getDylibName(uleb).c_str());
                 break;
             case BIND_OPCODE_SET_DYLIB_SPECIAL_IMM:
