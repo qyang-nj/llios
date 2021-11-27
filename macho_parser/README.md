@@ -100,6 +100,7 @@ LC_DYLD_INFO_ONLY    cmdsize: 48     export_size: 192
   lazy_bind_off: 49360        lazy_bind_size: 80
   export_off   : 49440        export_size   : 192
 ```
+### Bind / Lazy Bind / Weak Bind
 ```
 $ ./macho_parser --bind sample.out
   Binding Table:
@@ -125,6 +126,7 @@ $ ./macho_parser --bind --opcode sample.out
 0x0031 BIND_OPCODE_DO_BIND ()
 ...
 ```
+### [Export](../exported_symbol/README.md)
 ```
 $ ./macho_parser --export sample.out
   Exported Symbols (Trie):

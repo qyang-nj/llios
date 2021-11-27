@@ -35,4 +35,4 @@ The difference between these two commands is that `LC_DYLD_INFO_ONLY` has `LC_RE
 ## Bind
 
 ## Export Info
-A deep dive of export info is at "[exported_symbol](../exported_symbol)".
+A deep dive of export info is at "[exported_symbol](../../exported_symbol/README.md)".
