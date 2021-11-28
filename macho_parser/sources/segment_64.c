@@ -26,7 +26,7 @@ void parse_segment(void *base, struct segment_command_64 *seg_cmd, int section_i
     format_size(seg_cmd->filesize, formatted_filesize);
     format_size(seg_cmd->vmsize, formatted_vmsize);
 
-    printf("%-20s cmdsize: %-6d segname: %-12s   file: 0x%08llx-0x%08llx %-9s  vm: 0x%09llx-0x%09llx %-9s prot: %d/%d\n",
+    printf("%-20s cmdsize: %-6d segname: %-12.16s   file: 0x%08llx-0x%08llx %-9s  vm: 0x%09llx-0x%09llx %-9s prot: %d/%d\n",
         "LC_SEGMENT_64", seg_cmd->cmdsize, seg_cmd->segname,
         seg_cmd->fileoff, seg_cmd->fileoff + seg_cmd->filesize, formatted_filesize,
         seg_cmd->vmaddr, seg_cmd->vmaddr + seg_cmd->vmsize, formatted_vmsize,
@@ -64,7 +64,7 @@ static void print_section(void *base, struct section_64 sect, int section_index)
     const uint8_t type = sect.flags & SECTION_TYPE;
 
     format_section_type(type, formatted_type);
-    sprintf(formatted_seg_sec, "(%s,%s)", sect.segname, sect.sectname);
+    sprintf(formatted_seg_sec, "(%.16s,%.16s)", sect.segname, sect.sectname);
     format_size(sect.size, formatted_size);
 
     printf("  %2d: 0x%09llx-0x%09llx %-11s %-32s  type: %s  offset: %d",

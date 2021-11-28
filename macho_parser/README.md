@@ -71,7 +71,7 @@ LC_SEGMENT_64        cmdsize: 712    segname: __TEXT         file: 0x00000000-0x
    1: 0x100003f28-0x100003f40 24B         (__TEXT,__stubs)                  type: S_SYMBOL_STUBS  offset: 16168   reserved1:  6
    2: 0x100003f40-0x100003f7a 58B         (__TEXT,__stub_helper)            type: S_REGULAR  offset: 16192
    3: 0x100003f7a-0x100003f9b 33B         (__TEXT,__cstring)                type: S_CSTRING_LITERALS  offset: 16250
-   4: 0x100003f9b-0x100003fa7 12B         (__TEXT,__objc_classname__TEXT)   type: S_CSTRING_LITERALS  offset: 16283
+   4: 0x100003f9b-0x100003fa7 12B         (__TEXT,__objc_classname)         type: S_CSTRING_LITERALS  offset: 16283
    5: 0x100003fa7-0x100003fac 5B          (__TEXT,__objc_methname)          type: S_CSTRING_LITERALS  offset: 16295
    6: 0x100003fac-0x100003fb4 8B          (__TEXT,__objc_methtype)          type: S_CSTRING_LITERALS  offset: 16300
    7: 0x100003fb4-0x100003ffc 72B         (__TEXT,__unwind_info)            type: S_REGULAR  offset: 16308
@@ -79,9 +79,9 @@ LC_SEGMENT_64        cmdsize: 552    segname: __DATA_CONST   file: 0x00004000-0x
    8: 0x100004000-0x100004010 16B         (__DATA_CONST,__got)              type: S_NON_LAZY_SYMBOL_POINTERS  offset: 16384   reserved1:  4
    9: 0x100004010-0x100004018 8B          (__DATA_CONST,__mod_init_func)    type: S_MOD_INIT_FUNC_POINTERS  offset: 16400
   10: 0x100004018-0x100004038 32B         (__DATA_CONST,__cfstring)         type: S_REGULAR  offset: 16408
-  11: 0x100004038-0x100004040 8B          (__DATA_CONST,__objc_classlist__DATA_CONST)  type: S_REGULAR  offset: 16440
-  12: 0x100004040-0x100004048 8B          (__DATA_CONST,__objc_nlclslist__DATA_CONST)  type: S_REGULAR  offset: 16448
-  13: 0x100004048-0x100004050 8B          (__DATA_CONST,__objc_imageinfo__DATA_CONST)  type: S_REGULAR  offset: 16456
+  11: 0x100004038-0x100004040 8B          (__DATA_CONST,__objc_classlist)   type: S_REGULAR  offset: 16440
+  12: 0x100004040-0x100004048 8B          (__DATA_CONST,__objc_nlclslist)   type: S_REGULAR  offset: 16448
+  13: 0x100004048-0x100004050 8B          (__DATA_CONST,__objc_imageinfo)   type: S_REGULAR  offset: 16456
 LC_SEGMENT_64        cmdsize: 392    segname: __DATA         file: 0x00008000-0x0000c000 16.00KB    vm: 0x100008000-0x10000c000 16.00KB   prot: 3/3
   14: 0x100008000-0x100008020 32B         (__DATA,__la_symbol_ptr)          type: S_LAZY_SYMBOL_POINTERS  offset: 32768   reserved1:  6
   15: 0x100008020-0x1000080d0 176B        (__DATA,__objc_const)             type: S_REGULAR  offset: 32800

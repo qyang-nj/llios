@@ -106,13 +106,11 @@ static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size) {
         uint64_t address = segCmd->vmaddr + segmentOffset;
 
         struct section_64 *sect = machoBinary.getSectionByAddress(address);
-        char *sectName = NULL;
-        if (sect != NULL) {
-            sectName = sect->sectname;
-        }
 
-        std::string sectName2 = std::string(segCmd->segname) + "," + sectName;
-        printf("%-32s  0x%llX  ", sectName2.c_str(), address);
+        char segSectName[128];
+        snprintf(segSectName, sizeof(segSectName), "%.16s,%.16s", segCmd->segname, sect ? sect->sectname : "(no section)");
+
+        printf("%-32s  0x%llX  ", segSectName, address);
 
         printf("%s  value(0x%08llX)\n", stringifyRebaseTypeImmForTable(type).c_str(),
             *(uint64_t *)(base + segCmd->fileoff + segmentOffset));
@@ -259,13 +257,10 @@ static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enu
         uint64_t address = segCmd->vmaddr + segmentOffset;
 
         struct section_64 *sect = machoBinary.getSectionByAddress(address);
-        char *sectName = NULL;
-        if (sect != NULL) {
-            sectName = sect->sectname;
-        }
+        char segSectName[128];
+        snprintf(segSectName, sizeof(segSectName), "%.16s,%.16s", segCmd->segname, sect ? sect->sectname : "(no section)");
 
-        std::string sectName2 = std::string(segCmd->segname) + "," + sectName;
-        printf("%-24s  0x%llX  ", sectName2.c_str(), address);
+        printf("%-24s  0x%llX  ", segSectName, address);
 
         switch (bindType) {
             case regular:
