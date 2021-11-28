@@ -100,9 +100,37 @@ LC_DYLD_INFO_ONLY    cmdsize: 48     export_size: 192
   lazy_bind_off: 49360        lazy_bind_size: 80
   export_off   : 49440        export_size   : 192
 ```
+### Rebase
+```
+$ ./macho_parser --rebase sample.out
+  Rebase Table:
+__DATA_CONST,__mod_init_func      0x100004010  pointer  value(0x100003E70)
+__DATA_CONST,__cfstring           0x100004028  pointer  value(0x100003F89)
+__DATA_CONST,__objc_classlist     0x100004038  pointer  value(0x1000080F8)
+__DATA_CONST,__objc_nlclslist     0x100004040  pointer  value(0x1000080F8)
+__DATA,__la_symbol_ptr            0x100008000  pointer  value(0x100003F70)
+__DATA,__la_symbol_ptr            0x100008008  pointer  value(0x100003F40)
+__DATA,__la_symbol_ptr            0x100008010  pointer  value(0x100003F5C)
+__DATA,__la_symbol_ptr            0x100008018  pointer  value(0x100003F66)
+...
+```
+```
+$ ./macho_parser --rebase --opcode sample.out
+  Rebase Opcodes:
+0x0000 REBASE_OPCODE_SET_TYPE_IMM (REBASE_TYPE_POINTER)
+0x0001 REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB (2, 0x00000010) -- __DATA_CONST
+0x0003 REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB (0x00000010)
+0x0005 REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB (0x00000008)
+0x0007 REBASE_OPCODE_DO_REBASE_IMM_TIMES (2)
+0x0008 REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB (3, 0x00000000) -- __DATA
+0x000A REBASE_OPCODE_DO_REBASE_IMM_TIMES (4)
+0x000B REBASE_OPCODE_ADD_ADDR_IMM_SCALED (1)
+...
+```
+
 ### Bind / Lazy Bind / Weak Bind
 ```
-$ ./macho_parser --bind sample.out
+$ ./macho_parser --bind [--lazy-bind] [--weak-bind] sample.out
   Binding Table:
 __DATA_CONST,__got        0x100004000  pointer  flat-namespace        addend(0)  _c_extern_weak_function (weak import)
 __DATA_CONST,__got        0x100004008  pointer  libSystem.B.dylib     addend(0)  dyld_stub_binder
