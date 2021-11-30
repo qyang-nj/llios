@@ -71,7 +71,7 @@ LC_SEGMENT_64        cmdsize: 712    segname: __TEXT         file: 0x00000000-0x
    1: 0x100003f28-0x100003f40 24B         (__TEXT,__stubs)                  type: S_SYMBOL_STUBS  offset: 16168   reserved1:  6
    2: 0x100003f40-0x100003f7a 58B         (__TEXT,__stub_helper)            type: S_REGULAR  offset: 16192
    3: 0x100003f7a-0x100003f9b 33B         (__TEXT,__cstring)                type: S_CSTRING_LITERALS  offset: 16250
-   4: 0x100003f9b-0x100003fa7 12B         (__TEXT,__objc_classname__TEXT)   type: S_CSTRING_LITERALS  offset: 16283
+   4: 0x100003f9b-0x100003fa7 12B         (__TEXT,__objc_classname)         type: S_CSTRING_LITERALS  offset: 16283
    5: 0x100003fa7-0x100003fac 5B          (__TEXT,__objc_methname)          type: S_CSTRING_LITERALS  offset: 16295
    6: 0x100003fac-0x100003fb4 8B          (__TEXT,__objc_methtype)          type: S_CSTRING_LITERALS  offset: 16300
    7: 0x100003fb4-0x100003ffc 72B         (__TEXT,__unwind_info)            type: S_REGULAR  offset: 16308
@@ -79,9 +79,9 @@ LC_SEGMENT_64        cmdsize: 552    segname: __DATA_CONST   file: 0x00004000-0x
    8: 0x100004000-0x100004010 16B         (__DATA_CONST,__got)              type: S_NON_LAZY_SYMBOL_POINTERS  offset: 16384   reserved1:  4
    9: 0x100004010-0x100004018 8B          (__DATA_CONST,__mod_init_func)    type: S_MOD_INIT_FUNC_POINTERS  offset: 16400
   10: 0x100004018-0x100004038 32B         (__DATA_CONST,__cfstring)         type: S_REGULAR  offset: 16408
-  11: 0x100004038-0x100004040 8B          (__DATA_CONST,__objc_classlist__DATA_CONST)  type: S_REGULAR  offset: 16440
-  12: 0x100004040-0x100004048 8B          (__DATA_CONST,__objc_nlclslist__DATA_CONST)  type: S_REGULAR  offset: 16448
-  13: 0x100004048-0x100004050 8B          (__DATA_CONST,__objc_imageinfo__DATA_CONST)  type: S_REGULAR  offset: 16456
+  11: 0x100004038-0x100004040 8B          (__DATA_CONST,__objc_classlist)   type: S_REGULAR  offset: 16440
+  12: 0x100004040-0x100004048 8B          (__DATA_CONST,__objc_nlclslist)   type: S_REGULAR  offset: 16448
+  13: 0x100004048-0x100004050 8B          (__DATA_CONST,__objc_imageinfo)   type: S_REGULAR  offset: 16456
 LC_SEGMENT_64        cmdsize: 392    segname: __DATA         file: 0x00008000-0x0000c000 16.00KB    vm: 0x100008000-0x10000c000 16.00KB   prot: 3/3
   14: 0x100008000-0x100008020 32B         (__DATA,__la_symbol_ptr)          type: S_LAZY_SYMBOL_POINTERS  offset: 32768   reserved1:  6
   15: 0x100008020-0x1000080d0 176B        (__DATA,__objc_const)             type: S_REGULAR  offset: 32800
@@ -100,9 +100,37 @@ LC_DYLD_INFO_ONLY    cmdsize: 48     export_size: 192
   lazy_bind_off: 49360        lazy_bind_size: 80
   export_off   : 49440        export_size   : 192
 ```
+### Rebase
+```
+$ ./macho_parser --rebase sample.out
+  Rebase Table:
+__DATA_CONST,__mod_init_func      0x100004010  pointer  value(0x100003E70)
+__DATA_CONST,__cfstring           0x100004028  pointer  value(0x100003F89)
+__DATA_CONST,__objc_classlist     0x100004038  pointer  value(0x1000080F8)
+__DATA_CONST,__objc_nlclslist     0x100004040  pointer  value(0x1000080F8)
+__DATA,__la_symbol_ptr            0x100008000  pointer  value(0x100003F70)
+__DATA,__la_symbol_ptr            0x100008008  pointer  value(0x100003F40)
+__DATA,__la_symbol_ptr            0x100008010  pointer  value(0x100003F5C)
+__DATA,__la_symbol_ptr            0x100008018  pointer  value(0x100003F66)
+...
+```
+```
+$ ./macho_parser --rebase --opcode sample.out
+  Rebase Opcodes:
+0x0000 REBASE_OPCODE_SET_TYPE_IMM (REBASE_TYPE_POINTER)
+0x0001 REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB (2, 0x00000010) -- __DATA_CONST
+0x0003 REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB (0x00000010)
+0x0005 REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB (0x00000008)
+0x0007 REBASE_OPCODE_DO_REBASE_IMM_TIMES (2)
+0x0008 REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB (3, 0x00000000) -- __DATA
+0x000A REBASE_OPCODE_DO_REBASE_IMM_TIMES (4)
+0x000B REBASE_OPCODE_ADD_ADDR_IMM_SCALED (1)
+...
+```
+
 ### Bind / Lazy Bind / Weak Bind
 ```
-$ ./macho_parser --bind sample.out
+$ ./macho_parser --bind [--lazy-bind] [--weak-bind] sample.out
   Binding Table:
 __DATA_CONST,__got        0x100004000  pointer  flat-namespace        addend(0)  _c_extern_weak_function (weak import)
 __DATA_CONST,__got        0x100004008  pointer  libSystem.B.dylib     addend(0)  dyld_stub_binder
