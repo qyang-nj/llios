@@ -1,5 +1,5 @@
 # Binding Information
-When a binary uses some APIs provided by another binary at run time, binding is required. **Binding** is the process to connect a symbol between the consumer (e.g. an executable) and the provider (usually a dylib). In [the other article](../exported_symbol/README.md), we talked about exported symbols are stored as a trie on the provider side. In this one, we are going to dive into how binding information are stored on the consumer side.
+When a binary uses some APIs provided by another binary at run time, binding is required. **Binding** is the process to connect a symbol between the consumer (e.g. an executable) and the provider (usually a dylib). In [the other article](../../exported_symbol/README.md), we talked about exported symbols are stored as a trie on the provider side. In this one, we are going to dive into how binding information are stored on the consumer side.
 
 ## LC_DYLD_INFO(_ONLY)
 Like exported symbols, binding information are also stored in [`LC_DYLD_INFO(_ONLY)`](../../macho_parser/docs/LC_DYLD_INFO.md). There are three kinds of binding, non-lazy bind, lazy bind and weak bind. Their locations are specified by `bind_off`, `lazy_bind_off` and `weak_bind_off` respectively. We will focus on non-lazy bind as the other two are very similar.
