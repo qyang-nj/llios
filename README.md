@@ -1,5 +1,7 @@
 # Lower Level iOS
-📝 This repo is mostly my study notes about lower level iOS. If you find anything in my notes is incorrect, inaccurate or unclear, feel free to create an [issue](https://github.com/qyang-nj/llios/issues). If you have any questions, please use [Discussions](https://github.com/qyang-nj/llios/discussions). We can learn this together.
+This repo is mostly my study notes about lower level iOS.
+
+If you find anything in my notes is incorrect, please create an [issue](https://github.com/qyang-nj/llios/issues)! If you have any questions, feel free to use [Discussions](https://github.com/qyang-nj/llios/discussions) so that we can learn something together.
 
 ## Topics
 * [Mach-O Parser](./macho_parser) - writing a Mach-O format parser while learning it
