@@ -12,7 +12,7 @@ struct argument args;
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"command", required_argument, NULL, 'c'},
-    {"arch", required_argument, NULL, 'a'},
+    {"arch", required_argument, NULL, 0},
     {"verbose", no_argument, NULL, 'v'},
     {"no-truncate", no_argument, &(args.no_truncate), 1},
     {"segments", no_argument, &(args.show_segments), 1},
@@ -48,14 +48,14 @@ void usage() {
     puts("Usage: macho_parser [options] macho_file");
     puts("    -c, --command LOAD_COMMAND           show specific load command");
     puts("    -v, --verbose                        can be used multiple times to increase verbose level");
-    puts("    -a, --arch                           select the architecture for fat binary, arm64 or x86_64");
+    puts("        --arch                           specify an architecture, arm64 or x86_64");
     puts("        --no-truncate                    do not truncate even the content is long");
     puts("    -h, --help                           show this help message");
     puts("");
-    puts("    --segments                           equivalent to '--comand LC_SEGMENT_64");
+    puts("    --segments                           equivalent to '--command LC_SEGMENT_64");
     puts("    --section INDEX                      show the section at INDEX");
     puts("    --dylibs                             show dylib related commands");
-    puts("    --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*'");
+    puts("    --build-version                      equivalent to '--command LC_BUILD_VERSION --command LC_VERSION_MIN_*'");
     puts("");
     puts("Code Signature Options:");
     puts("    --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'");
@@ -82,13 +82,12 @@ void usage() {
 
 void parse_arguments(int argc, char **argv) {
     int opt = 0;
-    while ((opt = getopt_long(argc, argv, "c:a:s:hv", longopts, NULL)) != -1) {
+    int option_index = 0;
+
+    while ((opt = getopt_long(argc, argv, "c:s:hv", longopts, &option_index)) != -1) {
         switch(opt) {
             case 'c':
                 args.commands[args.command_count++] = string_to_load_command(optarg);
-                break;
-            case 'a':
-                args.arch = optarg;
                 break;
             case 'v':
                 args.verbosity++;
@@ -101,6 +100,9 @@ void parse_arguments(int argc, char **argv) {
                 break;
             case 0:
                 // all long options that don't have short options
+                if (strcmp(longopts[option_index].name, "arch") == 0) {
+                    args.arch = optarg;
+                }
                 break;
             case '?':
                 // unrecognized option
