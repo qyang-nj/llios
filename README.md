@@ -14,6 +14,7 @@ Random stuff about lower level iOS
 * Dynamic Linking
     * [How does dynamic linking works](./dynamic_linking)
     * [Exported Symbols](./exported_symbol/) - details of how exported symbols are stored
+    * [Binding Info](./dynamic_linking/docs/BindingInfo.md) - details of binding opcodes
     * [Chained Fixups](./dynamic_linking/chained_fixups.md) - the new way to store dyld info
 * [Build iOS App](./build_ios_app) - build and debug an iOS app without an IDE
 * [Dead Code Elimination](./dce)

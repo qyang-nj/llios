@@ -33,6 +33,7 @@ The difference between these two commands is that `LC_DYLD_INFO_ONLY` has `LC_RE
 ## Rebase
 
 ## Bind
+As we can tell from `struct dyld_info_command`, there are three kinds of binding, non-lazy binding, lazy binding and weak binding. They are encoded in the similar way, known as opcodes. The detail explanation is at [Binding Information](../dynamic_linking/docs/BindingInfo.md).
 
 ## Export Info
 A deep dive of export info is at "[exported_symbol](../../exported_symbol/README.md)".
