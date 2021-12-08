@@ -11,6 +11,7 @@ struct argument {
     unsigned int commands[12];
     int command_count;
     int no_truncate;
+    char *arch;
 
     int show_build_version;
     int show_segments;
@@ -57,5 +58,7 @@ bool show_header();
 bool show_command(unsigned int cmd);
 
 bool show_section(int section);
+
+bool is_selected_arch(char *arch);
 
 #endif /* ARGUMENT_H */

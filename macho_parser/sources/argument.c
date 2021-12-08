@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <assert.h>
 
 #include "argument.h"
 
@@ -11,6 +12,7 @@ struct argument args;
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {"command", required_argument, NULL, 'c'},
+    {"arch", required_argument, NULL, 'a'},
     {"verbose", no_argument, NULL, 'v'},
     {"no-truncate", no_argument, &(args.no_truncate), 1},
     {"segments", no_argument, &(args.show_segments), 1},
@@ -46,6 +48,7 @@ void usage() {
     puts("Usage: macho_parser [options] macho_file");
     puts("    -c, --command LOAD_COMMAND           show specific load command");
     puts("    -v, --verbose                        can be used multiple times to increase verbose level");
+    puts("    -a, --arch                           select the architecture for fat binary, arm64 or x86_64");
     puts("        --no-truncate                    do not truncate even the content is long");
     puts("    -h, --help                           show this help message");
     puts("");
@@ -79,10 +82,13 @@ void usage() {
 
 void parse_arguments(int argc, char **argv) {
     int opt = 0;
-    while ((opt = getopt_long(argc, argv, "c:s:hv", longopts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:a:s:hv", longopts, NULL)) != -1) {
         switch(opt) {
             case 'c':
                 args.commands[args.command_count++] = string_to_load_command(optarg);
+                break;
+            case 'a':
+                args.arch = optarg;
                 break;
             case 'v':
                 args.verbosity++;
@@ -106,6 +112,11 @@ void parse_arguments(int argc, char **argv) {
         args.file_name = argv[optind];
     } else {
         puts("Error: missing a macho file.");
+        exit(1);
+    }
+
+    if (args.arch != NULL && (strcasecmp(args.arch, "arm64") != 0 && strcasecmp(args.arch, "x86_64") != 0)) {
+        fprintf(stderr, "Only architecture arm64 and x86_64 are supported.\n");
         exit(1);
     }
 
@@ -224,4 +235,13 @@ bool show_section(int section) {
         }
     }
     return show;
+}
+
+bool is_selected_arch(char *arch) {
+    if (args.arch == NULL) {
+        // when --arch is not specified
+        return true;
+    }
+
+    return strcasecmp(args.arch, arch) == 0;
 }
