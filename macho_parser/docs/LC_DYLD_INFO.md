@@ -38,9 +38,9 @@ As we can tell from `struct dyld_info_command`, there are three kinds of binding
 ## Rebase
 Rebasing is needed to support ASLR (Address Space Layout Randomization), in which the addresses in a binary are shifted by a random number. Rebase information is used to tell `dyld` what addresses are needed to be rebased at launch time.
 
-Using macho-o parser, we can tell that all rebases are in the `__DATA` or `__DATA_CONST` segment. It makes sense because `__TEXT` segment is read only. But why code in `__TEXT` doesn't need to be rebased? It's because all addresses in `__TEXT` are relative to the instruction pointer. This is called [RIP-relative addressing](../../dynamic_linking#rip-relative-addressing). Only absolute addresses need to be shifted.
+Using macho-o parser, we can tell that all rebases are in the `__DATA` or `__DATA_CONST` segment. It makes sense because `__TEXT` segment is read only. But why code in `__TEXT` doesn't need to be rebased? It's because all addresses in `__TEXT` are relative to the instruction pointer. This is called [RIP-relative addressing](../../dynamic_linking/README.md#rip-relative-addressing). Only absolute addresses need to be shifted.
 
 The way that rebase information is encoded is very similar to binding, which is also using opcodes. Check out [Binding Information](../../dynamic_linking/docs/BindingInfo.md) for details.
 
 ## Export
-If we say binding info stores symbols that a binary depends upon, then export info saves the symbols that a binary provides. Instead of opcodes used by binding and rebasing, export info uses a fancy data structure, trie. The deep dive of export info is at [Exported Symbols](../../exported_symbol/README.md).
+If we say binding info stores symbols that a binary depends upon, then export info saves the symbols that a binary provides. Instead of opcodes used by binding and rebasing, export info uses a fancy data structure, trie. The deep dive of export info is at [Exported Symbol](../../exported_symbol/README.md).
