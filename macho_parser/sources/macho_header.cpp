@@ -29,6 +29,7 @@ static void format_file_type(uint32_t filetype, char *name);
 struct mach_header_64 *parseMachHeader(uint8_t *base) {
     uint32_t magic = read_magic(base, 0);
     int mach_header_offset = 0;
+    char cpu_type[64];
 
     if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
         struct fat_header header = read_fat_header(base, NEEDS_SWAP(magic));
@@ -40,25 +41,42 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
         }
 
         for (int i = 0; i < header.nfat_arch; ++i) {
-            // locate the first 64-bit arch
-            if (fat_archs[i].cputype & CPU_ARCH_ABI64) {
+            format_cpu_type(fat_archs[i].cputype, cpu_type);
+            if ((fat_archs[i].cputype & CPU_ARCH_ABI64) && is_selected_arch(cpu_type)) {
                 mach_header_offset = fat_archs[i].offset;
                 break;
             }
         }
 
         free(fat_archs);
+
+        if (mach_header_offset == 0) {
+            if (args.arch != NULL) {
+                fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
+            } else {
+                fprintf (stderr, "The binary doesn't contain any 64-bit architecture.\n");
+            }
+            exit(1);
+        }
     }
 
     magic = read_magic(base, mach_header_offset);
     if (magic != MH_MAGIC_64) {
         char magic_name[32];
         format_magic(magic, magic_name);
-        printf ("Magic %s is not recognized or supported.\n", magic_name);
+        fprintf (stderr, "Magic %s is not recognized or supported.\n", magic_name);
         exit(1);
     }
 
     struct mach_header_64 header = read_mach_header(base, mach_header_offset);
+    if (mach_header_offset == 0) { // non-fat binary
+        format_cpu_type(header.cputype, cpu_type);
+        if (!is_selected_arch(cpu_type)) {
+            fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
+            exit(1);
+        }
+    }
+
     if (show_header()) {
         print_mach_header(header);
     }

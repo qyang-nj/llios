@@ -9,13 +9,14 @@ $ ./macho_parser --help
 Usage: macho_parser [options] macho_file
     -c, --command LOAD_COMMAND           show specific load command
     -v, --verbose                        can be used multiple times to increase verbose level
+        --arch                           specify an architecture, arm64 or x86_64
         --no-truncate                    do not truncate even the content is long
     -h, --help                           show this help message
 
-    --segments                           equivalent to '--comand LC_SEGMENT_64
+    --segments                           equivalent to '--command LC_SEGMENT_64
     --section INDEX                      show the section at INDEX
     --dylibs                             show dylib related commands
-    --build-version                      equivalent to '--comand LC_BUILD_VERSION --comand LC_VERSION_MIN_*'
+    --build-version                      equivalent to '--command LC_BUILD_VERSION --command LC_VERSION_MIN_*'
 
 Code Signature Options:
     --cs,  --code-signature              equivalent to '--command LC_CODE_SIGNATURE'
