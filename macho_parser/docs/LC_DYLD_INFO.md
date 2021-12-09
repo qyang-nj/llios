@@ -1,5 +1,5 @@
 # LC_DYLD_INFO(_ONLY)
-As their names suggest, the load command `LC_DYLD_INFO` and `LC_DYLD_INFO_ONLY` store the information that is used by `dyld`, the dynamic linker. Those information consists of rebase, binding and export symbols. All of them can be accessed through `struct dyld_info_command` and be inspected by `xcrun dyldinfo (-rebase|-bind|-weak_bind|-lazy_bind|-export)`.
+As their names suggest, the load command `LC_DYLD_INFO` and `LC_DYLD_INFO_ONLY` have the information that is used by `dyld`, the dynamic linker. These information consists of rebasing info, binding info and exported symbols. All of them can be accessed through `struct dyld_info_command`.
 
 ``` c
 struct dyld_info_command {
@@ -31,14 +31,14 @@ The difference between these two commands is that `LC_DYLD_INFO_ONLY` has `LC_RE
 ```
 
 ## Bind
-Binding is the process to resolve undefined symbols in a binary. This is required when a binary depends on another binary, usually an executable depending on a dynamic library. Biding information stored in `LC_DYLD_INFO(_ONLY)` is used to facilitate this process.
+Binding is the process to resolve undefined symbols in a binary. This is required when a binary depends on another binary, usually an executable depending on a dynamic library. Biding information in `LC_DYLD_INFO(_ONLY)` is used to facilitate binding process.
 
-As we can tell from `struct dyld_info_command`, there are three kinds of binding, non-lazy binding, lazy binding and weak binding. They are encoded in the similar way, known as opcodes. More on this is at [Binding Information](../../dynamic_linking/docs/BindingInfo.md).
+As we can tell from `struct dyld_info_command`, there are three kinds of binding, non-lazy binding, lazy binding and weak binding. They are encoded in the similar way, known as **opcodes**. More on this is at [Binding Information](../../dynamic_linking/docs/BindingInfo.md).
 
 ## Rebase
-Rebasing is needed to support ASLR (Address Space Layout Randomization), in which the addresses in a binary are shifted by a random number. Rebase information is used to facilitate that process, telling `dyld` what addresses are needed to be rebased at launch time.
+Rebasing is needed to support ASLR (Address Space Layout Randomization), in which the addresses in a binary are shifted by a random number. Rebase information is used to tell `dyld` what addresses are needed to be rebased at launch time.
 
-Using macho-o parser, we can tell that all rebases are in the `__DATA` or `__DATA_CONST` segment. It makes sense because `__TEXT` segment is read only. But why code in `__TEXT` doesn't need to be rebased? It's because all addresses in `__TEXT` are relative to the instruction pointer. This is called [RIP-relative addressing](). Only absolute addresses need to be shifted.
+Using macho-o parser, we can tell that all rebases are in the `__DATA` or `__DATA_CONST` segment. It makes sense because `__TEXT` segment is read only. But why code in `__TEXT` doesn't need to be rebased? It's because all addresses in `__TEXT` are relative to the instruction pointer. This is called [RIP-relative addressing](../../dynamic_linking#rip-relative-addressing). Only absolute addresses need to be shifted.
 
 The way that rebase information is encoded is very similar to binding, which is also using opcodes. Check out [Binding Information](../../dynamic_linking/docs/BindingInfo.md) for details.
 
