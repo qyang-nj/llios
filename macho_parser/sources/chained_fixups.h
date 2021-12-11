@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-void parse_chained_fixups(uint8_t *base, uint32_t dataoff, uint32_t datasize);
+void printChainedFixups(uint8_t *base, uint32_t dataoff, uint32_t datasize);
 
 #ifdef __cplusplus
 }

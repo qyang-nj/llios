@@ -4,41 +4,49 @@
 #include <mach-o/loader.h>
 #include <mach-o/fixup-chains.h>
 #include <sys/mman.h>
+#include <algorithm>
 
+extern "C" {
+#include "argument.h"
 #include "util.h"
+#include "dylib.h"
+}
+
+#include "macho_binary.h"
 
 #include "chained_fixups.h"
 
-static void print_chained_fixups_header(struct dyld_chained_fixups_header *header);
-static void print_imports(struct dyld_chained_fixups_header *header);
+static void printChainedFixupsHeader(struct dyld_chained_fixups_header *header);
+static void printImports(struct dyld_chained_fixups_header *header);
 
-static void format_pointer_format(uint16_t pointer_format, char *formatted);
+static void formatPointerFormat(uint16_t pointer_format, char *formatted);
 
-void parse_chained_fixups(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
+void printChainedFixups(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
     uint8_t *fixup_base = base + dataoff;
 
     struct dyld_chained_fixups_header *header = (struct dyld_chained_fixups_header *)fixup_base;
-    print_chained_fixups_header(header);
-    print_imports(header);
+    printChainedFixupsHeader(header);
+    printImports(header);
 
     struct dyld_chained_starts_in_image *starts_in_image = (struct dyld_chained_starts_in_image *)(fixup_base + header->starts_offset);
-    // printf("    STARTS IN IMAGE\n");
-    // printf("    seg_count: %d\n", starts_in_image->seg_count);
-    // printf("    seg_info_offset: %d\n", starts_in_image->seg_info_offset[0]);
-    // printf("\n");
+    printf("  STARTS IN IMAGE\n");
+    printf("    seg_count: %d\n", starts_in_image->seg_count);
+    printf("    seg_info_offset: %d\n", starts_in_image->seg_info_offset[0]);
+    printf("\n");
 
     uint32_t *offsets = starts_in_image->seg_info_offset;
     for (int i = 0; i < starts_in_image->seg_count; ++i) {
-        printf("    SEGMENT %d (offset: %d)\n", i, offsets[i]);
+        struct segment_command_64 *segCmd = machoBinary.segmentCommands[i];
+        printf("  SEGMENT %.16s (offset: %d)\n", segCmd->segname, offsets[i]);
 
         if (offsets[i] == 0) {
             printf("\n");
             continue;
         }
 
-        struct dyld_chained_starts_in_segment* starts_in_segment = (struct dyld_chained_starts_in_segment*)(base + dataoff + header->starts_offset + offsets[i]);
+        struct dyld_chained_starts_in_segment* starts_in_segment = (struct dyld_chained_starts_in_segment*)(fixup_base + header->starts_offset + offsets[i]);
         char formatted_pointer_format[256];
-        format_pointer_format(starts_in_segment->pointer_format, formatted_pointer_format);
+        formatPointerFormat(starts_in_segment->pointer_format, formatted_pointer_format);
 
         printf("    size: %d\n", starts_in_segment->size);
         printf("    page_size: 0x%x\n", starts_in_segment->page_size);
@@ -49,14 +57,18 @@ void parse_chained_fixups(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
         printf("    page_start: %d\n", starts_in_segment-> page_start[0]);
 
         uint16_t *page_starts = starts_in_segment-> page_start;
-        for (int j = 0; j < starts_in_segment->page_count; ++j) {
-            printf("        SEGMENT %d, PAGE %d (offset: %d)\n", i, j, page_starts[j]);
+        uint16_t maxPageNum = args.no_truncate ? UINT16_MAX : 10;
+        int pageCount = 0;
+        for (int j = 0; j < std::min(starts_in_segment->page_count, maxPageNum); ++j) {
+            printf("      PAGE %d (offset: %d)\n", j, page_starts[j]);
 
             if (page_starts[j] == DYLD_CHAINED_PTR_START_NONE) { continue; }
 
             uint32_t chain = starts_in_segment->segment_offset + starts_in_segment->page_size * j + page_starts[j];
 
             bool done = false;
+            int count = 0;
+            int maxNumFixup = args.no_truncate ? INT_MAX : 10;
             while (!done) {
                 if (starts_in_segment->pointer_format == DYLD_CHAINED_PTR_64
                     || starts_in_segment->pointer_format == DYLD_CHAINED_PTR_64_OFFSET) {
@@ -83,13 +95,25 @@ void parse_chained_fixups(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
                     printf("Unsupported pointer format: 0x%x", starts_in_segment->pointer_format);
                     break;
                 }
+
+                count++;
+                if (count >= maxNumFixup) {
+                    done = true;
+                    printf("        ... more fixups ...\n");
+                }
             }
+
+            pageCount++;
             printf("\n");
+        }
+
+        if (pageCount < starts_in_segment->page_count) {
+            printf("      ... %d more pages ...\n\n", starts_in_segment->page_count - pageCount);
         }
     }
 }
 
-static void print_chained_fixups_header(struct dyld_chained_fixups_header *header) {
+static void printChainedFixupsHeader(struct dyld_chained_fixups_header *header) {
     const char *imports_format = NULL;
     switch (header->imports_format) {
         case DYLD_CHAINED_IMPORT: imports_format = "DYLD_CHAINED_IMPORT"; break;
@@ -97,8 +121,7 @@ static void print_chained_fixups_header(struct dyld_chained_fixups_header *heade
         case DYLD_CHAINED_IMPORT_ADDEND64: imports_format = "DYLD_CHAINED_IMPORT_ADDEND64"; break;
     }
 
-
-    printf("    CHAINED FIXUPS HEADER\n");
+    printf("  CHAINED FIXUPS HEADER\n");
     printf("    fixups_version : %d\n", header->fixups_version);
     printf("    starts_offset  : %#4x (%d)\n", header->starts_offset, header->starts_offset);
     printf("    imports_offset : %#4x (%d)\n", header->imports_offset, header->imports_offset);
@@ -110,19 +133,33 @@ static void print_chained_fixups_header(struct dyld_chained_fixups_header *heade
     printf("\n");
 }
 
-static void print_imports(struct dyld_chained_fixups_header *header) {
-    printf("    IMPORTS\n");
+static void printImports(struct dyld_chained_fixups_header *header) {
+    printf("  IMPORTS\n");
 
-    for (int i = 0; i < header->imports_count; ++i) {
+    uint32_t maxImportNum = args.no_truncate ? UINT32_MAX : 10;
+    int importCount = 0;
+    for (int i = 0; i < std::min(header->imports_count, maxImportNum); ++i) {
         struct dyld_chained_import import = ((struct dyld_chained_import *)((uint8_t *)header + header->imports_offset))[i];
-        printf("    [%d] lib_ordinal: %d   weak_import: %d   name_offset: %d (%s)\n",
-            i, import.lib_ordinal, import.weak_import, import.name_offset,
+
+        int dylibOrdinal = import.lib_ordinal;
+        struct dylib_command *dylibCmd = machoBinary.getDylibCommands()[dylibOrdinal - 1];
+        const char * dylibName = (dylibCmd == NULL ? "" : get_dylib_name(dylibCmd, true));
+
+        printf("    [%d] lib_ordinal: %d (%s)   weak_import: %d   name_offset: %d (%s)\n",
+            i, import.lib_ordinal, dylibName, import.weak_import, import.name_offset,
             (char *)((uint8_t *)header + header->symbols_offset + import.name_offset));
+
+        importCount++;
     }
+
+    if (importCount < header->imports_count) {
+        printf("    ... %d more imports ...\n", header->imports_count - importCount);
+    }
+
     printf("\n");
 }
 
-static void format_pointer_format(uint16_t pointer_format, char *formatted) {
+static void formatPointerFormat(uint16_t pointer_format, char *formatted) {
     switch(pointer_format) {
         case DYLD_CHAINED_PTR_ARM64E: strcpy(formatted, "DYLD_CHAINED_PTR_ARM64E"); break;
         case DYLD_CHAINED_PTR_64: strcpy(formatted, "DYLD_CHAINED_PTR_64"); break;
