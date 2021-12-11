@@ -129,7 +129,7 @@ $ ./macho_parser --rebase --opcode sample.out
 ...
 ```
 
-### Bind / Lazy Bind / Weak Bind
+### [Bind](../dynamic_linking/docs/BindingInfo.md)
 ```
 $ ./macho_parser --bind [--lazy-bind] [--weak-bind] sample.out
   Binding Table:
