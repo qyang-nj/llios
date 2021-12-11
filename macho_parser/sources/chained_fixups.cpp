@@ -18,6 +18,8 @@ extern "C" {
 
 static void printChainedFixupsHeader(struct dyld_chained_fixups_header *header);
 static void printImports(struct dyld_chained_fixups_header *header);
+static void printFixupsInPage(uint8_t *base, uint8_t *fixupBase, struct dyld_chained_fixups_header *header,
+    struct dyld_chained_starts_in_segment *startsInSegment, int pageIndex);
 
 static void formatPointerFormat(uint16_t pointer_format, char *formatted);
 
@@ -44,71 +46,34 @@ void printChainedFixups(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
             continue;
         }
 
-        struct dyld_chained_starts_in_segment* starts_in_segment = (struct dyld_chained_starts_in_segment*)(fixup_base + header->starts_offset + offsets[i]);
+        struct dyld_chained_starts_in_segment* startsInSegment = (struct dyld_chained_starts_in_segment*)(fixup_base + header->starts_offset + offsets[i]);
         char formatted_pointer_format[256];
-        formatPointerFormat(starts_in_segment->pointer_format, formatted_pointer_format);
+        formatPointerFormat(startsInSegment->pointer_format, formatted_pointer_format);
 
-        printf("    size: %d\n", starts_in_segment->size);
-        printf("    page_size: 0x%x\n", starts_in_segment->page_size);
-        printf("    pointer_format: %d (%s)\n", starts_in_segment->pointer_format, formatted_pointer_format);
-        printf("    segment_offset: 0x%llx\n", starts_in_segment->segment_offset);
-        printf("    max_valid_pointer: %d\n", starts_in_segment->max_valid_pointer);
-        printf("    page_count: %d\n", starts_in_segment->page_count);
-        printf("    page_start: %d\n", starts_in_segment-> page_start[0]);
+        printf("    size: %d\n", startsInSegment->size);
+        printf("    page_size: 0x%x\n", startsInSegment->page_size);
+        printf("    pointer_format: %d (%s)\n", startsInSegment->pointer_format, formatted_pointer_format);
+        printf("    segment_offset: 0x%llx\n", startsInSegment->segment_offset);
+        printf("    max_valid_pointer: %d\n", startsInSegment->max_valid_pointer);
+        printf("    page_count: %d\n", startsInSegment->page_count);
+        printf("    page_start: %d\n", startsInSegment-> page_start[0]);
 
-        uint16_t *page_starts = starts_in_segment-> page_start;
+        uint16_t *page_starts = startsInSegment->page_start;
         uint16_t maxPageNum = args.no_truncate ? UINT16_MAX : 10;
         int pageCount = 0;
-        for (int j = 0; j < std::min(starts_in_segment->page_count, maxPageNum); ++j) {
+        for (int j = 0; j < std::min(startsInSegment->page_count, maxPageNum); ++j) {
             printf("      PAGE %d (offset: %d)\n", j, page_starts[j]);
 
             if (page_starts[j] == DYLD_CHAINED_PTR_START_NONE) { continue; }
 
-            uint32_t chain = starts_in_segment->segment_offset + starts_in_segment->page_size * j + page_starts[j];
-
-            bool done = false;
-            int count = 0;
-            int maxNumFixup = args.no_truncate ? INT_MAX : 10;
-            while (!done) {
-                if (starts_in_segment->pointer_format == DYLD_CHAINED_PTR_64
-                    || starts_in_segment->pointer_format == DYLD_CHAINED_PTR_64_OFFSET) {
-                    struct dyld_chained_ptr_64_bind bind = *(struct dyld_chained_ptr_64_bind *)(base + chain);
-                    if (bind.bind) {
-                        struct dyld_chained_import import = ((struct dyld_chained_import *)(fixup_base + header->imports_offset))[bind.ordinal];
-                        char *symbol = (char *)(fixup_base + header->symbols_offset + import.name_offset);
-                        printf("        0x%08x BIND     ordinal: %d   addend: %d    reserved: %d   (%s)\n",
-                            chain, bind.ordinal, bind.addend, bind.reserved, symbol);
-                    } else {
-                        // rebase
-                        struct dyld_chained_ptr_64_rebase rebase = *(struct dyld_chained_ptr_64_rebase *)&bind;
-                        printf("        %#010x REBASE   target: %#010llx   high8: %d\n",
-                            chain, rebase.target, rebase.high8);
-                    }
-
-                    if (bind.next == 0) {
-                        done = true;
-                    } else {
-                        chain += bind.next * 4;
-                    }
-
-                } else {
-                    printf("Unsupported pointer format: 0x%x", starts_in_segment->pointer_format);
-                    break;
-                }
-
-                count++;
-                if (count >= maxNumFixup) {
-                    done = true;
-                    printf("        ... more fixups ...\n");
-                }
-            }
+            printFixupsInPage(base, fixup_base, header, startsInSegment, j);
 
             pageCount++;
             printf("\n");
         }
 
-        if (pageCount < starts_in_segment->page_count) {
-            printf("      ... %d more pages ...\n\n", starts_in_segment->page_count - pageCount);
+        if (pageCount < startsInSegment->page_count) {
+            printf("      ... %d more pages ...\n\n", startsInSegment->page_count - pageCount);
         }
     }
 }
@@ -157,6 +122,47 @@ static void printImports(struct dyld_chained_fixups_header *header) {
     }
 
     printf("\n");
+}
+
+static void printFixupsInPage(uint8_t *base, uint8_t *fixupBase, struct dyld_chained_fixups_header *header,
+    struct dyld_chained_starts_in_segment *startsInSegment, int pageIndex) {
+    uint32_t chain = startsInSegment->segment_offset + startsInSegment->page_size * pageIndex + startsInSegment->page_start[pageIndex];
+    bool done = false;
+    int count = 0;
+    int maxNumFixup = args.no_truncate ? INT_MAX : 10;
+    while (!done) {
+        if (startsInSegment->pointer_format == DYLD_CHAINED_PTR_64
+            || startsInSegment->pointer_format == DYLD_CHAINED_PTR_64_OFFSET) {
+            struct dyld_chained_ptr_64_bind bind = *(struct dyld_chained_ptr_64_bind *)(base + chain);
+            if (bind.bind) {
+                struct dyld_chained_import import = ((struct dyld_chained_import *)(fixupBase + header->imports_offset))[bind.ordinal];
+                char *symbol = (char *)(fixupBase + header->symbols_offset + import.name_offset);
+                printf("        0x%08x BIND     ordinal: %d   addend: %d    reserved: %d   (%s)\n",
+                    chain, bind.ordinal, bind.addend, bind.reserved, symbol);
+            } else {
+                // rebase
+                struct dyld_chained_ptr_64_rebase rebase = *(struct dyld_chained_ptr_64_rebase *)&bind;
+                printf("        %#010x REBASE   target: %#010llx   high8: %d\n",
+                    chain, rebase.target, rebase.high8);
+            }
+
+            if (bind.next == 0) {
+                done = true;
+            } else {
+                chain += bind.next * 4;
+            }
+
+        } else {
+            printf("Unsupported pointer format: 0x%x", startsInSegment->pointer_format);
+            break;
+        }
+
+        count++;
+        if (count >= maxNumFixup) {
+            done = true;
+            printf("        ... more fixups ...\n");
+        }
+    }
 }
 
 static void formatPointerFormat(uint16_t pointer_format, char *formatted) {
