@@ -14,14 +14,14 @@ static void print_imports(struct dyld_chained_fixups_header *header);
 
 static void format_pointer_format(uint16_t pointer_format, char *formatted);
 
-void parse_chained_fixups(void *base, uint32_t dataoff, uint32_t datasize) {
-    void *fixup_base = base + dataoff;
+void parse_chained_fixups(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
+    uint8_t *fixup_base = base + dataoff;
 
-    struct dyld_chained_fixups_header *header = fixup_base;
+    struct dyld_chained_fixups_header *header = (struct dyld_chained_fixups_header *)fixup_base;
     print_chained_fixups_header(header);
     print_imports(header);
 
-    struct dyld_chained_starts_in_image *starts_in_image = fixup_base + header->starts_offset;
+    struct dyld_chained_starts_in_image *starts_in_image = (struct dyld_chained_starts_in_image *)(fixup_base + header->starts_offset);
     // printf("    STARTS IN IMAGE\n");
     // printf("    seg_count: %d\n", starts_in_image->seg_count);
     // printf("    seg_info_offset: %d\n", starts_in_image->seg_info_offset[0]);
@@ -36,7 +36,7 @@ void parse_chained_fixups(void *base, uint32_t dataoff, uint32_t datasize) {
             continue;
         }
 
-        struct dyld_chained_starts_in_segment* starts_in_segment = base + dataoff + header->starts_offset + offsets[i];
+        struct dyld_chained_starts_in_segment* starts_in_segment = (struct dyld_chained_starts_in_segment*)(base + dataoff + header->starts_offset + offsets[i]);
         char formatted_pointer_format[256];
         format_pointer_format(starts_in_segment->pointer_format, formatted_pointer_format);
 
@@ -63,7 +63,7 @@ void parse_chained_fixups(void *base, uint32_t dataoff, uint32_t datasize) {
                     struct dyld_chained_ptr_64_bind bind = *(struct dyld_chained_ptr_64_bind *)(base + chain);
                     if (bind.bind) {
                         struct dyld_chained_import import = ((struct dyld_chained_import *)(fixup_base + header->imports_offset))[bind.ordinal];
-                        char *symbol = fixup_base + header->symbols_offset + import.name_offset;
+                        char *symbol = (char *)(fixup_base + header->symbols_offset + import.name_offset);
                         printf("        0x%08x BIND     ordinal: %d   addend: %d    reserved: %d   (%s)\n",
                             chain, bind.ordinal, bind.addend, bind.reserved, symbol);
                     } else {
@@ -90,7 +90,7 @@ void parse_chained_fixups(void *base, uint32_t dataoff, uint32_t datasize) {
 }
 
 static void print_chained_fixups_header(struct dyld_chained_fixups_header *header) {
-    char *imports_format = NULL;
+    const char *imports_format = NULL;
     switch (header->imports_format) {
         case DYLD_CHAINED_IMPORT: imports_format = "DYLD_CHAINED_IMPORT"; break;
         case DYLD_CHAINED_IMPORT_ADDEND: imports_format = "DYLD_CHAINED_IMPORT_ADDEND"; break;
@@ -114,10 +114,10 @@ static void print_imports(struct dyld_chained_fixups_header *header) {
     printf("    IMPORTS\n");
 
     for (int i = 0; i < header->imports_count; ++i) {
-        struct dyld_chained_import import = ((struct dyld_chained_import *)((void *)header + header->imports_offset))[i];
+        struct dyld_chained_import import = ((struct dyld_chained_import *)((uint8_t *)header + header->imports_offset))[i];
         printf("    [%d] lib_ordinal: %d   weak_import: %d   name_offset: %d (%s)\n",
             i, import.lib_ordinal, import.weak_import, import.name_offset,
-            (char *)((void *)header + header->symbols_offset + import.name_offset));
+            (char *)((uint8_t *)header + header->symbols_offset + import.name_offset));
     }
     printf("\n");
 }
