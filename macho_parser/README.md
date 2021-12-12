@@ -171,6 +171,54 @@ $ ./macho_parser --export sample.out
       CLASS_$_SimpleClass (data: 00f88102)
 ```
 
+## [LC_DYLD_CHAINED_FIXUPS]((../dynamic_linking/chained_fixups.md))
+```
+$ ./macho_parser -c LC_DYLD_CHAINED_FIXUPS sample.out
+LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0x8f88000 (150503424)   datasize: 196552
+  CHAINED FIXUPS HEADER
+    fixups_version : 0
+    starts_offset  : 0x20 (32)
+    imports_offset : 0xac0 (2752)
+    symbols_offset : 0x56dc (22236)
+    imports_count  : 4871
+    imports_format : 1 (DYLD_CHAINED_IMPORT)
+    symbols_format : 0 (UNCOMPRESSED)
+
+  IMPORTS
+    [0] lib_ordinal: 81 (libswiftFoundation.dylib)   weak_import: 0   name_of
+LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0x8000 (32768)   datasize: 120
+  CHAINED FIXUPS HEADER
+    fixups_version : 0
+    starts_offset  : 0x20 (32)
+    imports_offset : 0x50 (80)
+    symbols_offset : 0x58 (88)
+    imports_count  : 2
+    imports_format : 1 (DYLD_CHAINED_IMPORT)
+    symbols_format : 0 (UNCOMPRESSED)
+
+  IMPORTS
+    [0] lib_ordinal: 1 (lib.dylib)   weak_import: 0   name_offset: 1 (_llios_lib_func)
+    [1] lib_ordinal: 1 (lib.dylib)   weak_import: 0   name_offset: 17 (_llios_lib_str)
+
+  SEGMENT __PAGEZERO (offset: 0)
+
+  SEGMENT __TEXT (offset: 0)
+
+  SEGMENT __DATA_CONST (offset: 24)
+    size: 24
+    page_size: 0x4000
+    pointer_format: 6 (DYLD_CHAINED_PTR_64_OFFSET)
+    segment_offset: 0x4000
+    max_valid_pointer: 0
+    page_count: 1
+    page_start: 0
+      PAGE 0 (offset: 0)
+        0x00004000 BIND     ordinal: 0   addend: 0    reserved: 0   (_llios_lib_func)
+        0x00004008 BIND     ordinal: 1   addend: 0    reserved: 0   (_llios_lib_str)
+
+  SEGMENT __LINKEDIT (offset: 0)
+```
+
 ## [LC_SYMTAB](docs/LC_SYMTAB.md)
 ```
 $ ./macho_parser --command LC_SYMTAB --no-truncate sample.out

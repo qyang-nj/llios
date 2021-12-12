@@ -30,11 +30,9 @@ void printChainedFixups(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
     printChainedFixupsHeader(header);
     printImports(header);
 
-    struct dyld_chained_starts_in_image *starts_in_image = (struct dyld_chained_starts_in_image *)(fixup_base + header->starts_offset);
-    printf("  STARTS IN IMAGE\n");
-    printf("    seg_count: %d\n", starts_in_image->seg_count);
-    printf("    seg_info_offset: %d\n", starts_in_image->seg_info_offset[0]);
-    printf("\n");
+    struct dyld_chained_starts_in_image *starts_in_image =
+        (struct dyld_chained_starts_in_image *)(fixup_base + header->starts_offset);
+
 
     uint32_t *offsets = starts_in_image->seg_info_offset;
     for (int i = 0; i < starts_in_image->seg_count; ++i) {
