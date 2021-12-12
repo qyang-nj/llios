@@ -171,6 +171,53 @@ $ ./macho_parser --export sample.out
       CLASS_$_SimpleClass (data: 00f88102)
 ```
 
+## [LC_DYLD_CHAINED_FIXUPS](../dynamic_linking/chained_fixups.md)
+```
+./macho_parser -c LC_DYLD_CHAINED_FIXUPS sample.out
+LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0xc000 (49152)   datasize: 296
+  CHAINED FIXUPS HEADER
+    fixups_version : 0
+    starts_offset  : 0x20 (32)
+    imports_offset : 0x68 (104)
+    symbols_offset : 0x88 (136)
+    imports_count  : 8
+    imports_format : 1 (DYLD_CHAINED_IMPORT)
+    symbols_format : 0 (UNCOMPRESSED)
+
+  IMPORTS
+    [0] lib_ordinal: 4 (Foundation)        weak_import: 0   name_offset: 1 (_NSLog)
+    [1] lib_ordinal: 254 (flat lookup)     weak_import: 1   name_offset: 8 (_c_extern_weak_function)
+    [2] lib_ordinal: 1 (my_dylib.dylib)    weak_import: 0   name_offset: 32 (_my_dylib_func)
+    [3] lib_ordinal: 2 (libSystem.B.dylib) weak_import: 0   name_offset: 47 (_printf)
+    [4] lib_ordinal: 3 (CoreFoundation)    weak_import: 0   name_offset: 55 (___CFConstantStringClassReference)
+    [5] lib_ordinal: 5 (libobjc.A.dylib)   weak_import: 0   name_offset: 89 (__objc_empty_cache)
+    [6] lib_ordinal: 5 (libobjc.A.dylib)   weak_import: 0   name_offset: 108 (_OBJC_METACLASS_$_NSObject)
+    [7] lib_ordinal: 5 (libobjc.A.dylib)   weak_import: 0   name_offset: 135 (_OBJC_CLASS_$_NSObject)
+
+  SEGMENT __PAGEZERO (offset: 0)
+
+  SEGMENT __TEXT (offset: 0)
+
+  SEGMENT __DATA_CONST (offset: 24)
+    size: 24
+    page_size: 0x4000
+    pointer_format: 6 (DYLD_CHAINED_PTR_64_OFFSET)
+    segment_offset: 0x4000
+    max_valid_pointer: 0
+    page_count: 1
+    page_start: 0
+      PAGE 0 (offset: 0)
+        0x00004000 BIND     ordinal: 0   addend: 0    reserved: 0   (_NSLog)
+        0x00004008 BIND     ordinal: 1   addend: 0    reserved: 0   (_c_extern_weak_function)
+        0x00004010 BIND     ordinal: 2   addend: 0    reserved: 0   (_my_dylib_func)
+        0x00004018 BIND     ordinal: 3   addend: 0    reserved: 0   (_printf)
+        0x00004020 BIND     ordinal: 4   addend: 0    reserved: 0   (___CFConstantStringClassReference)
+        0x00004030 REBASE   target: 0x00003f83   high8: 0
+        0x00004040 REBASE   target: 0x000080d8   high8: 0
+        0x00004048 REBASE   target: 0x000080d8   high8: 0
+    ...
+```
+
 ## [LC_SYMTAB](docs/LC_SYMTAB.md)
 ```
 $ ./macho_parser --command LC_SYMTAB --no-truncate sample.out
