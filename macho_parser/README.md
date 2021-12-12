@@ -186,7 +186,7 @@ LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0xc000 (49152)   datasize: 296
 
   IMPORTS
     [0] lib_ordinal: 4 (Foundation)        weak_import: 0   name_offset: 1 (_NSLog)
-    [1] lib_ordinal: 254 ()                weak_import: 1   name_offset: 8 (_c_extern_weak_function)
+    [1] lib_ordinal: 254 (flat lookup)     weak_import: 1   name_offset: 8 (_c_extern_weak_function)
     [2] lib_ordinal: 1 (my_dylib.dylib)    weak_import: 0   name_offset: 32 (_my_dylib_func)
     [3] lib_ordinal: 2 (libSystem.B.dylib) weak_import: 0   name_offset: 47 (_printf)
     [4] lib_ordinal: 3 (CoreFoundation)    weak_import: 0   name_offset: 55 (___CFConstantStringClassReference)

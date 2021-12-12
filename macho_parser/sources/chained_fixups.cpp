@@ -5,6 +5,7 @@
 #include <mach-o/fixup-chains.h>
 #include <sys/mman.h>
 #include <algorithm>
+#include <string>
 
 extern "C" {
 #include "argument.h"
@@ -21,6 +22,7 @@ static void printImports(struct dyld_chained_fixups_header *header);
 static void printFixupsInPage(uint8_t *base, uint8_t *fixupBase, struct dyld_chained_fixups_header *header,
     struct dyld_chained_starts_in_segment *startsInSegment, int pageIndex);
 
+static std::string getDylibName(uint16_t dylibOrdinal);
 static void formatPointerFormat(uint16_t pointer_format, char *formatted);
 
 void printChainedFixups(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
@@ -102,14 +104,11 @@ static void printImports(struct dyld_chained_fixups_header *header) {
     uint32_t maxImportNum = args.no_truncate ? UINT32_MAX : 10;
     int importCount = 0;
     for (int i = 0; i < std::min(header->imports_count, maxImportNum); ++i) {
-        struct dyld_chained_import import = ((struct dyld_chained_import *)((uint8_t *)header + header->imports_offset))[i];
+        struct dyld_chained_import import =
+            ((struct dyld_chained_import *)((uint8_t *)header + header->imports_offset))[i];
 
-        int dylibOrdinal = import.lib_ordinal;
-        struct dylib_command *dylibCmd = machoBinary.getDylibCommands()[dylibOrdinal - 1];
-        const char * dylibName = (dylibCmd == NULL ? "" : get_dylib_name(dylibCmd, true));
-
-        printf("    [%d] lib_ordinal: %d (%s)   weak_import: %d   name_offset: %d (%s)\n",
-            i, import.lib_ordinal, dylibName, import.weak_import, import.name_offset,
+        printf("    [%d] lib_ordinal: %-22s   weak_import: %d   name_offset: %d (%s)\n",
+            i, getDylibName(import.lib_ordinal).c_str(), import.weak_import, import.name_offset,
             (char *)((uint8_t *)header + header->symbols_offset + import.name_offset));
 
         importCount++;
@@ -179,4 +178,28 @@ static void formatPointerFormat(uint16_t pointer_format, char *formatted) {
         case DYLD_CHAINED_PTR_ARM64E_USERLAND24: strcpy(formatted, "DYLD_CHAINED_PTR_ARM64E_USERLAND24"); break;
         default: strcpy(formatted, "UNKNOWN");
     }
+}
+
+static std::string getDylibName(uint16_t dylibOrdinal) {
+    const char * dylibName  = "";
+
+    switch (dylibOrdinal) {
+        case (uint8_t)BIND_SPECIAL_DYLIB_SELF:
+            dylibName = "self";
+            break;
+        case (uint8_t)BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE:
+            dylibName = "main executable";
+            break;
+        case (uint8_t)BIND_SPECIAL_DYLIB_FLAT_LOOKUP:
+            dylibName = "flat lookup";
+            break;
+        case (uint8_t)BIND_SPECIAL_DYLIB_WEAK_LOOKUP:
+            dylibName = "weak lookup";
+            break;
+        default:
+            struct dylib_command *dylibCmd = machoBinary.getDylibCommands()[dylibOrdinal - 1];
+            dylibName = (dylibCmd == NULL ? "" : get_dylib_name(dylibCmd, true));
+    }
+
+    return std::to_string(dylibOrdinal) + std::string(" (") + std::string(dylibName) + std::string(")");
 }
