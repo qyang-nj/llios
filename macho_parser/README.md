@@ -171,7 +171,7 @@ $ ./macho_parser --export sample.out
       CLASS_$_SimpleClass (data: 00f88102)
 ```
 
-## [LC_DYLD_CHAINED_FIXUPS]((../dynamic_linking/chained_fixups.md))
+## [LC_DYLD_CHAINED_FIXUPS](../dynamic_linking/chained_fixups.md)
 ```
 ./macho_parser -c LC_DYLD_CHAINED_FIXUPS sample.out
 LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0xc000 (49152)   datasize: 296
