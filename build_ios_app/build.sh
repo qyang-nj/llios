@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 set -e
 
 # -d/--device: build for an iOS device instead of simulator
@@ -25,16 +25,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-[ $OPT_DEVICE == 1 ] && SDK="iphoneos" || SDK="iphonesimulator"
+[[ $OPT_DEVICE == 1 ]] && SDK="iphoneos" || SDK="iphonesimulator"
 SDK_PATH=$(xcrun --show-sdk-path --sdk $SDK)
 
 # Targeting ios12 or lower will end up linking with libSwiftCompatibility50
 # and libSwiftCompatibilityDynamicReplacements.
-[ $OPT_DEVICE == 1 ] && TARGET=arm64-apple-ios14.0 || TARGET=x86_64-apple-ios14.0-simulator
+[[ $OPT_DEVICE == 1 ]] && TARGET=arm64-apple-ios14.0 || TARGET=x86_64-apple-ios14.0-simulator
 SWIFTC="xcrun swiftc -sdk $SDK_PATH -target $TARGET"
 APP_NAME="SampleApp"
 
-if [ "$OPT_RELEASE" == 1 ]; then
+if [[ "$OPT_RELEASE" == 1 ]]; then
     SWIFTC="$SWIFTC -O"
 else
     SWIFTC="$SWIFTC -g -Onone"
@@ -54,7 +54,7 @@ cat > $OUTPUT_FILE_MAP_JSON <<EOL
 }
 EOL
 
-$SWIFTC \
+eval ${SWIFTC} \
     -incremental \
     -parse-as-library \
     -c \
@@ -71,7 +71,7 @@ xcrun libtool \
     Build/foo.o Build/bar.o
 
 # Build the dynamic library
-$SWIFTC \
+eval ${SWIFTC} \
     -emit-library \
     -emit-module \
     -o Build/DynamicLib.dylib \
@@ -81,7 +81,7 @@ $SWIFTC \
     Sources/DynamicLib/DynamicLib.swift
 
 # Build the executable
-$SWIFTC \
+eval ${SWIFTC} \
     -emit-executable \
     -I Build \
     -o "Build/$APP_NAME" \
@@ -109,7 +109,7 @@ mv "Build/Info.plist" "Build/$APP_NAME.app"
 # Find a valid signing identity by `security find-identity -v -p codesigning`.
 # You also need to change the app id and modify Entitlements.plist.
 # (It doesn't seem to be necessary to copy the provisioning profile. Idk why.)
-if [ "$OPT_DEVICE" == 1 ]; then
+if [[ "$OPT_DEVICE" == 1 ]]; then
     # The embedded dylibs need to be signed separately and before signing the app bundle.
     codesign --force --sign '08F760DEAD51F26EE4ADC5FF40196215C85AD9DE' "$(ls Build/$APP_NAME.app/*.dylib)"
     codesign --force --sign '08F760DEAD51F26EE4ADC5FF40196215C85AD9DE' "Build/$APP_NAME.app" --entitlements Sources/Entitlements.plist
