@@ -26,15 +26,15 @@ static void print_fat_archs(struct fat_arch *archs, int nfat_arch);
 static void print_mach_header(struct mach_header_64 header);
 
 static void format_magic(uint32_t magic, char *name);
-static void format_cpu_type(cpu_type_t cputype, char *name);
 static void format_file_type(uint32_t filetype, char *name);
 
+static std::string stringifyCPUType(cpu_type_t cputype);
 static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusubtype);
 
 struct mach_header_64 *parseMachHeader(uint8_t *base) {
     uint32_t magic = read_magic(base, 0);
     int mach_header_offset = 0;
-    char cpu_type[64];
+    const char *cpuType;
 
     if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
         struct fat_header header = read_fat_header(base, NEEDS_SWAP(magic));
@@ -46,8 +46,8 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
         }
 
         for (int i = 0; i < header.nfat_arch; ++i) {
-            format_cpu_type(fat_archs[i].cputype, cpu_type);
-            if ((fat_archs[i].cputype & CPU_ARCH_ABI64) && is_selected_arch(cpu_type)) {
+            cpuType = stringifyCPUType(fat_archs[i].cputype).c_str();
+            if ((fat_archs[i].cputype & CPU_ARCH_ABI64) && is_selected_arch(cpuType)) {
                 mach_header_offset = fat_archs[i].offset;
                 break;
             }
@@ -75,8 +75,8 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
 
     struct mach_header_64 header = read_mach_header(base, mach_header_offset);
     if (mach_header_offset == 0) { // non-fat binary
-        format_cpu_type(header.cputype, cpu_type);
-        if (!is_selected_arch(cpu_type)) {
+        cpuType = stringifyCPUType(header.cputype).c_str();
+        if (!is_selected_arch(cpuType)) {
             fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
             exit(1);
         }
@@ -127,26 +127,22 @@ static void print_fat_header(uint32_t magic, struct fat_header header) {
 static void print_fat_archs(struct fat_arch *archs, int nfat_arch) {
     for (int i = 0; i < nfat_arch; ++i) {
         struct fat_arch arch = archs[i];
-        char cpu_type[64];
-        format_cpu_type(arch.cputype, cpu_type);
 
         printf("#%d: cputype: %-10s  cpusubtype: %-8s   offset: %-8d size: %d\n",
-            i, cpu_type, stringifyCPUSubType(arch.cputype, arch.cpusubtype).c_str(), arch.offset, arch.size);
+            i, stringifyCPUType(arch.cputype).c_str(), stringifyCPUSubType(arch.cputype, arch.cpusubtype).c_str(), arch.offset, arch.size);
     }
     printf("\n");
 }
 
 static void print_mach_header(struct mach_header_64 header) {
     char magic_name[32];
-    char cpu_type[64];
     char file_type[64];
 
     format_magic(header.magic, magic_name);
-    format_cpu_type(header.cputype, cpu_type);
     format_file_type(header.filetype, file_type);
 
     printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   flags: 0x%X\n",
-        "MACHO_HEADER", magic_name, cpu_type, stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
+        "MACHO_HEADER", magic_name, stringifyCPUType(header.cputype).c_str(), stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
         file_type, header.ncmds, header.sizeofcmds, header.flags);
 }
 
@@ -164,17 +160,6 @@ static void format_magic(uint32_t magic, char *name) {
     }
 }
 
-
-static void format_cpu_type(cpu_type_t cputype, char *name) {
-    switch (cputype) {
-        case CPU_TYPE_X86:      strcpy(name, "X86");        break;
-        case CPU_TYPE_X86_64:   strcpy(name, "X86_64");     break;
-        case CPU_TYPE_ARM:      strcpy(name, "ARM");        break;
-        case CPU_TYPE_ARM64:    strcpy(name, "ARM64");      break;
-        default:                sprintf(name, "0x%x", cputype);
-    }
-}
-
 static void format_file_type(uint32_t filetype, char *name) {
     switch (filetype) {
         case MH_OBJECT:     strcpy(name, "MH_OBJECT");      break;
@@ -187,6 +172,19 @@ static void format_file_type(uint32_t filetype, char *name) {
     }
 }
 
+static std::string stringifyCPUType(cpu_type_t cputype) {
+    switch (cputype) {
+        case CPU_TYPE_X86:      return std::string("X86");
+        case CPU_TYPE_X86_64:   return std::string("X86_64");
+        case CPU_TYPE_ARM:      return std::string("ARM");
+        case CPU_TYPE_ARM64:    return std::string("ARM64");
+        default: {
+            std::stringstream ss;
+            ss << "0x" << std::hex << cputype;
+            return ss.str();
+        }
+    }
+}
 
 static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusubtype) {
     if (cputype == CPU_TYPE_ARM64) {

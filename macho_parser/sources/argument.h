@@ -59,6 +59,6 @@ bool show_command(unsigned int cmd);
 
 bool show_section(int section);
 
-bool is_selected_arch(char *arch);
+bool is_selected_arch(const char *arch);
 
 #endif /* ARGUMENT_H */
