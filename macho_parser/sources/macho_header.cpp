@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <mach-o/fat.h>
 #include <mach-o/swap.h>
+#include <string>
+#include <iomanip>
+#include <sstream>
 
 extern "C" {
 #include "util.h"
@@ -25,6 +28,8 @@ static void print_mach_header(struct mach_header_64 header);
 static void format_magic(uint32_t magic, char *name);
 static void format_cpu_type(cpu_type_t cputype, char *name);
 static void format_file_type(uint32_t filetype, char *name);
+
+static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusubtype);
 
 struct mach_header_64 *parseMachHeader(uint8_t *base) {
     uint32_t magic = read_magic(base, 0);
@@ -125,8 +130,8 @@ static void print_fat_archs(struct fat_arch *archs, int nfat_arch) {
         char cpu_type[64];
         format_cpu_type(arch.cputype, cpu_type);
 
-        printf("#%d: cputype: %-10s  cpusubtype: %-8x   offset: %-8d size: %d\n",
-            i, cpu_type, arch.cpusubtype, arch.offset, arch.size);
+        printf("#%d: cputype: %-10s  cpusubtype: %-8s   offset: %-8d size: %d\n",
+            i, cpu_type, stringifyCPUSubType(arch.cputype, arch.cpusubtype).c_str(), arch.offset, arch.size);
     }
     printf("\n");
 }
@@ -140,8 +145,9 @@ static void print_mach_header(struct mach_header_64 header) {
     format_cpu_type(header.cputype, cpu_type);
     format_file_type(header.filetype, file_type);
 
-    printf("%-20s magic: %s   cputype: %s   cpusubtype: %x   filetype: %s   ncmds: %d   sizeofcmds: %d   flags: 0x%X\n",
-        "MACHO_HEADER", magic_name, cpu_type, header.cpusubtype, file_type, header.ncmds, header.sizeofcmds, header.flags);
+    printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   flags: 0x%X\n",
+        "MACHO_HEADER", magic_name, cpu_type, stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
+        file_type, header.ncmds, header.sizeofcmds, header.flags);
 }
 
 static void format_magic(uint32_t magic, char *name) {
@@ -179,4 +185,24 @@ static void format_file_type(uint32_t filetype, char *name) {
         case MH_DSYM:       strcpy(name, "MH_DSYM");        break;
         default:            sprintf(name, "0x%x", filetype);
     }
+}
+
+
+static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusubtype) {
+    if (cputype == CPU_TYPE_ARM64) {
+        if (cpusubtype == CPU_SUBTYPE_ARM64_ALL) {
+            return std::string("ALL");
+        } else if (cpusubtype == (CPU_SUBTYPE_ARM64E | CPU_SUBTYPE_PTRAUTH_ABI)) {
+            return std::string("E");
+        }
+
+    } else if (cputype == CPU_TYPE_X86_64) {
+        if (cpusubtype == CPU_SUBTYPE_X86_64_ALL) {
+            return std::string("ALL");
+        }
+    }
+
+    std::stringstream ss;
+    ss << "0x" << std::hex << cpusubtype;
+    return ss.str();
 }
