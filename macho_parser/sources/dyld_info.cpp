@@ -87,6 +87,7 @@ void printDyldInfo(uint8_t *base, struct dyld_info_command *dyldInfoCmd) {
     }
 
     if (args.show_export) {
+        printf ("\n  Exported Symbols (Trie):");
         printExport(base, dyldInfoCmd->export_off, dyldInfoCmd->export_size);
     }
 }

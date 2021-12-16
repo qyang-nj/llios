@@ -155,6 +155,14 @@ void parse_arguments(int argc, char **argv) {
     if (args.show_dyld_info || args.show_rebase || args.show_bind || args.show_weak_bind || args.show_lazy_bind || args.show_export) {
         args.commands[args.command_count++] = LC_DYLD_INFO;
         args.commands[args.command_count++] = LC_DYLD_INFO_ONLY;
+
+        if (args.show_rebase || args.show_bind) {
+            args.commands[args.command_count++] = LC_DYLD_CHAINED_FIXUPS;
+        }
+
+        if (args.show_export) {
+            args.commands[args.command_count++] = LC_DYLD_EXPORTS_TRIE;
+        }
     }
 
     if (args.command_count > 0) {
