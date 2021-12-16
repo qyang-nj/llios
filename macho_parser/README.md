@@ -219,7 +219,7 @@ LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0xc000 (49152)   datasize: 296
 ```
 
 ## LC_DYLD_EXPORTS_TRIE
-See [Export](../../macho_parser/README.md#export) in `LC_DYLD_INFO`.
+See [Export](../macho_parser/README.md#export) in `LC_DYLD_INFO`.
 
 ## [LC_SYMTAB](docs/LC_SYMTAB.md)
 ```
