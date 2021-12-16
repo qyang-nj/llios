@@ -13,7 +13,8 @@ int main() { return 0; }
 ```
 *(The sample code and build script are in this directory.)*
 
-## LC_DYLD_INFO(_ONLY)
+## Dyld Info
+### LC_DYLD_INFO(_ONLY)
 As mentioned above, export info is not stored in symbol table (`LC_SYMTAB`). Instead, they are in the [`LC_DYLD_INFO(_ONLY)`](../macho_parser/docs/LC_DYLD_INFO.md) load command. With the help of `otool -l`, we're able to see the offset and the size of export info.
 
 ```
@@ -45,6 +46,9 @@ export information (from trie):
 0x100003FA0  _main
 0x100004000  _llios_int
 ```
+
+### LC_DYLD_EXPORTS_TRIE
+If the binary is targeted at iOS 14+ or is linked with `-fixup_chains` linker flag, the same information is stored in `LC_DYLD_EXPORTS_TRIE` load command instead. The detail of this change is discussed at [Chained Fixups](../dynamic_linking/chained_fixups.md).
 
 ## Export Trie
 The export info is actually a trie. A [trie](https://en.wikipedia.org/wiki/Trie) is a tree structure that is used for accelerating searching strings. It has nodes and edges. Different from the trie we were taught in text book, in an export trie, an edge is a string, and a node stores associated data.
@@ -87,9 +91,6 @@ This is what the trie actually looks like. The green nodes are the terminal node
 ![Trie Graph](../articles/images/Export%20Trie.png)
 
 To learn more, [here](../macho_parser/dyld_info.c) is the simple trie parser in the [macho parser](../macho_parser), and [here](https://github.com/opensource-apple/dyld/blob/3f928f32597888c5eac6003b9199d972d49857b5/launch-cache/MachOTrie.hpp) is the full-fledged parser in `dyld`.
-
-## LC_DYLD_EXPORTS_TRIE
-If the binary is built for iOS device and targeted at iOS 14+ or is linked with `-fixup_chains` linker flag, the export trie is stored in `LC_DYLD_EXPORTS_TRIE` load command instead of `LC_DYLD_INFO(_ONLY)`. Other information in `LC_DYLD_INFO(_ONLY)` is reformed into [Chained Fixups](../dynamic_linking/chained_fixups.md).
 
 ## Control export symbols
 By default, global symbols are exported. Many linker flags can control what symbols to export, `-exported_symbols_list`, `-exported_symbol`, `-unexported_symbols_list`, `-unexported_symbol`, `-reexported_symbols_list`, `-alias`, etc. More details are in the `man ld`.
