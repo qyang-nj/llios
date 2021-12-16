@@ -10,6 +10,7 @@ extern "C" {
 }
 
 #include "macho_binary.h"
+#include "exports_trie.h"
 #include "dyld_info.h"
 
 enum BindType {
@@ -22,7 +23,6 @@ static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size);
 static void printRebaseOpcodes(uint8_t *base, uint32_t offset, uint32_t size);
 static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enum BindType bindType);
 static void printBindingOpcodes(uint8_t *base, uint32_t offset, uint32_t size);
-static void printExport(uint8_t *base, uint32_t exportOff, uint32_t exportSize);
 
 static int8_t convertSignedImm(uint8_t imm);
 static std::string getDylibName(int dylibOrdinal);
@@ -87,7 +87,8 @@ void printDyldInfo(uint8_t *base, struct dyld_info_command *dyldInfoCmd) {
     }
 
     if (args.show_export) {
-        printExport(base, dyldInfoCmd->export_off, dyldInfoCmd->export_size);
+        printf ("\n  Exported Symbols (Trie):");
+        printExportTrie(base, dyldInfoCmd->export_off, dyldInfoCmd->export_size);
     }
 }
 
@@ -434,43 +435,6 @@ static void printBindingOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
             }
         }
     }
-}
-
-// Print out the export trie.
-static void printExportTrie(uint8_t *exportStart, uint8_t *nodePtr, int level) {
-    uint64_t terminalSize;
-    int byteCount = read_uleb128(nodePtr, &terminalSize);
-    uint8_t *childrenCountPtr = nodePtr + byteCount + terminalSize;
-
-    if (terminalSize != 0) {
-        printf(" (data: ");
-        for (int i = 0; i < terminalSize; ++i) {
-            printf("%02x", *(nodePtr + byteCount + i));
-        }
-        printf(")\n");
-    } else {
-        printf("\n");
-    }
-
-    // According to the source code in dyld,
-    // the count number is not uleb128 encoded;
-    uint8_t children_count = *childrenCountPtr;
-    uint8_t *s = childrenCountPtr + 1;
-    for (int i = 0; i < children_count; ++i) {
-        printf("  %*s%s", level * 2, "", s);
-        s += strlen((char *)s) + 1;
-
-        uint64_t child_offset;
-        byteCount = read_uleb128(s, &child_offset);
-        s += byteCount; // now s points to the next child's edge string
-        printExportTrie(exportStart, exportStart + child_offset, level + 1);
-    }
-}
-
-static void printExport(uint8_t *base, uint32_t exportOff, uint32_t exportSize) {
-    uint8_t *exportInfo = base + exportOff;
-    printf ("\n  Exported Symbols (Trie):");
-    printExportTrie(exportInfo, exportInfo, 0);
 }
 
 static int8_t convertSignedImm(uint8_t imm) {

@@ -1,5 +1,5 @@
 # Exported Symbol
-Exported symbols are basically the public APIs provided by a dynamic library. For a long time, I thought the exported symbols were stored in the symbol table (It's not wrong though). Surprisingly exported symbols are stored somewhere in a more efficient way, smaller on disk and faster at runtime. In this article, we will dive into the details of exported symbol information (short for export info).
+Exported symbols are the public APIs provided by a dynamic library. For a long time, I thought the exported symbols were stored in the symbol table (It's not wrong though). Surprisingly exported symbols are stored somewhere in a more efficient way, smaller on disk and faster at runtime. In this article, we will dive into the details of the export information (short for export info).
 
 It may not be obvious that an executable can also have exported symbols (use cases are explained in below "strip" section). We will anatomize the following sample code which contains a few public symbols. We are using C here as it does the least name mangling than other languages.
 
@@ -13,8 +13,9 @@ int main() { return 0; }
 ```
 *(The sample code and build script are in this directory.)*
 
-## LC_DYLD_INFO_ONLY
-As mentioned above, export info is not stored in symbol table (`LC_SYMTAB`). Instead, they are in the `LC_DYLD_INFO_ONLY` load command. With the help of `otool -l`, we're able to see the offset and the size of export info.
+## Dyld Info
+### LC_DYLD_INFO(_ONLY)
+As mentioned above, export info is not stored in symbol table (`LC_SYMTAB`). Instead, they are in the [`LC_DYLD_INFO(_ONLY)`](../macho_parser/docs/LC_DYLD_INFO.md) load command. With the help of `otool -l`, we're able to see the offset and the size of export info.
 
 ```
 $ otool -l sample.out
@@ -45,6 +46,9 @@ export information (from trie):
 0x100003FA0  _main
 0x100004000  _llios_int
 ```
+
+### LC_DYLD_EXPORTS_TRIE
+If the binary is targeted at iOS 14+ or is linked with `-fixup_chains` linker flag, the same information is stored in `LC_DYLD_EXPORTS_TRIE` load command instead. The detail of this change is discussed at [Chained Fixups](../dynamic_linking/chained_fixups.md).
 
 ## Export Trie
 The export info is actually a trie. A [trie](https://en.wikipedia.org/wiki/Trie) is a tree structure that is used for accelerating searching strings. It has nodes and edges. Different from the trie we were taught in text book, in an export trie, an edge is a string, and a node stores associated data.

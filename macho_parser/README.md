@@ -91,7 +91,7 @@ LC_SEGMENT_64        cmdsize: 392    segname: __DATA         file: 0x00008000-0x
 LC_SEGMENT_64        cmdsize: 72     segname: __LINKEDIT     file: 0x0000c000-0x0000c728 1.79KB     vm: 0x10000c000-0x100010000 16.00KB   prot: 1/1
 ```
 
-## [LC_DYLD_INFO_ONLY](docs/LC_DYLD_INFO.md)
+## [LC_DYLD_INFO(_ONLY)](docs/LC_DYLD_INFO.md)
 ```
 $ ./macho_parser --dyld-info sample.out
 LC_DYLD_INFO_ONLY    cmdsize: 48     export_size: 192
@@ -217,6 +217,9 @@ LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0xc000 (49152)   datasize: 296
         0x00004048 REBASE   target: 0x000080d8   high8: 0
     ...
 ```
+
+## LC_DYLD_EXPORTS_TRIE
+See [Export](../macho_parser/README.md#export) in `LC_DYLD_INFO`.
 
 ## [LC_SYMTAB](docs/LC_SYMTAB.md)
 ```
