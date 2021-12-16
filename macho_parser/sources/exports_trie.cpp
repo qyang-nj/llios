@@ -9,10 +9,11 @@ extern "C" {
 
 #include "exports_trie.h"
 
-static void printExport(uint8_t *base, uint32_t exportOff, uint32_t exportSize);
+static void printExportRecursion(uint8_t *exportStart, uint8_t *nodePtr, int level);
 
 void printExportTrie(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
-    printExport(base, dataoff, datasize);
+    uint8_t *exportInfo = base + dataoff;
+    printExportRecursion(exportInfo, exportInfo, 0);
 }
 
 static void printExportRecursion(uint8_t *exportStart, uint8_t *nodePtr, int level) {
@@ -43,9 +44,4 @@ static void printExportRecursion(uint8_t *exportStart, uint8_t *nodePtr, int lev
         s += byteCount; // now s points to the next child's edge string
         printExportRecursion(exportStart, exportStart + child_offset, level + 1);
     }
-}
-
-static void printExport(uint8_t *base, uint32_t exportOff, uint32_t exportSize) {
-    uint8_t *exportInfo = base + exportOff;
-    printExportRecursion(exportInfo, exportInfo, 0);
 }
