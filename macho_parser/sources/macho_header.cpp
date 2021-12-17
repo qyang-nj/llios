@@ -16,14 +16,14 @@ extern "C" {
 
 #define NEEDS_SWAP(magic) (magic == FAT_CIGAM || magic == FAT_CIGAM_64 || magic == MH_CIGAM || magic == MH_CIGAM_64)
 
-static uint32_t read_magic(uint8_t *base, int offset);
-static struct fat_header read_fat_header(uint8_t *base, bool needs_swap);
-static struct fat_arch *read_fat_archs(uint8_t *base, struct fat_header header, bool needs_swap);
-static struct mach_header_64 read_mach_header(uint8_t *base, uint64_t offset);
+static uint32_t readMagic(uint8_t *base, int offset);
+static struct fat_header readFatHeader(uint8_t *base, bool needs_swap);
+static struct fat_arch *readFatArchs(uint8_t *base, struct fat_header header, bool needs_swap);
+static struct mach_header_64 readMachHeader(uint8_t *base, uint64_t offset);
 
-static void print_fat_header(uint32_t magic, struct fat_header header);
-static void print_fat_archs(struct fat_arch *archs, int nfat_arch);
-static void print_mach_header(struct mach_header_64 header);
+static void printFatHeader(uint32_t magic, struct fat_header header);
+static void printFatArchs(struct fat_arch *archs, int nfat_arch);
+static void printMachHeader(struct mach_header_64 header);
 
 static std::string stringifyMagic(uint32_t magic);
 static std::string stringifyCPUType(cpu_type_t cputype);
@@ -31,17 +31,17 @@ static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusub
 static std::string stringifyFileType(uint32_t filetype);
 
 struct mach_header_64 *parseMachHeader(uint8_t *base) {
-    uint32_t magic = read_magic(base, 0);
+    uint32_t magic = readMagic(base, 0);
     int mach_header_offset = 0;
     const char *cpuType;
 
     if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
-        struct fat_header header = read_fat_header(base, NEEDS_SWAP(magic));
-        struct fat_arch *fat_archs = read_fat_archs(base, header, NEEDS_SWAP(magic));
+        struct fat_header header = readFatHeader(base, NEEDS_SWAP(magic));
+        struct fat_arch *fat_archs = readFatArchs(base, header, NEEDS_SWAP(magic));
 
         if (show_header()) {
-            print_fat_header(magic, header);
-            print_fat_archs(fat_archs, header.nfat_arch);
+            printFatHeader(magic, header);
+            printFatArchs(fat_archs, header.nfat_arch);
         }
 
         for (int i = 0; i < header.nfat_arch; ++i) {
@@ -64,13 +64,13 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
         }
     }
 
-    magic = read_magic(base, mach_header_offset);
+    magic = readMagic(base, mach_header_offset);
     if (magic != MH_MAGIC_64) {
         fprintf (stderr, "Magic %s is not recognized or supported.\n", stringifyMagic(magic).c_str());
         exit(1);
     }
 
-    struct mach_header_64 header = read_mach_header(base, mach_header_offset);
+    struct mach_header_64 header = readMachHeader(base, mach_header_offset);
     if (mach_header_offset == 0) { // non-fat binary
         cpuType = stringifyCPUType(header.cputype).c_str();
         if (!is_selected_arch(cpuType)) {
@@ -80,18 +80,18 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
     }
 
     if (show_header()) {
-        print_mach_header(header);
+        printMachHeader(header);
     }
 
     return (struct mach_header_64 *)(base + mach_header_offset);
 }
 
-static uint32_t read_magic(uint8_t *filebase, int offset) {
+static uint32_t readMagic(uint8_t *filebase, int offset) {
     uint32_t magic = *(uint32_t *)(filebase + offset);
     return magic;
 }
 
-static struct fat_header read_fat_header(uint8_t *base, bool needs_swap) {
+static struct fat_header readFatHeader(uint8_t *base, bool needs_swap) {
     struct fat_header header = *(struct fat_header *)base;
     if (needs_swap) {
         swap_fat_header(&header, NX_UnknownByteOrder);
@@ -99,7 +99,7 @@ static struct fat_header read_fat_header(uint8_t *base, bool needs_swap) {
     return header;
 }
 
-static struct fat_arch *read_fat_archs(uint8_t *base, struct fat_header header, bool needs_swap) {
+static struct fat_arch *readFatArchs(uint8_t *base, struct fat_header header, bool needs_swap) {
     size_t archs_size = sizeof(struct fat_arch) * header.nfat_arch;
     struct fat_arch *archs = (struct fat_arch *)malloc(archs_size);
     memcpy(archs, base + sizeof(header), archs_size);
@@ -110,16 +110,16 @@ static struct fat_arch *read_fat_archs(uint8_t *base, struct fat_header header, 
     return archs;
 }
 
-static struct mach_header_64 read_mach_header(uint8_t *base, uint64_t offset) {
+static struct mach_header_64 readMachHeader(uint8_t *base, uint64_t offset) {
     struct mach_header_64 header = *(struct mach_header_64 *)(base + offset);
     return header;
 }
 
-static void print_fat_header(uint32_t magic, struct fat_header header) {
+static void printFatHeader(uint32_t magic, struct fat_header header) {
     printf("%-20s magic: %s   nfat_arch: %d\n", "FAT_HEADER", stringifyMagic(magic).c_str(), header.nfat_arch);
 }
 
-static void print_fat_archs(struct fat_arch *archs, int nfat_arch) {
+static void printFatArchs(struct fat_arch *archs, int nfat_arch) {
     for (int i = 0; i < nfat_arch; ++i) {
         struct fat_arch arch = archs[i];
 
@@ -129,7 +129,7 @@ static void print_fat_archs(struct fat_arch *archs, int nfat_arch) {
     printf("\n");
 }
 
-static void print_mach_header(struct mach_header_64 header) {
+static void printMachHeader(struct mach_header_64 header) {
     printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   flags: 0x%X\n",
         "MACHO_HEADER", 
         stringifyMagic(header.magic).c_str(),
