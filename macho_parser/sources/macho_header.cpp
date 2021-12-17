@@ -25,8 +25,7 @@ static void print_fat_header(uint32_t magic, struct fat_header header);
 static void print_fat_archs(struct fat_arch *archs, int nfat_arch);
 static void print_mach_header(struct mach_header_64 header);
 
-static void format_magic(uint32_t magic, char *name);
-
+static std::string stringifyMagic(uint32_t magic);
 static std::string stringifyCPUType(cpu_type_t cputype);
 static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusubtype);
 static std::string stringifyFileType(uint32_t filetype);
@@ -67,9 +66,7 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
 
     magic = read_magic(base, mach_header_offset);
     if (magic != MH_MAGIC_64) {
-        char magic_name[32];
-        format_magic(magic, magic_name);
-        fprintf (stderr, "Magic %s is not recognized or supported.\n", magic_name);
+        fprintf (stderr, "Magic %s is not recognized or supported.\n", stringifyMagic(magic).c_str());
         exit(1);
     }
 
@@ -119,9 +116,7 @@ static struct mach_header_64 read_mach_header(uint8_t *base, uint64_t offset) {
 }
 
 static void print_fat_header(uint32_t magic, struct fat_header header) {
-    char magic_name[32];
-    format_magic(magic, magic_name);
-    printf("%-20s magic: %s   nfat_arch: %d\n", "FAT_HEADER", magic_name, header.nfat_arch);
+    printf("%-20s magic: %s   nfat_arch: %d\n", "FAT_HEADER", stringifyMagic(magic).c_str(), header.nfat_arch);
 }
 
 static void print_fat_archs(struct fat_arch *archs, int nfat_arch) {
@@ -135,28 +130,30 @@ static void print_fat_archs(struct fat_arch *archs, int nfat_arch) {
 }
 
 static void print_mach_header(struct mach_header_64 header) {
-    char magic_name[32];
-    format_magic(header.magic, magic_name);
-
     printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   flags: 0x%X\n",
-        "MACHO_HEADER", magic_name,
+        "MACHO_HEADER", 
+        stringifyMagic(header.magic).c_str(),
         stringifyCPUType(header.cputype).c_str(),
         stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
         stringifyFileType(header.filetype).c_str(),
         header.ncmds, header.sizeofcmds, header.flags);
 }
 
-static void format_magic(uint32_t magic, char *name) {
+static std::string stringifyMagic(uint32_t magic) {
     switch (magic) {
-        case FAT_MAGIC:     strcpy(name, "FAT_MAGIC");      break;
-        case FAT_CIGAM:     strcpy(name, "FAT_CIGAM");      break;
-        case FAT_MAGIC_64:  strcpy(name, "FAT_MAGIC_64");   break;
-        case FAT_CIGAM_64:  strcpy(name, "FAT_CIGAM_64");   break;
-        case MH_MAGIC:      strcpy(name, "MH_MAGIC");       break;
-        case MH_CIGAM:      strcpy(name, "MH_CIGAM");       break;
-        case MH_MAGIC_64:   strcpy(name, "MH_MAGIC_64");    break;
-        case MH_CIGAM_64:   strcpy(name, "MH_CIGAM_64");    break;
-        default:            sprintf(name, "%x", magic);
+        case FAT_MAGIC:     return std::string("FAT_MAGIC");
+        case FAT_CIGAM:     return std::string("FAT_CIGAM");
+        case FAT_MAGIC_64:  return std::string("FAT_MAGIC_64");
+        case FAT_CIGAM_64:  return std::string("FAT_CIGAM_64");
+        case MH_MAGIC:      return std::string("MH_MAGIC");
+        case MH_CIGAM:      return std::string("MH_CIGAM");
+        case MH_MAGIC_64:   return std::string("MH_MAGIC_64");
+        case MH_CIGAM_64:   return std::string("MH_CIGAM_64");
+        default: {
+            std::stringstream ss;
+            ss << "0x" << std::hex << magic;
+            return ss.str();
+        }
     }
 }
 
