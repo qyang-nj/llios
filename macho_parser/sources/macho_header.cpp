@@ -26,10 +26,10 @@ static void print_fat_archs(struct fat_arch *archs, int nfat_arch);
 static void print_mach_header(struct mach_header_64 header);
 
 static void format_magic(uint32_t magic, char *name);
-static void format_file_type(uint32_t filetype, char *name);
 
 static std::string stringifyCPUType(cpu_type_t cputype);
 static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusubtype);
+static std::string stringifyFileType(uint32_t filetype);
 
 struct mach_header_64 *parseMachHeader(uint8_t *base) {
     uint32_t magic = read_magic(base, 0);
@@ -136,14 +136,14 @@ static void print_fat_archs(struct fat_arch *archs, int nfat_arch) {
 
 static void print_mach_header(struct mach_header_64 header) {
     char magic_name[32];
-    char file_type[64];
-
     format_magic(header.magic, magic_name);
-    format_file_type(header.filetype, file_type);
 
     printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   flags: 0x%X\n",
-        "MACHO_HEADER", magic_name, stringifyCPUType(header.cputype).c_str(), stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
-        file_type, header.ncmds, header.sizeofcmds, header.flags);
+        "MACHO_HEADER", magic_name,
+        stringifyCPUType(header.cputype).c_str(),
+        stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
+        stringifyFileType(header.filetype).c_str(),
+        header.ncmds, header.sizeofcmds, header.flags);
 }
 
 static void format_magic(uint32_t magic, char *name) {
@@ -157,18 +157,6 @@ static void format_magic(uint32_t magic, char *name) {
         case MH_MAGIC_64:   strcpy(name, "MH_MAGIC_64");    break;
         case MH_CIGAM_64:   strcpy(name, "MH_CIGAM_64");    break;
         default:            sprintf(name, "%x", magic);
-    }
-}
-
-static void format_file_type(uint32_t filetype, char *name) {
-    switch (filetype) {
-        case MH_OBJECT:     strcpy(name, "MH_OBJECT");      break;
-        case MH_EXECUTE:    strcpy(name, "MH_EXECUTE");     break;
-        case MH_DYLIB:      strcpy(name, "MH_DYLIB");       break;
-        case MH_DYLINKER:   strcpy(name, "MH_DYLINKER");    break;
-        case MH_BUNDLE:     strcpy(name, "MH_BUNDLE");      break;
-        case MH_DSYM:       strcpy(name, "MH_DSYM");        break;
-        default:            sprintf(name, "0x%x", filetype);
     }
 }
 
@@ -203,4 +191,21 @@ static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusub
     std::stringstream ss;
     ss << "0x" << std::hex << cpusubtype;
     return ss.str();
+}
+
+
+static std::string stringifyFileType(uint32_t filetype) {
+    switch (filetype) {
+        case MH_OBJECT:     return std::string("OBJECT");
+        case MH_EXECUTE:    return std::string("EXECUTE");
+        case MH_DYLIB:      return std::string("DYLIB");
+        case MH_DYLINKER:   return std::string("DYLINKER");
+        case MH_BUNDLE:     return std::string("BUNDLE");
+        case MH_DSYM:       return std::string("DSYM");
+        default: {
+            std::stringstream ss;
+            ss << "0x" << std::hex << filetype;
+            return ss.str();
+        }
+    }
 }
