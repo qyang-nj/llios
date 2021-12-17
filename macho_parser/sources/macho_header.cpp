@@ -6,6 +6,8 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <vector>
+#include <map>
 
 extern "C" {
 #include "util.h"
@@ -29,6 +31,7 @@ static std::string stringifyMagic(uint32_t magic);
 static std::string stringifyCPUType(cpu_type_t cputype);
 static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusubtype);
 static std::string stringifyFileType(uint32_t filetype);
+static std::string stringifyHeaderFlags(uint32_t flags);
 
 struct mach_header_64 *parseMachHeader(uint8_t *base) {
     uint32_t magic = readMagic(base, 0);
@@ -130,13 +133,14 @@ static void printFatArchs(struct fat_arch *archs, int nfat_arch) {
 }
 
 static void printMachHeader(struct mach_header_64 header) {
-    printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   flags: 0x%X\n",
+    printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   \n%-20s flags:%s\n",
         "MACHO_HEADER", 
         stringifyMagic(header.magic).c_str(),
         stringifyCPUType(header.cputype).c_str(),
         stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
         stringifyFileType(header.filetype).c_str(),
-        header.ncmds, header.sizeofcmds, header.flags);
+        header.ncmds, header.sizeofcmds, "",
+        stringifyHeaderFlags(header.flags).c_str());
 }
 
 static std::string stringifyMagic(uint32_t magic) {
@@ -205,4 +209,54 @@ static std::string stringifyFileType(uint32_t filetype) {
             return ss.str();
         }
     }
+}
+
+static std::string stringifyHeaderFlags(uint32_t flags) {
+    std::vector<std::string> flagArray;
+
+    std::map<int, std::string> flagMap = {
+        {MH_NOUNDEFS, std::string("NOUNDEFS")},
+        {MH_INCRLINK, std::string("INCRLINK")},
+        {MH_DYLDLINK, std::string("DYLDLINK")},
+        {MH_BINDATLOAD, std::string("BINDATLOAD")},
+        {MH_PREBOUND, std::string("PREBOUND")},
+        {MH_SPLIT_SEGS, std::string("SPLIT_SEGS")},
+        {MH_LAZY_INIT, std::string("LAZY_INIT")},
+        {MH_TWOLEVEL, std::string("TWOLEVEL")},
+        {MH_FORCE_FLAT, std::string("FORCE_FLAT")},
+        {MH_NOMULTIDEFS, std::string("NOMULTIDEFS")},
+        {MH_NOFIXPREBINDING, std::string("NOFIXPREBINDING")},
+        {MH_PREBINDABLE, std::string("PREBINDABLE")},
+        {MH_ALLMODSBOUND, std::string("ALLMODSBOUND")},
+        {MH_SUBSECTIONS_VIA_SYMBOLS, std::string("SUBSECTIONS_VIA_SYMBOLS")},
+        {MH_CANONICAL, std::string("CANONICAL")},
+        {MH_WEAK_DEFINES, std::string("WEAK_DEFINES")},
+        {MH_BINDS_TO_WEAK, std::string("BINDS_TO_WEAK")},
+        {MH_ALLOW_STACK_EXECUTION, std::string("ALLOW_STACK_EXECUTION")},
+        {MH_ROOT_SAFE, std::string("ROOT_SAFE")},
+        {MH_SETUID_SAFE, std::string("SETUID_SAFE")},
+        {MH_NO_REEXPORTED_DYLIBS, std::string("NO_REEXPORTED_DYLIBS")},
+        {MH_PIE, std::string("PIE")},
+        {MH_DEAD_STRIPPABLE_DYLIB, std::string("STRIPPABLE_DYLIB")},
+        {MH_HAS_TLV_DESCRIPTORS, std::string("HAS_TLV_DESCRIPTORS")},
+        {MH_NO_HEAP_EXECUTION, std::string("NO_HEAP_EXECUTION")},
+        {MH_APP_EXTENSION_SAFE, std::string("APP_EXTENSION_SAFE")},
+        {MH_NLIST_OUTOFSYNC_WITH_DYLDINFO, std::string("NLIST_OUTOFSYNC_WITH_DYLDINFO")},
+        {MH_SIM_SUPPORT, std::string("SIM_SUPPORT")},
+        {MH_DYLIB_IN_CACHE, std::string("DYLIB_IN_CACHE")},
+    };
+
+    for (auto entry : flagMap) {
+        if (flags & entry.first) {
+            flagArray.push_back(entry.second);
+        }
+    }
+
+    std::stringstream ss;
+    for (auto flag: flagArray) {
+        ss << " " << flag;
+    }
+
+    return ss.str();
+
 }
