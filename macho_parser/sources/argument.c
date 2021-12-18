@@ -246,7 +246,7 @@ bool show_section(int section) {
     return show;
 }
 
-bool is_selected_arch(char *arch) {
+bool is_selected_arch(const char *arch) {
     if (args.arch == NULL) {
         // when --arch is not specified
         return true;
