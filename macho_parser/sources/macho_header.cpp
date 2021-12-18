@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <cmath>
 
 extern "C" {
 #include "util.h"
@@ -69,7 +70,7 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
 
     magic = readMagic(base, machHeaderOffset);
     if (magic != MH_MAGIC_64) {
-        fprintf (stderr, "Magic %s is not recognized or supported.\n", stringifyMagic(magic).c_str());
+        fprintf (stderr, "Magic %s is not recognized or supported. It may not be a Mach-O binary.\n", stringifyMagic(magic).c_str());
         exit(1);
     }
 
@@ -126,8 +127,13 @@ static void printFatArchs(struct fat_arch *archs, int nfat_arch) {
     for (int i = 0; i < nfat_arch; ++i) {
         struct fat_arch arch = archs[i];
 
-        printf("#%d: cputype: %-10s  cpusubtype: %-8s   offset: %-8d size: %d\n",
-            i, stringifyCPUType(arch.cputype).c_str(), stringifyCPUSubType(arch.cputype, arch.cpusubtype).c_str(), arch.offset, arch.size);
+        printf("#%d: cputype: %-10s cpusubtype: %-8s offset: %-8d size: %-8d align: %#-10x\n",
+            i,
+            stringifyCPUType(arch.cputype).c_str(),
+            stringifyCPUSubType(arch.cputype, arch.cpusubtype).c_str(),
+            arch.offset,
+            arch.size,
+            (uint32_t)pow(2, arch.align));
     }
     printf("\n");
 }
@@ -139,7 +145,9 @@ static void printMachHeader(struct mach_header_64 header) {
         stringifyCPUType(header.cputype).c_str(),
         stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
         stringifyFileType(header.filetype).c_str(),
-        header.ncmds, header.sizeofcmds, "",
+        header.ncmds,
+        header.sizeofcmds,
+        "",
         stringifyHeaderFlags(header.flags).c_str());
 }
 
@@ -258,5 +266,4 @@ static std::string stringifyHeaderFlags(uint32_t flags) {
     }
 
     return ss.str();
-
 }
