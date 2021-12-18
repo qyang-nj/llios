@@ -35,7 +35,7 @@ static std::string stringifyHeaderFlags(uint32_t flags);
 
 struct mach_header_64 *parseMachHeader(uint8_t *base) {
     uint32_t magic = readMagic(base, 0);
-    int mach_header_offset = 0;
+    int machHeaderOffset = 0;
     const char *cpuType;
 
     if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
@@ -50,14 +50,14 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
         for (int i = 0; i < header.nfat_arch; ++i) {
             cpuType = stringifyCPUType(fat_archs[i].cputype).c_str();
             if ((fat_archs[i].cputype & CPU_ARCH_ABI64) && is_selected_arch(cpuType)) {
-                mach_header_offset = fat_archs[i].offset;
+                machHeaderOffset = fat_archs[i].offset;
                 break;
             }
         }
 
         free(fat_archs);
 
-        if (mach_header_offset == 0) {
+        if (machHeaderOffset == 0) {
             if (args.arch != NULL) {
                 fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
             } else {
@@ -67,14 +67,14 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
         }
     }
 
-    magic = readMagic(base, mach_header_offset);
+    magic = readMagic(base, machHeaderOffset);
     if (magic != MH_MAGIC_64) {
         fprintf (stderr, "Magic %s is not recognized or supported.\n", stringifyMagic(magic).c_str());
         exit(1);
     }
 
-    struct mach_header_64 header = readMachHeader(base, mach_header_offset);
-    if (mach_header_offset == 0) { // non-fat binary
+    struct mach_header_64 header = readMachHeader(base, machHeaderOffset);
+    if (machHeaderOffset == 0) { // non-fat binary
         cpuType = stringifyCPUType(header.cputype).c_str();
         if (!is_selected_arch(cpuType)) {
             fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
@@ -86,7 +86,7 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
         printMachHeader(header);
     }
 
-    return (struct mach_header_64 *)(base + mach_header_offset);
+    return (struct mach_header_64 *)(base + machHeaderOffset);
 }
 
 static uint32_t readMagic(uint8_t *filebase, int offset) {
@@ -133,8 +133,8 @@ static void printFatArchs(struct fat_arch *archs, int nfat_arch) {
 }
 
 static void printMachHeader(struct mach_header_64 header) {
-    printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   \n%-20s flags:%s\n",
-        "MACHO_HEADER", 
+    printf("%-20s magic: %s   cputype: %s   cpusubtype: %s   filetype: %s   ncmds: %d   sizeofcmds: %d   \n%-20s flags: %s\n",
+        "MACHO_HEADER",
         stringifyMagic(header.magic).c_str(),
         stringifyCPUType(header.cputype).c_str(),
         stringifyCPUSubType(header.cputype, header.cpusubtype).c_str(),
@@ -254,7 +254,7 @@ static std::string stringifyHeaderFlags(uint32_t flags) {
 
     std::stringstream ss;
     for (auto flag: flagArray) {
-        ss << " " << flag;
+        ss << flag << " ";
     }
 
     return ss.str();
