@@ -1,11 +1,14 @@
-#!/bin/bash
-# This script is tested on XCode 12.5
+#!/bin/zsh
+# This script was tested on XCode 13.1
 set -e
 
-SDKROOT=$(xcrun --show-sdk-path --sdk iphonesimulator)
-PLATFORM_DIR="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform"
-TOOLCHAIN_DIR="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain"
+# Change the target to arm64 to run tests natively on M1 machine
 TARGET="x86_64-apple-ios14.0-simulator"
+
+SDKROOT=$(xcrun --show-sdk-path --sdk iphonesimulator)
+PLATFORM_DIR="$(xcode-select -p)/Platforms/iPhoneSimulator.platform"
+TOOLCHAIN_DIR="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain"
+ARCH="$(echo $TARGET | awk -F "-" '{print $1}')"
 
 rm -rf build
 mkdir -p build/Test.xctest
@@ -29,6 +32,6 @@ xcrun ld -bundle -o build/Test.xctest/Test build/Test.o \
 # export SIMCTL_CHILD_DYLD_PRINT_ENV=1
 # export SIMCTL_CHILD_DYLD_PRINT_LIBRARIES=1
 
-xcrun simctl spawn --standalone "iPhone 8" \
+xcrun simctl spawn --arch=$ARCH --standalone "iPhone 8"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
     $(realpath build/Test.xctest)
