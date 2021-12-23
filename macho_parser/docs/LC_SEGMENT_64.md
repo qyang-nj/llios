@@ -20,10 +20,10 @@ struct segment_command_64 {     /* for 64-bit architectures */
 `__PAGEZERO` segment has zero size on disk but 4GB in VM. Its main purpose is to trap NULL dereference, causing segment fault.
 
 ## __TEXT
-`__TEXT` segment is readable (`VM_PROT_READ`) and executable (`VM_PROT_EXECUTE`), but not writable (`VM_PROT_WRITE`).
+`__TEXT` segment is readable (`VM_PROT_READ`) and executable (`VM_PROT_EXECUTE`), but not writable (`VM_PROT_WRITE`). Technically `__TEXT` segment starts at 0x0 and includes Mach-O header and load commands, as those are read-only. 
 
 ### __text
-This section is where the executable code is.
+This section is where the executable code is. It usually starts at the beginning of a whole page. If the page size is 0x4000, the `__text` section starts at 0x4000 from the file, since the 1st page is the Mach-O header, load commands and paddings.
 
 ### __cstring
 This section stores constant string literals. The following code will end up having "hello world" in this section.
