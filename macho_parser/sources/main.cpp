@@ -24,6 +24,7 @@ extern "C" {
 #include "macho_binary.h"
 #include "load_command.h"
 #include "dyld_info.h"
+#include "encryption_info.h"
 
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
 
@@ -137,6 +138,9 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 break;
             case LC_SOURCE_VERSION:
                 parse_source_version(base, (struct source_version_command *)lcmd);
+                break;
+            case LC_ENCRYPTION_INFO_64:
+                printEncryptionInfo(base, (struct encryption_info_command_64 *)lcmd);
                 break;
             default:
                 printf("LC_(%x)\n", lcmd->cmd);
