@@ -328,6 +328,12 @@ LC_BUILD_VERSION     cmdsize: 32     platform: MACOS   minos: 12.0.0   sdk: 12.0
     tool:  LD   version: 711.0.0
 ```
 
+## [LC_ENCRYPTION_INFO_64](../macho_parser/docs/LC_ENCRYPTION_INFO.md)
+```
+$ ./macho_parser --command LC_ENCRYPTION_INFO_64 sample.out
+LC_ENCRYPTION_INFO_64 cmdsize: 24    cryptoff: 16384  cryptsize: 143081472  (range: 0x4000-0x8878000)  cryptid: 1   pad: 0
+```
+
 ## [LC_CODE_SIGNATURE](docs/LC_CODE_SIGNATURE.md)
 ```
 $ ./macho_parser --code-signature --code-directory --entitlement --blob-wrapper -v SampleApp.app/SampleApp
