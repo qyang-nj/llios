@@ -280,7 +280,7 @@ LC_DYSYMTAB          cmdsize: 80     nlocalsym: 25  nextdefsym: 7   nundefsym: 9
 
 ## [LC_FUNCTION_STARTS](docs/LC_FUNCTION_STARTS.md)
 ```
-$ ./macho_parser -c LC_FUNCTION_STARTS sample.out
+$ ./macho_parser --command LC_FUNCTION_STARTS sample.out
 LC_FUNCTION_STARTS   cmdsize: 16     dataoff: 0xc1e0 (49632)   datasize: 8
   0x100003e70  _c_constructor_function
   0x100003e80  _c_used_function
@@ -289,14 +289,10 @@ LC_FUNCTION_STARTS   cmdsize: 16     dataoff: 0xc1e0 (49632)   datasize: 8
   0x100003f00  +[SimpleClass load]
 ```
 
-## LC_MAIN
-``` c
-struct entry_point_command {
-    uint32_t  cmd;	/* LC_MAIN only used in MH_EXECUTE filetypes */
-    uint32_t  cmdsize;	/* 24 */
-    uint64_t  entryoff;	/* file (__TEXT) offset of main() */
-    uint64_t  stacksize;/* if not zero, initial stack size */
-};
+## [LC_MAIN](../macho_parser/docs/LC_MAIN.md)
+```
+$ ./macho_parser --command LC_MAIN sample.out
+LC_MAIN              cmdsize: 24     entryoff: 16052 (0x3eb4)  stacksize: 0
 ```
 
 ## LC_LINKER_OPTION

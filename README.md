@@ -12,6 +12,7 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [LC_DYLD_CHAINED_FIXUPS](./dynamic_linking/chained_fixups.md) - the new way to encode dyld info
     * [LC_DYLD_EXPORTS_TRIE](./exported_symbol/README.md) - the new command for exported symbols
     * [LC_BUILD_VERSION](./macho_parser/docs/LC_BUILD_VERSION.md) - platform requirements
+    * [LC_MAIN](./macho_parser/docs/LC_MAIN.md) - the entry point of an executable
     * [LC_ENCRYPTION_INFO_64](./macho_parser/docs/LC_ENCRYPTION_INFO.md) - FairPlay encryption
     * [LC_FUNCTION_STARTS](./macho_parser/docs/LC_FUNCTION_STARTS.md) - function addresses
     * [LC_*_DYLIB and LC_RPATH](./macho_parser/docs/LC_dylib.md) - dylib related load commands

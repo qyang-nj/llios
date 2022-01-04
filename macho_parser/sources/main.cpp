@@ -25,15 +25,9 @@ extern "C" {
 #include "load_command.h"
 #include "dyld_info.h"
 #include "encryption_info.h"
+#include "small_cmds.h"
 
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
-
-void parse_dylinker(void *base, struct dylinker_command *);
-void parse_entry_point(void *base, struct entry_point_command *);
-void parse_linker_option(void *base, struct linker_option_command *);
-void parse_rpath(void *base, struct rpath_command *);
-void parse_uuid(void *base, struct uuid_command *cmd);
-void parse_source_version(void *base, struct source_version_command *cmd);
 
 struct MachoBinary machoBinary;
 
@@ -94,13 +88,13 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 parse_dynamic_symbol_table(base, (struct dysymtab_command *)lcmd);
                 break;
             case LC_LOAD_DYLINKER:
-                parse_dylinker(base, (struct dylinker_command *)lcmd);
+                printDyLinker(base, (struct dylinker_command *)lcmd);
                 break;
             case LC_MAIN:
-                parse_entry_point(base, (struct entry_point_command *)lcmd);
+                printEntryPoint(base, (struct entry_point_command *)lcmd);
                 break;
             case LC_LINKER_OPTION:
-                parse_linker_option(base, (struct linker_option_command *)lcmd);
+                printLinkerOption(base, (struct linker_option_command *)lcmd);
                 break;
             case LC_ID_DYLIB:
             case LC_LOAD_DYLIB:
@@ -109,7 +103,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 parse_dylib(base, (struct dylib_command *)lcmd);
                 break;
             case LC_RPATH:
-                parse_rpath(base, (struct rpath_command *)lcmd);
+                printRpath(base, (struct rpath_command *)lcmd);
                 break;
             case LC_DYLD_INFO:
             case LC_DYLD_INFO_ONLY:
@@ -134,10 +128,10 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 parse_version_min(base, (struct version_min_command *)lcmd);
                 break;
             case LC_UUID:
-                parse_uuid(base, (struct uuid_command *)lcmd);
+                printUUID(base, (struct uuid_command *)lcmd);
                 break;
             case LC_SOURCE_VERSION:
-                parse_source_version(base, (struct source_version_command *)lcmd);
+                printSourceVersion(base, (struct source_version_command *)lcmd);
                 break;
             case LC_ENCRYPTION_INFO_64:
                 printEncryptionInfo(base, (struct encryption_info_command_64 *)lcmd);
@@ -147,54 +141,3 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
         }
     }
 }
-
-void parse_dylinker(void *base, struct dylinker_command *dylinker_cmd) {
-    printf("%-20s cmdsize: %-6u %s\n", "LC_LOAD_DYLINKER",
-        dylinker_cmd->cmdsize, (char *)dylinker_cmd + dylinker_cmd->name.offset);
-}
-
-void parse_entry_point(void *base, struct entry_point_command *entry_point_cmd) {
-    uint64_t entryoff = entry_point_cmd->entryoff;
-    printf("%-20s cmdsize: %-6u entryoff: 0x%llx(%llu) stacksize: %llu\n", "LC_MAIN",
-        entry_point_cmd->cmdsize, entryoff, entryoff, entry_point_cmd->stacksize);
-}
-
-void parse_linker_option(void *base, struct linker_option_command *cmd) {
-    char *options = (char *)calloc(1, cmd->cmdsize);
-    memcpy(options, (char *)cmd + sizeof(struct linker_option_command), cmd->cmdsize -  sizeof(struct linker_option_command));
-
-    char *opt = options;
-    // replace '\n' to ' '. For example "abc\0def\0" -> "abc def\0"
-    for (int i = 0; i < cmd->count - 1; ++i) {
-        int len = strlen(opt);
-        options[strlen(opt)] = ' ';
-        opt = opt + len;
-    }
-
-    printf("%-20s cmdsize: %-6u count: %d   %s\n", "LC_LINKER_OPTION", cmd->cmdsize, cmd->count, options);
-    free(options);
-}
-
-void parse_rpath(void *base, struct rpath_command *cmd) {
-    printf("%-20s cmdsize: %-6u %s\n", "LC_RPATH", cmd->cmdsize, (char *)cmd + cmd->path.offset);
-}
-
-void parse_uuid(void *base, struct uuid_command *cmd) {
-    printf("%-20s cmdsize: %-6u ", "LC_UUID", cmd->cmdsize);
-    for (int i = 0; i < sizeof(cmd->uuid); ++i) {
-        printf("%X", cmd->uuid[i]);
-    }
-    printf("\n");
-}
-
-void parse_source_version(void *base, struct source_version_command *cmd) {
-    int a = (0xFFFFFF0000000000 & cmd->version) >> 40;
-    int b = (0x000000FFC0000000 & cmd->version) >> 30;
-    int c = (0x000000003FF00000 & cmd->version) >> 20;
-    int d = (0x00000000000FFC00 & cmd->version) >> 10;
-    int e = (0x00000000000003FF & cmd->version);
-    printf("%-20s cmdsize: %-6u %d.%d.%d.%d.%d\n", "LC_SOURCE_VERSION", cmd->cmdsize,
-        a, b, c, d, e);
-}
-
-
