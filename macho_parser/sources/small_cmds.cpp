@@ -11,7 +11,7 @@ void printDyLinker(void *base, struct dylinker_command *dylinker_cmd) {
 
 void printEntryPoint(void *base, struct entry_point_command *entry_point_cmd) {
     uint64_t entryoff = entry_point_cmd->entryoff;
-    printf("%-20s cmdsize: %-6u entryoff: %llu(%#llx) stacksize: %llu\n", "LC_MAIN",
+    printf("%-20s cmdsize: %-6u entryoff: %llu (%#llx)  stacksize: %llu\n", "LC_MAIN",
         entry_point_cmd->cmdsize, entryoff, entryoff, entry_point_cmd->stacksize);
 }
 
