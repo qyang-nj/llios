@@ -302,11 +302,16 @@ $ ./macho_parser --command LC_MAIN sample.out
 LC_MAIN              cmdsize: 24     entryoff: 16052 (0x3eb4)  stacksize: 0
 ```
 
-## LC_LINKER_OPTION
-`LC_LINKER_OPTION` only exists in the object files (`MH_OBJECT`) and is used for auto-linking. This load command literally contains linker flags that will be used by the static linker.
+## [LC_LINKER_OPTION](macho_parser/docs/LC_LINKER_OPTION.md)
+```
+$ ./macho_parser --command LC_LINKER_OPTION sample.o
+LC_LINKER_OPTION     cmdsize: 32     count: 1   -lswift_Concurrency
+LC_LINKER_OPTION     cmdsize: 24     count: 1   -lswiftCore
+LC_LINKER_OPTION     cmdsize: 32     count: 1   -lswiftWebKit
+LC_LINKER_OPTION     cmdsize: 32     count: 2   -framework WebKit
+...
+```
 
-##### Learn more
-[Auto Linking on iOS & macOS](https://milen.me/writings/auto-linking-on-ios-and-macos/)
 
 ## [LC_*_DYLIB](docs/LC_dylib.md)
 ```
