@@ -27,7 +27,7 @@ void parse_linkedit_data(void *base, struct linkedit_data_command *linkedit_data
     } else if (linkedit_data_cmd->cmd == LC_DYLD_EXPORTS_TRIE) {
         printExportTrie(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
     } else if (linkedit_data_cmd->cmd == LC_CODE_SIGNATURE) {
-        parse_code_signature(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
+        printCodeSignature(base, linkedit_data_cmd->dataoff, linkedit_data_cmd->datasize);
     }
 }
 
