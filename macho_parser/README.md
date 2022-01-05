@@ -371,7 +371,7 @@ SuperBlob: magic: CSMAGIC_EMBEDDED_SIGNATURE, length: 7162, count: 5
 </dict>
 </plist>
 
-  Blob 3: type: 0x00007, offset: 2165, magic: UNKNOWN(0xfade7172), length: 205
+  Blob 3: type: 0x00007, offset: 2157, magic: 0xfade7172, length: 205  (likely DER entitlements)
   Blob 4: type: 0x10000, offset: 2370, magic: CSMAGIC_BLOBWRAPPER, length: 4792
     PKCS7:
       type: pkcs7-signedData (1.2.840.113549.1.7.2)
