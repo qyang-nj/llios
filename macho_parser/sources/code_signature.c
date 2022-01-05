@@ -38,7 +38,11 @@ void parse_code_signature(void *base, uint32_t dataoff, uint32_t datasize) {
         uint32_t magic = ntohl(blob->magic);
         format_blob_magic(magic, magic_name);
 
-        printf("  Blob %d: type: %#07x, offset: %d, magic: %s, length: %d\n", i, blob_type, blob_offset, magic_name, ntohl(blob->length));
+        printf("  Blob %d: type: %#07x, offset: %d, magic: %s, length: %d", i, blob_type, blob_offset, magic_name, ntohl(blob->length));
+        if (blob_type == 0x7 && magic == 0xfade7172) {
+            printf("  (likely DER entitlements)");
+        }
+        printf("\n");
 
         if (magic == CSMAGIC_CODEDIRECTORY) {
             if (args.show_code_direcotry) {
@@ -187,7 +191,7 @@ static void format_blob_magic(uint32_t magic, char *formatted) {
         case CSMAGIC_EMBEDDED_ENTITLEMENTS: strcpy(formatted, "CSMAGIC_EMBEDDED_ENTITLEMENTS"); break;
         case CSMAGIC_DETACHED_SIGNATURE: strcpy(formatted, "CSMAGIC_DETACHED_SIGNATURE"); break;
         case CSMAGIC_BLOBWRAPPER: strcpy(formatted, "CSMAGIC_BLOBWRAPPER"); break;
-        default: sprintf(formatted, "UNKNOWN(%#08x)", magic);
+        default: sprintf(formatted, "%#08x", magic);
     }
 }
 
