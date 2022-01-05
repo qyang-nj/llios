@@ -21,14 +21,13 @@ done
 CFLAGS=""
 
 if [ "$OPT_OPENSSL" == 1 ]; then
+    CFLAGS="$CFLAGS -D OPENSSL"
     LDFLAGS="$LDFLAGS -lssl -lcrypto -L$(brew --prefix openssl)/lib -D OPENSSL"
 fi
 
 if [ "$OPT_DEBUG" == 1 ]; then
     CFLAGS="$CFLAGS -g"
 fi
-
-
 
 mkdir -p build/
 rm -f build/*.o
