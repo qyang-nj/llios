@@ -159,6 +159,34 @@ Surprisingly, the provisioning profile does NOT present in `LC_CODE_SIGNATURE` i
 
 I also found it's not necessary to have `embedded.mobileprovision` in the app bundle when install a debug build to a device, which still bewilders me.
 
+## App Store Resigning
+After being uploaded to App Store, the app will be re-signed by Apple due to [encryption](../../macho_parser/docs/LC_ENCRYPTION_INFO.md). This resigning will increase the app size quite a lot, by [including both SHA-1 and SHA-256 hashes of both the encrypted and original binaries](https://docs.emergetools.com/docs/code-signing-update). The size increase is approximately `(size of original Code Directory) * (2*(1+20/32)-1)`. Note that SHA-1 hash is 20 bytes while SHA-256 hash is 32 bytes.
+
+Below is an example that I compared the `LC_CODE_SIGNATURE` of a binary before and after resigning. It's obvious that the resigned binary has one more Code Directory which is the SHA-1 hashes. The size of SHA-256 Code Directory is twice the size before resigning.
+
+```
+$ ./macho_parser --code-signature {binary_before_resigning}
+LC_CODE_SIGNATURE    cmdsize: 16     dataoff: 0x9f17d40 (166821184)   datasize: 1331104
+SuperBlob: magic: CSMAGIC_EMBEDDED_SIGNATURE, length: 1317863, count: 5
+  Blob 0: type: 0000000, offset: 52, magic: CSMAGIC_CODEDIRECTORY, length: 1303634  <-- SHA-256 Code Directory
+  Blob 1: type: 0x00002, offset: 1303686, magic: CSMAGIC_REQUIREMENTS, length: 180
+  Blob 2: type: 0x00005, offset: 1303866, magic: CSMAGIC_EMBEDDED_ENTITLEMENTS, length: 5767
+  Blob 3: type: 0x00007, offset: 1309633, magic: 0xfade7172, length: 3460  (likely DER entitlements)
+  Blob 4: type: 0x10000, offset: 1313093, magic: CSMAGIC_BLOBWRAPPER, length: 4770
+```
+
+```
+$ ./macho_parser --code-signature {binary_after_resigning}
+LC_CODE_SIGNATURE    cmdsize: 16     dataoff: 0x9f17d40 (166821184)   datasize: 4263584
+SuperBlob: magic: CSMAGIC_EMBEDDED_SIGNATURE, length: 4249975, count: 6
+  Blob 0: type: 0000000, offset: 60, magic: CSMAGIC_CODEDIRECTORY, length: 1629382  <-- SHA-1 Code Directory
+  Blob 1: type: 0x00002, offset: 1629442, magic: CSMAGIC_REQUIREMENTS, length: 96
+  Blob 2: type: 0x00005, offset: 1629538, magic: CSMAGIC_EMBEDDED_ENTITLEMENTS, length: 5688
+  Blob 3: type: 0x00007, offset: 1635226, magic: 0xfade7172, length: 3413  (likely DER entitlements)
+  Blob 4: type: 0x01000, offset: 1638639, magic: CSMAGIC_CODEDIRECTORY, length: 2606938  <-- SHA-256 Code Directory
+  Blob 5: type: 0x10000, offset: 4245577, magic: CSMAGIC_BLOBWRAPPER, length: 4398
+```
+
 ## More
 This article merely covers the content and format of `LC_CODE_SIGNATURE`. There are a lot more beyond that. Especially, the actual code signing and validation are way more complicated.
 
