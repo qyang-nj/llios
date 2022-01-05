@@ -21,7 +21,7 @@ done
 CFLAGS=""
 
 if [ "$OPT_OPENSSL" == 1 ]; then
-    LDFLAGS="$LDFLAGS -lssl -lcrypto -L/usr/local/opt/openssl/lib -D OPENSSL"
+    LDFLAGS="$LDFLAGS -lssl -lcrypto -L$(brew --prefix openssl)/lib -D OPENSSL"
 fi
 
 if [ "$OPT_DEBUG" == 1 ]; then
