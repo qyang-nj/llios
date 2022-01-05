@@ -162,7 +162,7 @@ I also found it's not necessary to have `embedded.mobileprovision` in the app bu
 ## App Store Resigning
 After being uploaded to App Store, the app will be re-signed by Apple due to [encryption](../../macho_parser/docs/LC_ENCRYPTION_INFO.md). This resigning will increase the app size quite a lot, by [including both SHA-1 and SHA-256 hashes of both the encrypted and original binaries](https://docs.emergetools.com/docs/code-signing-update). The size increase is approximately `(size of original Code Directory) * (2*(1+20/32)-1)`. Note that SHA-1 hash is 20 bytes while SHA-256 hash is 32 bytes.
 
-Below is an example that I compared the `LC_CODE_SIGNATURE` of a binary before and after resigning. It's obvious that the resigned binary has one more Code Directory which is the SHA-1 hashes. The size of SHA-256 Code Directory is twice the size before resigning.
+Below is an example that I compared the `LC_CODE_SIGNATURE` of a binary before and after resigning. It's clear that the resigned binary has one more Code Directory which is the SHA-1 hashes. The size of SHA-256 Code Directory is twice the size before resigning.
 
 ```
 $ ./macho_parser --code-signature {binary_before_resigning}
