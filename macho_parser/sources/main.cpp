@@ -88,6 +88,8 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 parse_dynamic_symbol_table(base, (struct dysymtab_command *)lcmd);
                 break;
             case LC_LOAD_DYLINKER:
+            case LC_ID_DYLINKER:
+            case LC_DYLD_ENVIRONMENT:
                 printDyLinker(base, (struct dylinker_command *)lcmd);
                 break;
             case LC_MAIN:

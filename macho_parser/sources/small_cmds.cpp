@@ -5,7 +5,20 @@
 #include "small_cmds.h"
 
 void printDyLinker(void *base, struct dylinker_command *dylinker_cmd) {
-    printf("%-20s cmdsize: %-6u %s\n", "LC_LOAD_DYLINKER",
+    const char *cmd_name = NULL;
+    switch (dylinker_cmd->cmd) {
+        case LC_LOAD_DYLINKER:
+            cmd_name = "LC_LOAD_DYLINKER";
+            break;
+        case LC_ID_DYLINKER:
+            cmd_name  = "LC_ID_DYLINKER";
+            break;
+        case LC_DYLD_ENVIRONMENT:
+            cmd_name  = "LC_DYLD_ENVIRONMENT";
+            break;
+    }
+
+    printf("%-20s cmdsize: %-6u %s\n", cmd_name,
         dylinker_cmd->cmdsize, (char *)dylinker_cmd + dylinker_cmd->name.offset);
 }
 
