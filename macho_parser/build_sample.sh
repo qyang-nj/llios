@@ -16,5 +16,6 @@ xcrun clang -c -fmodules -o build/objc.o sample/objc.m
 xcrun clang $two_level_flag $fixup_chains_flag \
     -o sample.out \
     -Xlinker -U -Xlinker "_c_extern_weak_function" \
+    -Xlinker -dyld_env -Xlinker DYLD_VERSIONED_FRAMEWORK_PATH=/path/to/llios \
     -rpath "build" \
     build/main.o build/objc.o build/my_dylib.dylib
