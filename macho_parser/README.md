@@ -221,6 +221,13 @@ LC_DYLD_CHAINED_FIXUPS cmdsize: 16     dataoff: 0xc000 (49152)   datasize: 296
 ## LC_DYLD_EXPORTS_TRIE
 See [Export](../macho_parser/README.md#export) in `LC_DYLD_INFO`.
 
+## [LC_DYLD_ENVIRONMENT](../macho_parser/docs/LC_DYLD_ENVIRONMENT.md)
+```
+$ ./macho_parser --command LC_DYLD_ENVIRONMENT /Applications/Xcode-13.2.1.app/Contents/MacOS/Xcode
+LC_DYLD_ENVIRONMENT  cmdsize: 120    DYLD_VERSIONED_FRAMEWORK_PATH=@executable_path/../SystemFrameworks:@executable_path/../InternalFrameworks
+LC_DYLD_ENVIRONMENT  cmdsize: 120    DYLD_VERSIONED_LIBRARY_PATH=@executable_path/../SystemLibraries:@executable_path/../InternalLibraries
+```
+
 ## [LC_SYMTAB](docs/LC_SYMTAB.md)
 ```
 $ ./macho_parser --command LC_SYMTAB --no-truncate sample.out
