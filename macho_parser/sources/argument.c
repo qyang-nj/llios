@@ -204,6 +204,8 @@ unsigned int string_to_load_command(char *cmd_str) {
         return LC_DYLD_EXPORTS_TRIE;
     } else if (strcmp(cmd_str, "LC_DYLD_CHAINED_FIXUPS") == 0) {
         return LC_DYLD_CHAINED_FIXUPS;
+    } else if (strcmp(cmd_str, "LC_DYLD_ENVIRONMENT") == 0) {
+        return LC_DYLD_ENVIRONMENT;
     } else if (strcmp(cmd_str, "LC_CODE_SIGNATURE") == 0) {
         return LC_CODE_SIGNATURE;
     } else if (strcmp(cmd_str, "LC_ENCRYPTION_INFO_64") == 0) {
