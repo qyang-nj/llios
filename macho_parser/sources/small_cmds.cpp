@@ -65,3 +65,17 @@ void printSourceVersion(void *base, struct source_version_command *cmd) {
     printf("%-20s cmdsize: %-6u %d.%d.%d.%d.%d\n", "LC_SOURCE_VERSION", cmd->cmdsize,
         a, b, c, d, e);
 }
+
+void printThread(uint8_t *base, struct thread_command *cmd) {
+    const char *cmd_name = NULL;
+    switch (cmd->cmd) {
+        case LC_THREAD:
+            cmd_name = "LC_THREAD";
+            break;
+        case LC_UNIXTHREAD:
+            cmd_name  = "LC_UNIXTHREAD";
+            break;
+    }
+
+    printf("%-20s cmdsize: %-6u\n", cmd_name, cmd->cmdsize);
+}
