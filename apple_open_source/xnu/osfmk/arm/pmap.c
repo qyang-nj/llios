@@ -7131,6 +7131,21 @@ pmap_remove_some_phys(
 	/* Implement to support working set code */
 }
 
+/*
+ * Implementation of PMAP_SWITCH_USER that Mach VM uses to
+ * switch a thread onto a new vm_map.
+ */
+void
+pmap_switch_user(thread_t thread, vm_map_t new_map)
+{
+	pmap_t new_pmap = new_map->pmap;
+
+
+	thread->map = new_map;
+	pmap_set_pmap(new_pmap, thread);
+
+}
+
 void
 pmap_set_pmap(
 	pmap_t pmap,
@@ -8152,6 +8167,50 @@ pmap_map_block(
 	return KERN_SUCCESS;
 }
 
+/*
+ * Inserts an arbitrary number of physical pages in a pmap.
+ * As opposed to pmap_map_block(), this function takes
+ * a physical address as an input and operates using the
+ * page size associated with the input pmap.
+ */
+kern_return_t
+pmap_map_block_addr(
+	pmap_t pmap,
+	addr64_t va,
+	pmap_paddr_t pa,
+	uint32_t size,
+	vm_prot_t prot,
+	int attr,
+	__unused unsigned int flags)
+{
+	const pt_attr_t * const pt_attr = pmap_get_pt_attr(pmap);
+	/*
+	 * pmap_enter_addr() operates using the VM page size, rather than the hardware
+	 * page size. Because of this, we need to multiply by PAGE_RATIO, so this works
+	 * on devices where the HW and VM page sizes differ. On those devices,
+	 * pmap_enter_addr() will create multiple mappings to cover the entire VM page.
+	 */
+	const uint64_t pmap_page_size = pt_attr_page_size(pt_attr) * PAGE_RATIO;
+	kern_return_t   kr;
+	uint32_t        page;
+
+	for (page = 0; page < size; page++) {
+		kr = pmap_enter_addr(pmap, va, pa, prot, VM_PROT_NONE, attr, TRUE);
+
+		if (kr != KERN_SUCCESS) {
+			panic("%s: failed pmap_enter_addr, "
+			    "pmap=%p, va=%#llx, pa=%llu, size=%u, prot=%#x, flags=%#x",
+			    __FUNCTION__,
+			    pmap, va, (uint64_t)pa, size, prot, flags);
+		}
+
+		va += pmap_page_size;
+		pa += pmap_page_size;
+	}
+
+	return KERN_SUCCESS;
+}
+
 kern_return_t
 pmap_enter_addr(
 	pmap_t pmap,
@@ -8475,6 +8534,9 @@ pmap_enter_options_internal(
 		panic("pmap_enter_options() pmap %p pa 0x%llx\n",
 		    pmap, (uint64_t)pa);
 	}
+
+	/* The PA should not extend beyond the architected physical address space */
+	pa &= ARM_PTE_PAGE_MASK;
 
 	if ((prot & VM_PROT_EXECUTE) && (pmap == kernel_pmap)) {
 #if defined(KERNEL_INTEGRITY_CTRR) && defined(CONFIG_XNUPOST)
@@ -11047,13 +11109,13 @@ pmap_map_cpu_windows_copy_internal(
 	bool            need_strong_sync = false;
 
 #if XNU_MONITOR
-	unsigned int    cacheattr = (!pa_valid(ptoa(pn)) ? pmap_cache_attributes(pn) : 0);
+	unsigned int    cacheattr = (!pa_valid(ptoa(pn) & ARM_PTE_PAGE_MASK) ? pmap_cache_attributes(pn) : 0);
 	need_strong_sync = ((cacheattr & PMAP_IO_RANGE_STRONG_SYNC) != 0);
 #endif
 
 #if XNU_MONITOR
 #ifdef  __ARM_COHERENT_IO__
-	if (__improbable(pa_valid(ptoa(pn)) && !pmap_ppl_disable)) {
+	if (__improbable(pa_valid(ptoa(pn) & ARM_PTE_PAGE_MASK) && !pmap_ppl_disable)) {
 		panic("%s: attempted to map a managed page, "
 		    "pn=%u, prot=0x%x, wimg_bits=0x%x",
 		    __FUNCTION__,

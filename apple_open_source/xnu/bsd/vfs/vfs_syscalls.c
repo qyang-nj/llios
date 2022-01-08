@@ -2958,6 +2958,13 @@ quotactl(proc_t p, struct quotactl_args *uap, __unused int32_t *retval)
 	vnode_put(nd.ni_vp);
 	nameidone(&nd);
 
+#if CONFIG_MACF
+	error = mac_mount_check_quotactl(ctx, mp, uap->cmd, uap->uid);
+	if (error != 0) {
+		goto out;
+	}
+#endif
+
 	/* copyin any data we will need for downstream code */
 	quota_cmd = uap->cmd >> SUBCMDSHIFT;
 
@@ -3029,6 +3036,7 @@ quotactl(proc_t p, struct quotactl_args *uap, __unused int32_t *retval)
 		break;
 	} /* switch */
 
+out:
 	mount_drop(mp, 0);
 	return error;
 }
@@ -10422,7 +10430,7 @@ searchfs(proc_t p, struct searchfs_args *uap, __unused int32_t *retval)
 	}
 
 #if CONFIG_MACF
-	error = mac_vnode_check_searchfs(ctx, vp, &searchblock.searchattrs);
+	error = mac_vnode_check_searchfs(ctx, vp, returnattrs, &searchblock.searchattrs);
 	if (error) {
 		vnode_put(vp);
 		goto freeandexit;
@@ -11942,6 +11950,10 @@ fgetxattr(proc_t p, struct fgetxattr_args *uap, user_ssize_t *retval)
 		goto out;
 	}
 	if (uap->value && uap->size > 0) {
+		if (uap->size > (size_t)XATTR_MAXSIZE) {
+			uap->size = XATTR_MAXSIZE;
+		}
+
 		auio = uio_createwithbuffer(1, uap->position, spacetype, UIO_READ,
 		    &uio_buf[0], sizeof(uio_buf));
 		uio_addiov(auio, uap->value, uap->size);

@@ -650,8 +650,8 @@ necp_session_open(struct proc *p, struct necp_session_open_args *uap, int *retva
 	struct necp_session *session = NULL;
 	struct fileproc *fp = NULL;
 	int fd = -1;
+	uid_t uid = kauth_cred_getuid(kauth_cred_get());
 
-	uid_t uid = kauth_cred_getuid(proc_ucred(p));
 	if (uid != 0 && priv_check_cred(kauth_cred_get(), PRIV_NET_PRIVILEGED_NECP_POLICIES, 0) != 0) {
 		NECPLOG0(LOG_ERR, "Process does not hold necessary entitlement to open NECP session");
 		error = EACCES;
@@ -6319,7 +6319,8 @@ necp_application_fillout_info_locked(uuid_t application_uuid, uuid_t real_applic
 	}
 
 	if (necp_kernel_application_policies_condition_mask & NECP_KERNEL_CONDITION_ENTITLEMENT && proc != NULL) {
-		info->cred_result = priv_check_cred(proc_ucred(proc), PRIV_NET_PRIVILEGED_NECP_MATCH, 0);
+		info->cred_result = priv_check_cred(kauth_cred_get(), PRIV_NET_PRIVILEGED_NECP_MATCH, 0);
+
 		if (info->cred_result != 0) {
 			// Process does not have entitlement, check the parent process
 			necp_get_parent_cred_result(proc, info);
@@ -6407,9 +6408,9 @@ necp_send_network_denied_event(pid_t pid, uuid_t proc_uuid, u_int32_t network_ty
 
 extern char *proc_name_address(void *p);
 
-#define NECP_VERIFY_DELEGATION_ENTITLEMENT(_p, _d) \
+#define NECP_VERIFY_DELEGATION_ENTITLEMENT(_p, _c, _d) \
 	if (!has_checked_delegation_entitlement) { \
-	        has_delegation_entitlement = (priv_check_cred(proc_ucred(_p), PRIV_NET_PRIVILEGED_SOCKET_DELEGATE, 0) == 0); \
+	        has_delegation_entitlement = (priv_check_cred(_c, PRIV_NET_PRIVILEGED_SOCKET_DELEGATE, 0) == 0); \
 	        has_checked_delegation_entitlement = TRUE; \
 	} \
 	if (!has_delegation_entitlement) { \
@@ -6469,7 +6470,11 @@ necp_application_find_policy_match_internal(proc_t proc,
 	}
 
 	// Initialize UID, PID, and UUIDs to the current process
-	uid_t uid = kauth_cred_getuid(proc_ucred(proc));
+	uid_t uid = 0;
+	kauth_cred_t cred = kauth_cred_proc_ref(proc);
+	if (cred != NULL) {
+		uid = kauth_cred_getuid(cred);
+	}
 	pid_t pid = proc_pid(proc);
 	int32_t pid_version = proc_pidversion(proc);
 	uuid_t application_uuid;
@@ -6506,6 +6511,9 @@ necp_application_find_policy_match_internal(proc_t proc,
 	u_int32_t flow_divert_aggregate_unit = 0;
 
 	if (returned_result == NULL) {
+		if (cred != NULL) {
+			kauth_cred_unref(&cred);
+		}
 		return EINVAL;
 	}
 
@@ -6523,7 +6531,7 @@ necp_application_find_policy_match_internal(proc_t proc,
 
 	memset(returned_result, 0, sizeof(struct necp_aggregate_result));
 
-	u_int32_t drop_order = necp_process_drop_order(proc_ucred(proc));
+	u_int32_t drop_order = necp_process_drop_order(cred);
 
 	necp_kernel_policy_result drop_dest_policy_result = NECP_KERNEL_POLICY_RESULT_NONE;
 
@@ -6532,6 +6540,9 @@ necp_application_find_policy_match_internal(proc_t proc,
 		if (necp_drop_all_order > 0 || drop_order > 0) {
 			returned_result->routing_result = NECP_KERNEL_POLICY_RESULT_DROP;
 			lck_rw_done(&necp_kernel_policy_lock);
+			if (cred != NULL) {
+				kauth_cred_unref(&cred);
+			}
 			return 0;
 		}
 	}
@@ -6558,7 +6569,7 @@ necp_application_find_policy_match_internal(proc_t proc,
 							break;
 						}
 
-						NECP_VERIFY_DELEGATION_ENTITLEMENT(proc, "euuid");
+						NECP_VERIFY_DELEGATION_ENTITLEMENT(proc, cred, "euuid");
 
 						is_delegated = true;
 						uuid_copy(application_uuid, value);
@@ -6572,7 +6583,7 @@ necp_application_find_policy_match_internal(proc_t proc,
 							break;
 						}
 
-						NECP_VERIFY_DELEGATION_ENTITLEMENT(proc, "uuid");
+						NECP_VERIFY_DELEGATION_ENTITLEMENT(proc, cred, "uuid");
 
 						is_delegated = true;
 						uuid_copy(real_application_uuid, value);
@@ -6586,7 +6597,7 @@ necp_application_find_policy_match_internal(proc_t proc,
 							break;
 						}
 
-						NECP_VERIFY_DELEGATION_ENTITLEMENT(proc, "pid");
+						NECP_VERIFY_DELEGATION_ENTITLEMENT(proc, cred, "pid");
 
 						is_delegated = true;
 						memcpy(&pid, value, sizeof(pid_t));
@@ -6600,7 +6611,7 @@ necp_application_find_policy_match_internal(proc_t proc,
 							break;
 						}
 
-						NECP_VERIFY_DELEGATION_ENTITLEMENT(proc, "uid");
+						NECP_VERIFY_DELEGATION_ENTITLEMENT(proc, cred, "uid");
 
 						is_delegated = true;
 						memcpy(&uid, value, sizeof(uid_t));
@@ -6737,6 +6748,9 @@ necp_application_find_policy_match_internal(proc_t proc,
 		returned_result->routing_result = NECP_KERNEL_POLICY_RESULT_PASS;
 		returned_result->routed_interface_index = lo_ifp->if_index;
 		*flags |= (NECP_CLIENT_RESULT_FLAG_IS_LOCAL | NECP_CLIENT_RESULT_FLAG_IS_DIRECT);
+		if (cred != NULL) {
+			kauth_cred_unref(&cred);
+		}
 		return 0;
 	}
 
@@ -7251,6 +7265,10 @@ done:
 		proc_rele(responsible_proc);
 	}
 #endif
+
+	if (cred != NULL) {
+		kauth_cred_unref(&cred);
+	}
 
 	return error;
 }
@@ -9997,8 +10015,11 @@ necp_socket_is_allowed_to_send_recv_internal(struct inpcb *inp, struct sockaddr 
 	if (bypass_type == NECP_BYPASS_TYPE_LOOPBACK &&
 	    necp_pass_loopback == NECP_LOOPBACK_PASS_WITH_FILTER &&
 	    (matched_policy == NULL || matched_policy->result != NECP_KERNEL_POLICY_RESULT_SOCKET_DIVERT)) {
-		// Polices have changed since last evaluation, update inp result with new filter state
-		if (inp->inp_policyresult.results.filter_control_unit != filter_control_unit) {
+		// If policies haven't changed since last evaluation, do not update filter result in order to
+		// preserve the very first filter result for the socket.  Otherwise, update the filter result to
+		// allow content filter to detect and drop pre-existing flows.
+		if (inp->inp_policyresult.policy_gencount != necp_kernel_socket_policies_gencount &&
+		    inp->inp_policyresult.results.filter_control_unit != filter_control_unit) {
 			inp->inp_policyresult.results.filter_control_unit = filter_control_unit;
 		}
 		if (inp->inp_policyresult.results.flow_divert_aggregate_unit != flow_divert_aggregate_unit) {
@@ -10044,8 +10065,11 @@ necp_socket_is_allowed_to_send_recv_internal(struct inpcb *inp, struct sockaddr 
 			if (matched_policy->result == NECP_KERNEL_POLICY_RESULT_PASS) {
 				pass_flags = matched_policy->result_parameter.pass_flags;
 			}
-			// Polices has changed since last evaluation, update inp result with new filter state
-			if (inp->inp_policyresult.results.filter_control_unit != filter_control_unit) {
+			// If policies haven't changed since last evaluation, do not update filter result in order to
+			// preserve the very first filter result for the socket.  Otherwise, update the filter result to
+			// allow content filter to detect and drop pre-existing flows.
+			if (inp->inp_policyresult.policy_gencount != necp_kernel_socket_policies_gencount &&
+			    inp->inp_policyresult.results.filter_control_unit != filter_control_unit) {
 				inp->inp_policyresult.results.filter_control_unit = filter_control_unit;
 			}
 			if (inp->inp_policyresult.results.flow_divert_aggregate_unit != flow_divert_aggregate_unit) {
@@ -10074,8 +10098,11 @@ necp_socket_is_allowed_to_send_recv_internal(struct inpcb *inp, struct sockaddr 
 				*return_route_rule_id = route_rule_id;
 			}
 
-			// Polices has changed since last evaluation, update inp result with new filter state
-			if (inp->inp_policyresult.results.filter_control_unit != filter_control_unit) {
+			// If policies haven't changed since last evaluation, do not update filter result in order to
+			// preserve the very first filter result for the socket.  Otherwise, update the filter result to
+			// allow content filter to detect and drop pre-existing flows.
+			if (inp->inp_policyresult.policy_gencount != necp_kernel_socket_policies_gencount &&
+			    inp->inp_policyresult.results.filter_control_unit != filter_control_unit) {
 				inp->inp_policyresult.results.filter_control_unit = filter_control_unit;
 			}
 			if (inp->inp_policyresult.results.flow_divert_aggregate_unit != flow_divert_aggregate_unit) {
