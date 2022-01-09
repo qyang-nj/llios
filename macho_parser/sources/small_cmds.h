@@ -9,5 +9,6 @@ void printLinkerOption(void *base, struct linker_option_command *);
 void printRpath(void *base, struct rpath_command *);
 void printUUID(void *base, struct uuid_command *cmd);
 void printSourceVersion(void *base, struct source_version_command *cmd);
+void printThread(uint8_t *base, struct thread_command *cmd);
 
 #endif /* SMALL_CMDS_H */

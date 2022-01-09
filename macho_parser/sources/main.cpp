@@ -95,6 +95,10 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
             case LC_MAIN:
                 printEntryPoint(base, (struct entry_point_command *)lcmd);
                 break;
+            case LC_THREAD:
+            case LC_UNIXTHREAD:
+                printThread(base, (struct thread_command *)lcmd);
+                break;
             case LC_LINKER_OPTION:
                 printLinkerOption(base, (struct linker_option_command *)lcmd);
                 break;
