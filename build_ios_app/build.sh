@@ -3,6 +3,7 @@ set -e
 
 # -d/--device: build for an iOS device instead of simulator
 # -r/--release: build for release instead of debug
+# --minos: set minimum os version
 OPT_DEVICE=0
 OPT_RELEASE=0
 OPT_MINOS="14.0"
@@ -29,22 +30,24 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-[[ $OPT_DEVICE == 1 ]] && SDK="iphoneos" || SDK="iphonesimulator"
-[[ $OPT_DEVICE == 1 ]] && ARCH="arm64" || ARCH="x86_64"
-[[ $OPT_DEVICE == 1 ]] && TARGET="${ARCH}-apple-ios${OPT_MINOS}" || TARGET="${ARCH}-apple-ios${OPT_MINOS}-simulator"
-[[ $OPT_DEVICE == 1 ]] && MIN_OS_OPTION="-miphoneos-version-min=$OPT_MINOS" || MIN_OS_OPTION="-mios-simulator-version-min=$OPT_MINOS"
-
-SDK_PATH=$(xcrun --show-sdk-path --sdk $SDK)
-SWIFTC="xcrun swiftc -sdk $SDK_PATH -target $TARGET"
-CLANG="xcrun clang -isysroot $SDK_PATH $MIN_OS_OPTION -arch $ARCH"
 APP_NAME="SampleApp"
 
-if [[ "$OPT_RELEASE" == 1 ]]; then
-    SWIFTC="$SWIFTC -O"
-    CLANG="$CLANG -O"
+if [[ $OPT_DEVICE == 1 ]]; then
+    SDK_PATH=$(xcrun --show-sdk-path --sdk iphoneos)
+    SWIFT_FLAGS+=(-sdk $SDK_PATH -target arm64-apple-ios${OPT_MINOS})
+    CFLAGS+=(-isysroot $SDK_PATH -arch arm64 -miphoneos-version-min=${OPT_MINOS})
 else
-    SWIFTC="$SWIFTC -g -Onone"
-    CLANG="$CLANG -g -O0"
+    SDK_PATH=$(xcrun --show-sdk-path --sdk iphonesimulator)
+    SWIFT_FLAGS+=(-sdk $(xcrun --show-sdk-path --sdk $SDK_PATH) -target x86_64-apple-ios${OPT_MINOS}-simulator)
+    CFLAGS+=(-isysroot $SDK_PATH -arch x86_64 -mios-simulator-version-min=${OPT_MINOS})
+fi
+
+if [[ "$OPT_RELEASE" == 1 ]]; then
+    SWIFT_FLAGS+=($SWIFT_FLAGS -O)
+    CFLAGS+=($CFLAGS -O)
+else
+    SWIFT_FLAGS+=(-g -Onone)
+    CFLAGS+=($CFLAGS -g -O0)
 fi
 
 function prepare() {
@@ -74,8 +77,7 @@ EOL
         Sources/StaticLib/bar.swift Sources/StaticLib/foo.swift
     )
 
-    eval ${SWIFTC} ${PARAMS[@]}
-
+    xcrun swiftc ${SWIFT_FLAGS[@]} ${PARAMS[@]}
     xcrun libtool -static -o Build/StaticLib.a Build/foo.o Build/bar.o
 }
 
@@ -89,7 +91,7 @@ function build_swift_dylib() {
         -Xlinker -install_name -Xlinker @rpath/Frameworks/SwiftDylib.dylib
         Sources/SwiftDylib/SwiftDylib.swift
     )
-    eval ${SWIFTC} ${PARAMS[@]}
+    xcrun swiftc ${SWIFT_FLAGS[@]} ${PARAMS[@]}
 }
 
 function build_objc_dylib() {
@@ -101,7 +103,7 @@ function build_objc_dylib() {
         -o Build/ObjcDylib.dylib
         Sources/ObjcDylib/LLIOSObjcDylib.m
     )
-    eval ${CLANG} ${PARAMS[@]}
+    xcrun clang ${CFLAGS[@]} ${PARAMS[@]}
 }
 
 function build_executable() {
@@ -116,7 +118,7 @@ function build_executable() {
         Build/ObjcDylib.dylib
         Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
     )
-    eval ${SWIFTC} ${PARAMS[@]}
+    xcrun swiftc ${SWIFT_FLAGS[@]} ${PARAMS[@]}
 }
 
 function process_info_plist() {
