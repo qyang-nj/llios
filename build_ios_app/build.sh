@@ -5,7 +5,7 @@ set -e
 # -r/--release: build for release instead of debug
 OPT_DEVICE=0
 OPT_RELEASE=0
-
+OPT_MINOS="14.0"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -d|--device)
@@ -18,6 +18,10 @@ while [[ $# -gt 0 ]]; do
             echo "Note: Build for release."
             shift
             ;;
+        --minos)
+            OPT_MINOS=$2
+            shift 2
+            ;;
         *) # unknown option
             echo "Unknow option: ${1}"
             shift
@@ -26,18 +30,21 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ $OPT_DEVICE == 1 ]] && SDK="iphoneos" || SDK="iphonesimulator"
-SDK_PATH=$(xcrun --show-sdk-path --sdk $SDK)
+[[ $OPT_DEVICE == 1 ]] && ARCH="arm64" || ARCH="x86_64"
+[[ $OPT_DEVICE == 1 ]] && TARGET="${ARCH}-apple-ios${OPT_MINOS}" || TARGET="${ARCH}-apple-ios${OPT_MINOS}-simulator"
+[[ $OPT_DEVICE == 1 ]] && MIN_OS_OPTION="-miphoneos-version-min=$OPT_MINOS" || MIN_OS_OPTION="-mios-simulator-version-min=$OPT_MINOS"
 
-# Targeting ios12 or lower will end up linking with libSwiftCompatibility50
-# and libSwiftCompatibilityDynamicReplacements.
-[[ $OPT_DEVICE == 1 ]] && TARGET=arm64-apple-ios14.0 || TARGET=x86_64-apple-ios14.0-simulator
+SDK_PATH=$(xcrun --show-sdk-path --sdk $SDK)
 SWIFTC="xcrun swiftc -sdk $SDK_PATH -target $TARGET"
+CLANG="xcrun clang -isysroot $SDK_PATH $MIN_OS_OPTION -arch $ARCH"
 APP_NAME="SampleApp"
 
 if [[ "$OPT_RELEASE" == 1 ]]; then
     SWIFTC="$SWIFTC -O"
+    CLANG="$CLANG -O"
 else
     SWIFTC="$SWIFTC -g -Onone"
+    CLANG="$CLANG -g -O0"
 fi
 
 function prepare() {
@@ -88,15 +95,13 @@ function build_swift_dylib() {
 function build_objc_dylib() {
     local PARAMS=(
         -shared
-        -o Build/ObjcDylib.dylib
         -all_load
-        -isysroot "$SDK_PATH"
         -fmodules
-        -arch x86_64
         -install_name @rpath/Frameworks/ObjcDylib.dylib
+        -o Build/ObjcDylib.dylib
         Sources/ObjcDylib/LLIOSObjcDylib.m
     )
-    clang ${PARAMS[@]}
+    eval ${CLANG} ${PARAMS[@]}
 }
 
 function build_executable() {
@@ -139,9 +144,10 @@ function package_app_bundle() {
 # You also need to change the app id and modify Entitlements.plist.
 # (It doesn't seem to be necessary to copy the provisioning profile. Idk why.)
 function sign_app() {
+    identity=$(security find-identity -v -p codesigning | grep "Apple Development" | head -1 | awk '{print $2}')
     # The embedded dylibs need to be signed separately and before signing the app bundle.
-    codesign --force --sign '08F760DEAD51F26EE4ADC5FF40196215C85AD9DE' "$(ls Build/$APP_NAME.app/Frameworks/*.dylib)"
-    codesign --force --sign '08F760DEAD51F26EE4ADC5FF40196215C85AD9DE' "Build/$APP_NAME.app" --entitlements Sources/Entitlements.plist
+    codesign --force --sign "$identity" "Build/$APP_NAME.app/Frameworks/"*.dylib
+    codesign --force --sign "$identity" "Build/$APP_NAME.app" --entitlements Sources/Entitlements.plist
 }
 
 prepare
