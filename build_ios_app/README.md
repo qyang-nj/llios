@@ -9,7 +9,7 @@ cd llios/build_ios_app
 
 The demonstration includes
 * building static libraries
-* building dynamic libraries
+* building Swift and Objective-C dynamic libraries
 * building an executable
 * packaging an app bundle
 * code signing
