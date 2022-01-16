@@ -302,7 +302,7 @@ $ ./macho_parser --command LC_MAIN sample.out
 LC_MAIN              cmdsize: 24     entryoff: 16052 (0x3eb4)  stacksize: 0
 ```
 
-## [LC_LINKER_OPTION](macho_parser/docs/LC_LINKER_OPTION.md)
+## [LC_LINKER_OPTION](../macho_parser/docs/LC_LINKER_OPTION.md)
 ```
 $ ./macho_parser --command LC_LINKER_OPTION sample.o
 LC_LINKER_OPTION     cmdsize: 32     count: 1   -lswift_Concurrency

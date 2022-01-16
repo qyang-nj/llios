@@ -12,6 +12,7 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [LC_DYLD_CHAINED_FIXUPS](./dynamic_linking/chained_fixups.md) - the new way to encode dyld info
     * [LC_DYLD_EXPORTS_TRIE](./exported_symbol/README.md) - the new command for exported symbols
     * [LC_DYLD_ENVIRONMENT](./macho_parser/docs/LC_DYLD_ENVIRONMENT.md) - embed environment variables in the binary
+    * [LC_LINKER_OPTION](.macho_parser/docs/LC_LINKER_OPTION.md) - auto linking
     * [LC_BUILD_VERSION](./macho_parser/docs/LC_BUILD_VERSION.md) - platform requirements
     * [LC_MAIN](./macho_parser/docs/LC_MAIN.md) - the entry point of an executable
     * [LC_ENCRYPTION_INFO_64](./macho_parser/docs/LC_ENCRYPTION_INFO.md) - FairPlay encryption
