@@ -88,7 +88,8 @@ function build_swift_dylib() {
         -module-name SwiftDylib
         -emit-module-path Build/SwiftDylib.swiftmodule
         -o Build/SwiftDylib.dylib
-        -Xlinker -install_name -Xlinker @rpath/Frameworks/SwiftDylib.dylib
+        -Xlinker -install_name
+        -Xlinker @rpath/Frameworks/SwiftDylib.dylib
         Sources/SwiftDylib/SwiftDylib.swift
     )
     xcrun swiftc ${SWIFT_FLAGS[@]} ${PARAMS[@]}
@@ -97,8 +98,8 @@ function build_swift_dylib() {
 function build_objc_dylib() {
     local PARAMS=(
         -shared
-        -all_load
-        -fmodules
+        -fmodules  # enable modules feature
+        -ObjC
         -install_name @rpath/Frameworks/ObjcDylib.dylib
         -o Build/ObjcDylib.dylib
         Sources/ObjcDylib/LLIOSObjcDylib.m
