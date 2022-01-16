@@ -14,7 +14,7 @@ struct linker_option_command {
 };
 ```
 
-Swift uses auto linking extensively. Here are some examples
+Swift uses auto linking extensively. Here are some examples.
 ``` bash
 $ touch foo.swift # create an empty swift file
 $ xcrun swiftc -c foo.swift -o foo.o
@@ -42,7 +42,7 @@ LC_LINKER_OPTION     cmdsize: 40     count: 1   -lswiftSwiftOnoneSupport
 LC_LINKER_OPTION     cmdsize: 24     count: 1   -lobjc
 ```
 
-In the above example, even though we imported Security framework in the code, we didn't specify that framework to the compiler. During **Sema** phase, the swift compiler parses the import statements and finds the module in the provided search paths. (The SDK path is inferred in the above example, so we didn't add any search path.) Then the compiler puts the required linker flags in the `LC_LINKER_OPTION` load commands. When the static linker sees them, they're treated as the same flags as passed through command line. Therefore, we don't have to specify "Security" in the entire build process and this is called auto-linking.
+In the above example, even though we imported Security framework in the code, we didn't specify that framework to the compiler. During **Sema** phase, the swift compiler parses the import statements and finds the module in the provided search paths. (The SDK path is inferred in the above example, so we didn't add any search path.) Then the compiler puts the relevant linker flags in the `LC_LINKER_OPTION` load commands. When the static linker sees them, they're treated as the same flags as passed through command line. Therefore, we don't have to specify "Security" in the entire build process.
 
 
 ##### Learn more
