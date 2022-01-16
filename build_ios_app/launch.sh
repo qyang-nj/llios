@@ -35,7 +35,7 @@ if [[ "$platform" == 7 ]]; then
 
     open $(xcode-select -p)/Applications/Simulator.app
 
-elif [ "$platform" == 2 ]; then
+elif [[ "$platform" == 2 ]]; then
     echo "Launching on device ..."
     if ! command -v ios-deploy &> /dev/null
     then
