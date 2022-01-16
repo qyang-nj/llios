@@ -1,0 +1,6 @@
+module ObjcDylib {
+    umbrella header "LLIOSObjcDylib.h"
+
+    export *
+    module * { export * }
+}

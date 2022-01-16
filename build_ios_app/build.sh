@@ -40,79 +40,117 @@ else
     SWIFTC="$SWIFTC -g -Onone"
 fi
 
-# Prepare
-rm -rf Build
-mkdir -p Build
+function prepare() {
+    rm -rf Build
+    mkdir -p Build
+}
 
-# Build the static library
-OUTPUT_FILE_MAP_JSON="Build/StaticLib_OutputFileMap.json"
-cat > $OUTPUT_FILE_MAP_JSON <<EOL
+function build_swift_static_lib() {
+    local OUTPUT_FILE_MAP_JSON="Build/StaticLib_OutputFileMap.json"
+    cat > $OUTPUT_FILE_MAP_JSON <<EOL
 {
-  "": {"swift-dependencies": "Build/StaticLib-master.swiftdeps"},
-  "Sources/StaticLib/foo.swift": {"object": "Build/foo.o", "swift-dependencies": "Build/foo.swiftdeps"},
-  "Sources/StaticLib/bar.swift": {"object": "Build/bar.o", "swift-dependencies": "Build/bar.swiftdeps"}
+"": {"swift-dependencies": "Build/StaticLib-master.swiftdeps"},
+"Sources/StaticLib/foo.swift": {"object": "Build/foo.o", "swift-dependencies": "Build/foo.swiftdeps"},
+"Sources/StaticLib/bar.swift": {"object": "Build/bar.o", "swift-dependencies": "Build/bar.swiftdeps"}
 }
 EOL
 
-eval ${SWIFTC} \
-    -incremental \
-    -parse-as-library \
-    -c \
-    -module-name StaticLib \
-    -emit-module \
-    -emit-module-path Build/StaticLib.swiftmodule \
-    -index-store-path Build/IndexStore \
-    -output-file-map "$OUTPUT_FILE_MAP_JSON" \
-    Sources/StaticLib/bar.swift Sources/StaticLib/foo.swift
+    local PARAMS=(
+        -incremental
+        -parse-as-library
+        -c
+        -module-name StaticLib
+        -emit-module
+        -emit-module-path Build/StaticLib.swiftmodule
+        -index-store-path Build/IndexStore
+        -output-file-map "$OUTPUT_FILE_MAP_JSON"
+        Sources/StaticLib/bar.swift Sources/StaticLib/foo.swift
+    )
 
-xcrun libtool \
-    -static \
-    -o Build/StaticLib.a \
-    Build/foo.o Build/bar.o
+    eval ${SWIFTC} ${PARAMS[@]}
 
-# Build the dynamic library
-eval ${SWIFTC} \
-    -emit-library \
-    -emit-module \
-    -o Build/DynamicLib.dylib \
-    -module-name DynamicLib \
-    -emit-module-path Build/DynamicLib.swiftmodule \
-    -Xlinker -install_name -Xlinker @rpath/DynamicLib.dylib \
-    Sources/DynamicLib/DynamicLib.swift
+    xcrun libtool -static -o Build/StaticLib.a Build/foo.o Build/bar.o
+}
 
-# Build the executable
-eval ${SWIFTC} \
-    -emit-executable \
-    -I Build \
-    -o "Build/$APP_NAME" \
-    -Xlinker -rpath -Xlinker @executable_path/ \
-    Build/StaticLib.a Build/DynamicLib.dylib \
-    Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
+function build_swift_dylib() {
+    local PARAMS=(
+        -emit-library
+        -emit-module
+        -module-name SwiftDylib
+        -emit-module-path Build/SwiftDylib.swiftmodule
+        -o Build/SwiftDylib.dylib
+        -Xlinker -install_name -Xlinker @rpath/Frameworks/SwiftDylib.dylib
+        Sources/SwiftDylib/SwiftDylib.swift
+    )
+    eval ${SWIFTC} ${PARAMS[@]}
+}
 
-# Process Info.plist
-PLIST_BUDDY="/usr/libexec/PlistBuddy"
-cp Sources/Info.plist Build/Info.plist
-$PLIST_BUDDY -c "Set :CFBundleDevelopmentRegion en" Build/Info.plist
-$PLIST_BUDDY -c "Set :CFBundleExecutable $APP_NAME" Build/Info.plist
-$PLIST_BUDDY -c "Set :CFBundleName $APP_NAME" Build/Info.plist
-$PLIST_BUDDY -c "Set :CFBundleIdentifier me.qyang.$APP_NAME" Build/Info.plist
-$PLIST_BUDDY -c "Set :CFBundlePackageType APPL" Build/Info.plist
+function build_objc_dylib() {
+    local PARAMS=(
+        -shared
+        -o Build/ObjcDylib.dylib
+        -all_load
+        -isysroot "$SDK_PATH"
+        -fmodules
+        -arch x86_64
+        -install_name @rpath/Frameworks/ObjcDylib.dylib
+        Sources/ObjcDylib/LLIOSObjcDylib.m
+    )
+    clang ${PARAMS[@]}
+}
 
-# Build app bundle
-mkdir -p "Build/$APP_NAME.app"
-mv "Build/$APP_NAME" "Build/$APP_NAME.app"
-mv "Build/DynamicLib.dylib" "Build/$APP_NAME.app"
-mv "Build/Info.plist" "Build/$APP_NAME.app"
+function build_executable() {
+    local PARAMS=(
+        -emit-executable
+        -I Build
+        -I Sources/ObjcDylib
+        -o "Build/$APP_NAME"
+        -Xlinker -rpath -Xlinker @executable_path/
+        Build/StaticLib.a
+        Build/SwiftDylib.dylib
+        Build/ObjcDylib.dylib
+        Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
+    )
+    eval ${SWIFTC} ${PARAMS[@]}
+}
+
+function process_info_plist() {
+    PLIST_BUDDY="/usr/libexec/PlistBuddy"
+    cp Sources/Info.plist Build/Info.plist
+    $PLIST_BUDDY -c "Set :CFBundleDevelopmentRegion en" Build/Info.plist
+    $PLIST_BUDDY -c "Set :CFBundleExecutable $APP_NAME" Build/Info.plist
+    $PLIST_BUDDY -c "Set :CFBundleName $APP_NAME" Build/Info.plist
+    $PLIST_BUDDY -c "Set :CFBundleIdentifier me.qyang.$APP_NAME" Build/Info.plist
+    $PLIST_BUDDY -c "Set :CFBundlePackageType APPL" Build/Info.plist
+}
+
+function package_app_bundle() {
+    mkdir -p "Build/$APP_NAME.app"
+    mkdir -p "Build/$APP_NAME.app/Frameworks"
+    mv "Build/$APP_NAME" "Build/$APP_NAME.app"
+    mv "Build/SwiftDylib.dylib" "Build/$APP_NAME.app/Frameworks"
+    mv "Build/ObjcDylib.dylib" "Build/$APP_NAME.app/Frameworks"
+    mv "Build/Info.plist" "Build/$APP_NAME.app"
+}
 
 # Code Signing (required for device builds)
 # Note: You need to replace the signing identity with your one.
 # Find a valid signing identity by `security find-identity -v -p codesigning`.
 # You also need to change the app id and modify Entitlements.plist.
 # (It doesn't seem to be necessary to copy the provisioning profile. Idk why.)
-if [[ "$OPT_DEVICE" == 1 ]]; then
+function sign_app() {
     # The embedded dylibs need to be signed separately and before signing the app bundle.
-    codesign --force --sign '08F760DEAD51F26EE4ADC5FF40196215C85AD9DE' "$(ls Build/$APP_NAME.app/*.dylib)"
+    codesign --force --sign '08F760DEAD51F26EE4ADC5FF40196215C85AD9DE' "$(ls Build/$APP_NAME.app/Frameworks/*.dylib)"
     codesign --force --sign '08F760DEAD51F26EE4ADC5FF40196215C85AD9DE' "Build/$APP_NAME.app" --entitlements Sources/Entitlements.plist
-fi
+}
+
+prepare
+build_swift_static_lib
+build_swift_dylib
+build_objc_dylib
+build_executable
+process_info_plist
+package_app_bundle
+if [[ "$OPT_DEVICE" == 1 ]]; then sign_app; fi
 
 echo "Done. Build/$APP_NAME.app"
