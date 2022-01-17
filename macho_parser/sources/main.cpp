@@ -26,7 +26,9 @@ extern "C" {
 #include "dyld_info.h"
 #include "encryption_info.h"
 #include "small_cmds.h"
+#include "ar_parser.h"
 
+static void printMacho(uint8_t *machoBase);
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
 
 struct MachoBinary machoBinary;
@@ -40,17 +42,40 @@ int main(int argc, char **argv) {
     fd = open(args.file_name, O_RDONLY);
     fstat(fd, &sb);
 
-    uint8_t *fileBase = (uint8_t *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    uint32_t fileSize = sb.st_size;
+    uint8_t *fileBase = (uint8_t *)mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, fd, 0);
     if (fileBase == MAP_FAILED) {
         fprintf(stderr, "Cannot read file %s\n", args.file_name);
         return 1;
     }
 
-    struct mach_header_64 *machHeader = parseMachHeader(fileBase);
+    uint8_t *sliceBase = fileBase;
+    uint32_t sliceSize = fileSize;
+    if (FatMacho::isFatMacho(fileBase, fileSize)) {
+        std::tie(sliceBase, sliceSize) = FatMacho::getSliceByArch(fileBase, fileSize, args.arch);
+    }
+
+    if (Archive::isArchive(sliceBase, sliceSize)) { // handle static library
+        Archive::enumerateObjectFileInArchive(sliceBase, sliceSize, [](char *objectFileName, uint8_t *objectFileBase) {
+            printf("\033[0;34m%s:\033[0m\n", objectFileName);
+            printMacho(objectFileBase);
+            printf("\n");
+        });
+    } else {
+        printMacho(sliceBase);
+    }
+
+    munmap(fileBase, fileSize);
+    return 0;
+}
+
+static void printMacho(uint8_t *machoBase) {
+    struct mach_header_64 *machHeader = parseMachHeader(machoBase);
     // the base address of a specific arch slice
     uint8_t *base = (uint8_t *)machHeader;
-    static std::vector<struct load_command *> allLoadCommands = parseLoadCommands(base, sizeof(struct mach_header_64), machHeader->ncmds);
+    std::vector<struct load_command *> allLoadCommands = parseLoadCommands(base, sizeof(struct mach_header_64), machHeader->ncmds);
 
+    memset(&machoBinary, 0x0, sizeof(machoBinary));
     machoBinary.base = base;
     machoBinary.allLoadCommands = allLoadCommands;
 
@@ -62,9 +87,6 @@ int main(int argc, char **argv) {
         [](struct load_command * lcmd){ return (struct segment_command_64 *)lcmd; });
 
     printLoadCommands(base, allLoadCommands);
-
-    munmap(base, sb.st_size);
-    return 0;
 }
 
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands) {
