@@ -17,8 +17,7 @@ extern "C" {
 #include "symtab.h"
 
 static std::string stringifyType(uint8_t type);
-static std::string stringifyDescription(uint8_t type, uint16_t desc);
-static inline void rtrim(std::string &s);
+static std::string stringifyDescription(struct nlist_64 *nlist);
 
 void printSymbolTable(uint8_t *base, struct symtab_command *symtab_cmd) {
     printf("%-20s cmdsize: %-6d symoff: %d   nsyms: %d   (symsize: %lu)   stroff: %d   strsize: %u\n",
@@ -59,11 +58,11 @@ void printSymbol(int indent, uint8_t *base, struct symtab_command *symtab_cmd, i
         sprintf(formatted_value, "%016llx  ", nlist->n_value);
     }
 
-    printf("%*s%-4d: %18s%-12s  \033[0;34m%s\033[0m  %s\n",
+    printf("%*s%-4d: %18s%-12s  \033[0;34m%-40s\033[0m  %s\n",
         indent, "", index, formatted_value,
         stringifyType(nlist->n_type).c_str(),
         symbol,
-        stringifyDescription(nlist->n_type, nlist->n_desc).c_str());
+        stringifyDescription(nlist).c_str());
 }
 
 static std::string stringifyType(uint8_t type) {
@@ -106,7 +105,10 @@ static std::string stringifyType(uint8_t type) {
     return std::string("[") + formatted + "]";
 }
 
-static std::string stringifyDescription(uint8_t type, uint16_t desc) {
+static std::string stringifyDescription(struct nlist_64 *nlist) {
+    uint8_t type = nlist->n_type;
+    uint16_t desc = nlist->n_desc;
+
     std::vector<std::string> attrs;
 
     if ((type & N_TYPE) == N_UNDF) {
@@ -129,6 +131,10 @@ static std::string stringifyDescription(uint8_t type, uint16_t desc) {
             case REFERENCE_FLAG_PRIVATE_UNDEFINED_LAZY:
                 attrs.push_back("PRIVATE_UNDEFINED_LAZY");
                 break;
+        }
+    } else if ((type & N_TYPE) == N_SECT) {
+        if (nlist->n_sect > NO_SECT && nlist->n_sect <= MAX_SECT) {
+            attrs.push_back(machoBinary.getSectionNameByOrdinal(nlist->n_sect));
         }
     }
 

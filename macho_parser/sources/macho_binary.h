@@ -61,6 +61,27 @@ struct MachoBinary {
         return nullptr;
     }
 
+    std::string getSectionNameByOrdinal(int ordinal) {
+        int index = 1;
+        for (auto segCmd : segmentCommands) {
+            struct section_64 *sections =
+                (struct section_64 *)((uint8_t *)segCmd + sizeof(struct segment_command_64));
+
+            for (int i = 0; i < segCmd->nsects; ++i) {
+                struct section_64 *sect = sections + i;
+                if (index == ordinal) {
+                    std::string segname(sect->segname);
+                    std::string sectname(sect->sectname);
+                    std::string fullName = std::string("(") + segname.c_str() + ", " + sectname.c_str() + ")";
+                    return fullName;
+                }
+                index++;
+            }
+        }
+
+        return nullptr;
+    }
+
 private:
     std::vector<struct dylib_command *> dylibCommands;
 };
