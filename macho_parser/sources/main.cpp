@@ -26,6 +26,7 @@ extern "C" {
 #include "dyld_info.h"
 #include "encryption_info.h"
 #include "small_cmds.h"
+#include "ar_parser.h"
 
 static void printMacho(uint8_t *machoBase);
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
@@ -47,7 +48,15 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    printMacho(fileBase);
+    if (isArchive(fileBase)) { // handle static library
+        enumerateObjectFileInArchive(fileBase, sb.st_size, [](char *fileName, uint8_t *fileBase) {
+            printf("\033[0;34m%s:\033[0m\n", fileName);
+            printMacho(fileBase);
+            printf("\n");
+        });
+    } else {
+        printMacho(fileBase);
+    }
 
     munmap(fileBase, sb.st_size);
     return 0;
