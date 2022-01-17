@@ -59,9 +59,6 @@ A `nlist` doesn't directly contain a string. Instead, it has an index pointing t
 ### n_value
 It is just the address. Please note undefined symbol doesn't have an address, because the address is defined elsewhere.
 
-### n_sect
-If the symbol type is `N_SECT` (`nlist.n_type & N_TYPE`), this field is the ordinal of sections that appear in the Mach-O binary. Otherwise this field should be 0 (`NO_SECT`).
-
 ### n_type
 The format of `n_type`:
 ```
@@ -72,6 +69,9 @@ The format of `n_type`:
  │ └─ N_PEXT (private external symbol)
  └─ N_STAB (debugging symbol)
 ```
+
+### n_sect
+If the symbol type is `N_SECT` (`nlist.n_type & N_TYPE`), this field is the ordinal of sections that appear in the Mach-O binary. Otherwise this field should be 0 (`NO_SECT`).
 
 ### n_desc
 The format of `n_desc`:
