@@ -27,6 +27,7 @@ extern "C" {
 #include "encryption_info.h"
 #include "small_cmds.h"
 
+static void printMacho(uint8_t *machoBase);
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
 
 struct MachoBinary machoBinary;
@@ -46,7 +47,14 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    struct mach_header_64 *machHeader = parseMachHeader(fileBase);
+    printMacho(fileBase);
+
+    munmap(fileBase, sb.st_size);
+    return 0;
+}
+
+static void printMacho(uint8_t *machoBase) {
+    struct mach_header_64 *machHeader = parseMachHeader(machoBase);
     // the base address of a specific arch slice
     uint8_t *base = (uint8_t *)machHeader;
     static std::vector<struct load_command *> allLoadCommands = parseLoadCommands(base, sizeof(struct mach_header_64), machHeader->ncmds);
@@ -62,9 +70,6 @@ int main(int argc, char **argv) {
         [](struct load_command * lcmd){ return (struct segment_command_64 *)lcmd; });
 
     printLoadCommands(base, allLoadCommands);
-
-    munmap(base, sb.st_size);
-    return 0;
 }
 
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands) {
