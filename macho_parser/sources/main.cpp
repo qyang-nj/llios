@@ -104,7 +104,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 sectionIndex += ((struct segment_command_64 *)lcmd)->nsects;
                 break;
             case LC_SYMTAB:
-                parse_symbol_table(base, (struct symtab_command *)lcmd);
+                printSymbolTable(base, (struct symtab_command *)lcmd);
                 break;
             case LC_DYSYMTAB:
                 parse_dynamic_symbol_table(base, (struct dysymtab_command *)lcmd);

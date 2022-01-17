@@ -4,12 +4,20 @@
 #include <mach-o/loader.h>
 #include <stdbool.h>
 
-void parse_symbol_table(void *base, struct symtab_command *cmd);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void print_symbol(int indent, void *base, struct symtab_command *symtab_cmd, int offset);
+void printSymbolTable(uint8_t *base, struct symtab_command *cmd);
 
-char *lookup_symbol_by_address(uint64_t address, void *base, struct symtab_command *symtab_cmd);
+void printSymbol(int indent, uint8_t *base, struct symtab_command *symtab_cmd, int offset);
+
+char *lookup_symbol_by_address(uint64_t address, uint8_t *base, struct symtab_command *symtab_cmd);
 
 bool is_symtab_load_command(struct load_command *lcmd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SYMTAB_H */
