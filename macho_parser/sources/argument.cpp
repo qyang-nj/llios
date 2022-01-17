@@ -155,6 +155,10 @@ void parseArguments(int argc, char **argv) {
 
     if (args.show_dysymtab || args.show_local || args. show_extdef || args.show_undef || args.show_indirect) {
         args.commands[args.command_count++] = LC_DYSYMTAB;
+
+        if (args.show_local || args. show_extdef || args.show_undef || args.show_indirect) {
+            args.no_truncate = true;
+        }
     }
 
     if (args.show_dyld_info || args.show_rebase || args.show_bind || args.show_weak_bind || args.show_lazy_bind || args.show_export) {

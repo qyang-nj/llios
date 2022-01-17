@@ -2,7 +2,9 @@
 #define MACHO_BINARY_H
 
 #include <mach-o/loader.h>
+#include <mach-o/nlist.h>
 #include <vector>
+#include <filesystem>
 
 struct MachoBinary {
     uint8_t *base;
@@ -25,6 +27,22 @@ struct MachoBinary {
                 [](struct load_command * lcmd){ return (struct dylib_command *)lcmd; });
         }
         return this->dylibCommands;
+    }
+
+    std::string getDylibNameByOrdinal(int ordinal, bool basename = true) {
+        if (ordinal > 0 && ordinal <= MAX_LIBRARY_ORDINAL) { // 0 ~ 253
+            struct dylib_command *dylibCmd = getDylibCommands()[ordinal - 1];
+            std::filesystem::path dylibPath = std::filesystem::path((char *)dylibCmd + dylibCmd->dylib.name.offset);
+            if (basename) {
+                dylibPath = dylibPath.filename();
+            }
+            return dylibPath.string();
+        } else if (ordinal == DYNAMIC_LOOKUP_ORDINAL) { // 254
+            return "dynamic lookup";
+        } else if (ordinal == EXECUTABLE_ORDINAL) { // 255
+            return "exectuable";
+        }
+        return "invalid ordinal";
     }
 
     struct section_64 *getSectionByAddress(uint64_t addr) {

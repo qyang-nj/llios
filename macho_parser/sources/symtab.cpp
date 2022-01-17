@@ -6,12 +6,19 @@
 #include <vector>
 #include <sstream>
 #include <iterator>
+#include <cctype>
+#include <locale>
 #include "argument.h"
 
+extern "C" {
+#include "dylib.h"
+}
+#include "macho_binary.h"
 #include "symtab.h"
 
 static std::string stringifyType(uint8_t type);
 static std::string stringifyDescription(uint8_t type, uint16_t desc);
+static inline void rtrim(std::string &s);
 
 void printSymbolTable(uint8_t *base, struct symtab_command *symtab_cmd) {
     printf("%-20s cmdsize: %-6d symoff: %d   nsyms: %d   (symsize: %lu)   stroff: %d   strsize: %u\n",
@@ -52,50 +59,18 @@ void printSymbol(int indent, uint8_t *base, struct symtab_command *symtab_cmd, i
         sprintf(formatted_value, "%016llx  ", nlist->n_value);
     }
 
-    printf("%*s%-4d: %18s%-18s  \033[0;34m%s:\033[0m  %s\n",
+    printf("%*s%-4d: %18s%-12s  \033[0;34m%s\033[0m  %s\n",
         indent, "", index, formatted_value,
         stringifyType(nlist->n_type).c_str(),
         symbol,
         stringifyDescription(nlist->n_type, nlist->n_desc).c_str());
 }
 
-char *lookup_symbol_by_address(uint64_t address, uint8_t *base, struct symtab_command *symtab_cmd) {
-    uint8_t *sym_table = base + symtab_cmd->symoff;
-    uint8_t *str_table = base + symtab_cmd->stroff;
-
-    // This logic can be optimized if the symbols are sorted by its address.
-    for (int i = 0; i < symtab_cmd->nsyms; ++i) {
-        struct nlist_64 *nlist = (struct nlist_64 *)(sym_table + sizeof(struct nlist_64) * i);
-        if (nlist->n_value == address) {
-            char *symbol = (char *)(str_table + nlist->n_un.n_strx);
-            if (strlen(symbol) > 0) {
-                return symbol;
-            }
-        }
-    }
-
-    return NULL;
-}
-
-bool is_symtab_load_command(struct load_command *lcmd) {
-    return lcmd->cmd == LC_SYMTAB;
-}
-
 static std::string stringifyType(uint8_t type) {
     std::vector<std::string> attrs;
 
-    if (type & N_EXT) {
-        attrs.push_back("EXT"); // global symbols
-    }
-
-    if (type & N_PEXT) {
-        attrs.push_back("PEXT"); // private external symbols
-    }
-
     if (type & N_STAB) {
-        char stab[16];
-        sprintf(stab, "STAB(%#02x)", type & N_STAB);
-        attrs.push_back(stab); // debugging symbols
+        attrs.push_back("STAB"); // debug symbols
     }
 
     switch (type & N_TYPE) {
@@ -116,9 +91,19 @@ static std::string stringifyType(uint8_t type) {
             break;
     }
 
-    std::ostringstream formatted;
-    std::copy(attrs.begin(), attrs.end(), std::ostream_iterator<std::string>(formatted, " "));
-    return std::string("[") + formatted.str() + "]";
+    if (type & N_EXT) {
+        attrs.push_back("EXT"); // global symbols
+    }
+
+    if (type & N_PEXT) {
+        attrs.push_back("PEXT"); // private external symbols
+    }
+
+    std::ostringstream formattedStream;
+    std::copy(attrs.begin(), attrs.end(), std::ostream_iterator<std::string>(formattedStream, " "));
+    std::string formatted = formattedStream.str();
+    formatted.pop_back(); // remove the last space
+    return std::string("[") + formatted + "]";
 }
 
 static std::string stringifyDescription(uint8_t type, uint16_t desc) {
@@ -162,18 +147,41 @@ static std::string stringifyDescription(uint8_t type, uint16_t desc) {
         attrs.push_back("WEAK_DEF");
     }
 
-    int library_ordinal = GET_LIBRARY_ORDINAL(desc);
-    if (library_ordinal > 0) {
-        char buf[32];
-        sprintf(buf, "LIBRARY_ORDINAL(%d)", library_ordinal);
-        attrs.push_back(buf);
+    int libraryOrdinal = GET_LIBRARY_ORDINAL(desc);
+    if (libraryOrdinal > 0) {
+        attrs.push_back(std::string("from ") + machoBinary.getDylibNameByOrdinal(libraryOrdinal));
     }
 
-    if (attrs.size() > 0) {
-        std::ostringstream formatted;
-        std::copy(attrs.begin(), attrs.end(), std::ostream_iterator<std::string>(formatted, " "));
-        return std::string("[") + formatted.str() + "]";
+    if (attrs.size() == 0) {
+        return "";
     }
 
-    return "";
+    std::ostringstream formattedStream;
+    std::copy(attrs.begin(), attrs.end(), std::ostream_iterator<std::string>(formattedStream, ", "));
+    std::string formatted = formattedStream.str();
+    formatted.pop_back(); // remove last to charaters ", "
+    formatted.pop_back();
+    return std::string("// ") + formatted;
+}
+
+char *lookup_symbol_by_address(uint64_t address, uint8_t *base, struct symtab_command *symtab_cmd) {
+    uint8_t *sym_table = base + symtab_cmd->symoff;
+    uint8_t *str_table = base + symtab_cmd->stroff;
+
+    // This logic can be optimized if the symbols are sorted by its address.
+    for (int i = 0; i < symtab_cmd->nsyms; ++i) {
+        struct nlist_64 *nlist = (struct nlist_64 *)(sym_table + sizeof(struct nlist_64) * i);
+        if (nlist->n_value == address) {
+            char *symbol = (char *)(str_table + nlist->n_un.n_strx);
+            if (strlen(symbol) > 0) {
+                return symbol;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+bool is_symtab_load_command(struct load_command *lcmd) {
+    return lcmd->cmd == LC_SYMTAB;
 }
