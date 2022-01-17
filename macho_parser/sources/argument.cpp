@@ -3,10 +3,15 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <map>
+#include <string>
+#include <algorithm>
 
 #include "argument.h"
 
 struct argument args;
+
+static uint8_t getCommandTypeFromString(char *commandString);
 
 static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
@@ -79,14 +84,14 @@ void usage() {
     puts("    --opcode                             show the raw opcode instead of a table");
 }
 
-void parse_arguments(int argc, char **argv) {
+void parseArguments(int argc, char **argv) {
     int opt = 0;
     int option_index = 0;
 
     while ((opt = getopt_long(argc, argv, "c:s:hv", longopts, &option_index)) != -1) {
         switch(opt) {
             case 'c':
-                args.commands[args.command_count++] = string_to_load_command(optarg);
+                args.commands[args.command_count++] = getCommandTypeFromString(optarg);
                 break;
             case 'v':
                 args.verbosity++;
@@ -171,58 +176,48 @@ void parse_arguments(int argc, char **argv) {
     }
 }
 
-unsigned int string_to_load_command(char *cmd_str) {
-    if (strcmp(cmd_str, "LC_SEGMENT_64") == 0) {
-        return LC_SEGMENT_64;
-    } else if (strcmp(cmd_str, "LC_SYMTAB") == 0) {
-        return LC_SYMTAB;
-    } else if (strcmp(cmd_str, "LC_DYLD_INFO") == 0) {
-        return LC_DYLD_INFO;
-    } else if (strcmp(cmd_str, "LC_DYLD_INFO_ONLY") == 0) {
-        return LC_DYLD_INFO_ONLY;
-    } else if (strcmp(cmd_str, "LC_ID_DYLIB") == 0) {
-        return LC_ID_DYLIB;
-    } else if (strcmp(cmd_str, "LC_DYSYMTAB") == 0) {
-        return LC_DYSYMTAB;
-    } else if (strcmp(cmd_str, "LC_LOAD_DYLIB") == 0) {
-        return LC_LOAD_DYLIB;
-    } else if (strcmp(cmd_str, "LC_LOAD_WEAK_DYLIB") == 0) {
-        return LC_LOAD_WEAK_DYLIB;
-    } else if (strcmp(cmd_str, "LC_RPATH") == 0) {
-        return LC_RPATH;
-    } else if (strcmp(cmd_str, "LC_FUNCTION_STARTS") == 0) {
-        return LC_FUNCTION_STARTS;
-    } else if (strcmp(cmd_str, "LC_BUILD_VERSION") == 0) {
-        return LC_BUILD_VERSION;
-    } else if (strcmp(cmd_str, "LC_MAIN") == 0) {
-        return LC_MAIN;
-    } else if (strcmp(cmd_str, "LC_LINKER_OPTION") == 0) {
-        return LC_LINKER_OPTION;
-    } else if (strcmp(cmd_str, "LC_UUID") == 0) {
-        return LC_UUID;
-    } else if (strcmp(cmd_str, "LC_SOURCE_VERSION") == 0) {
-        return LC_SOURCE_VERSION;
-    } else if (strcmp(cmd_str, "LC_DYLD_EXPORTS_TRIE") == 0) {
-        return LC_DYLD_EXPORTS_TRIE;
-    } else if (strcmp(cmd_str, "LC_DYLD_CHAINED_FIXUPS") == 0) {
-        return LC_DYLD_CHAINED_FIXUPS;
-    } else if (strcmp(cmd_str, "LC_DYLD_ENVIRONMENT") == 0) {
-        return LC_DYLD_ENVIRONMENT;
-    } else if (strcmp(cmd_str, "LC_CODE_SIGNATURE") == 0) {
-        return LC_CODE_SIGNATURE;
-    } else if (strcmp(cmd_str, "LC_ENCRYPTION_INFO_64") == 0) {
-        return LC_ENCRYPTION_INFO_64;
+static uint8_t getCommandTypeFromString(char *commandString) {
+    std::map<std::string, uint8_t> commandMap = {
+        { "LC_SEGMENT_64",          LC_SEGMENT_64 },
+        { "LC_SYMTAB",              LC_SYMTAB },
+        { "LC_DYLD_INFO",           LC_DYLD_INFO },
+        { "LC_DYLD_INFO_ONLY",      LC_DYLD_INFO_ONLY },
+        { "LC_ID_DYLIB",            LC_ID_DYLIB },
+        { "LC_DYSYMTAB",            LC_DYSYMTAB },
+        { "LC_LOAD_DYLIB",          LC_LOAD_DYLIB },
+        { "LC_LOAD_WEAK_DYLIB",     LC_LOAD_WEAK_DYLIB },
+        { "LC_RPATH",               LC_RPATH },
+        { "LC_FUNCTION_STARTS",     LC_FUNCTION_STARTS },
+        { "LC_BUILD_VERSION",       LC_BUILD_VERSION },
+        { "LC_MAIN",                LC_MAIN },
+        { "LC_LINKER_OPTION",       LC_LINKER_OPTION },
+        { "LC_UUID",                LC_UUID },
+        { "LC_SOURCE_VERSION",      LC_SOURCE_VERSION },
+        { "LC_DYLD_CHAINED_FIXUPS", LC_DYLD_CHAINED_FIXUPS },
+        { "LC_DYLD_ENVIRONMENT",    LC_DYLD_ENVIRONMENT },
+        { "LC_CODE_SIGNATURE",      LC_CODE_SIGNATURE },
+        { "LC_ENCRYPTION_INFO_64",  LC_ENCRYPTION_INFO_64 },
+    };
+
+    std::string key = std::string(commandString);
+    std::transform(key.begin(), key.end(),key.begin(), ::toupper);
+    if (key.substr(0, 3) != "LC_") {
+        key.insert(0, "LC_");
     }
 
-    fprintf(stderr, "Unknow load command: %s.\n", cmd_str);
+    if (commandMap.find(key) != commandMap.end()) {
+        return commandMap[key];
+    }
+
+    fprintf(stderr, "Unknow load command: %s.\n", commandString);
     exit(1);
 }
 
-bool show_header() {
+bool showHeader() {
     return args.command_count == 0;
 }
 
-bool show_command(unsigned int cmd) {
+bool showCommand(uint8_t cmd) {
     if (args.command_count == 0) {
         // if no command is specified, show all commands.
         return true;
@@ -238,7 +233,7 @@ bool show_command(unsigned int cmd) {
     return show;
 }
 
-bool show_section(int section) {
+bool showSection(int section) {
     if (args.section_count == 0) {
         // if no command is specified, show all sections
         return true;
@@ -254,7 +249,7 @@ bool show_section(int section) {
     return show;
 }
 
-bool is_selected_arch(const char *arch) {
+bool isSelectedArch(const char *arch) {
     if (args.arch == NULL) {
         // when --arch is not specified
         return true;

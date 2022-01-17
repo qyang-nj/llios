@@ -34,7 +34,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
 struct MachoBinary machoBinary;
 
 int main(int argc, char **argv) {
-    parse_arguments(argc, argv);
+    parseArguments(argc, argv);
 
     int fd;
     struct stat sb;
@@ -94,7 +94,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
 
     for (struct load_command *lcmd : allLoadCommands) {
 
-        if (!show_command(lcmd->cmd)) {
+        if (!showCommand(lcmd->cmd)) {
             continue;
         }
 

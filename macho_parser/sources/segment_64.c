@@ -41,7 +41,7 @@ void parse_segment(void *base, struct segment_command_64 *seg_cmd, int section_i
 
     for (int i = 0; i < seg_cmd->nsects; ++i) {
         struct section_64 sect = sections[i];
-        if (show_section(section_index + i)) {
+        if (showSection(section_index + i)) {
             print_section(base, sect, section_index + i);
         }
     }
@@ -49,7 +49,7 @@ void parse_segment(void *base, struct segment_command_64 *seg_cmd, int section_i
 
 static bool has_section_to_show(int section_index, int count) {
     for (int i = 0; i < count; ++i) {
-        if (show_section(section_index + i)) {
+        if (showSection(section_index + i)) {
             return true;
         }
     }
