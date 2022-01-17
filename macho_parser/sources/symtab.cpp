@@ -19,21 +19,21 @@ extern "C" {
 static std::string stringifyType(uint8_t type);
 static std::string stringifyDescription(struct nlist_64 *nlist);
 
-void printSymbolTable(uint8_t *base, struct symtab_command *symtab_cmd) {
+void printSymbolTable(uint8_t *base, struct symtab_command *symtabCmd) {
     printf("%-20s cmdsize: %-6d symoff: %d   nsyms: %d   (symsize: %lu)   stroff: %d   strsize: %u\n",
-        "LC_SYMTAB", symtab_cmd->cmdsize, symtab_cmd->symoff, symtab_cmd->nsyms,
-        symtab_cmd->nsyms * sizeof(struct nlist_64), symtab_cmd->stroff, symtab_cmd->strsize);
+        "LC_SYMTAB", symtabCmd->cmdsize, symtabCmd->symoff, symtabCmd->nsyms,
+        symtabCmd->nsyms * sizeof(struct nlist_64), symtabCmd->stroff, symtabCmd->strsize);
 
     if (args.verbosity == 0) { return; }
 
-    void *sym_table = base + symtab_cmd->symoff;
-    void *str_table = base + symtab_cmd->stroff;
+    void *sym_table = base + symtabCmd->symoff;
+    void *str_table = base + symtabCmd->stroff;
 
-    int nsyms = symtab_cmd->nsyms;
+    int nsyms = symtabCmd->nsyms;
     int max_number = args.no_truncate ? nsyms : (nsyms > 10 ? 10 : nsyms);
 
     for (int i = 0; i < max_number; ++i) {
-        printSymbol(2, base, symtab_cmd, i);
+        printSymbol(2, base, symtabCmd, i);
     }
 
     if (!args.no_truncate&& nsyms > 10) {
@@ -41,14 +41,14 @@ void printSymbolTable(uint8_t *base, struct symtab_command *symtab_cmd) {
     }
 }
 
-void printSymbol(int indent, uint8_t *base, struct symtab_command *symtab_cmd, int index) {
-    if (index < 0 || index >= symtab_cmd->nsyms) {
+void printSymbol(int indent, uint8_t *base, struct symtab_command *symtabCmd, int index) {
+    if (index < 0 || index >= symtabCmd->nsyms) {
         puts("Error: %d is out of bounds of symtab.");
         exit(0);
     }
 
-    uint8_t *sym_table = base + symtab_cmd->symoff;
-    uint8_t *str_table = base + symtab_cmd->stroff;
+    uint8_t *sym_table = base + symtabCmd->symoff;
+    uint8_t *str_table = base + symtabCmd->stroff;
 
     struct nlist_64 *nlist = (struct nlist_64 *)(sym_table + sizeof(struct nlist_64) * index);
     char *symbol = (char *)(str_table + nlist->n_un.n_strx);
@@ -170,12 +170,12 @@ static std::string stringifyDescription(struct nlist_64 *nlist) {
     return std::string("// ") + formatted;
 }
 
-char *lookup_symbol_by_address(uint64_t address, uint8_t *base, struct symtab_command *symtab_cmd) {
-    uint8_t *sym_table = base + symtab_cmd->symoff;
-    uint8_t *str_table = base + symtab_cmd->stroff;
+char *lookup_symbol_by_address(uint64_t address, uint8_t *base, struct symtab_command *symtabCmd) {
+    uint8_t *sym_table = base + symtabCmd->symoff;
+    uint8_t *str_table = base + symtabCmd->stroff;
 
     // This logic can be optimized if the symbols are sorted by its address.
-    for (int i = 0; i < symtab_cmd->nsyms; ++i) {
+    for (int i = 0; i < symtabCmd->nsyms; ++i) {
         struct nlist_64 *nlist = (struct nlist_64 *)(sym_table + sizeof(struct nlist_64) * i);
         if (nlist->n_value == address) {
             char *symbol = (char *)(str_table + nlist->n_un.n_strx);
