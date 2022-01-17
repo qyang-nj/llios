@@ -29,15 +29,8 @@ void printSymbolTable(uint8_t *base, struct symtab_command *symtabCmd) {
     void *sym_table = base + symtabCmd->symoff;
     void *str_table = base + symtabCmd->stroff;
 
-    int nsyms = symtabCmd->nsyms;
-    int max_number = args.no_truncate ? nsyms : (nsyms > 10 ? 10 : nsyms);
-
-    for (int i = 0; i < max_number; ++i) {
+    for (int i = 0; i < symtabCmd->nsyms; ++i) {
         printSymbol(2, base, symtabCmd, i);
-    }
-
-    if (!args.no_truncate&& nsyms > 10) {
-        printf("        ... %d more ...\n", nsyms - 10);
     }
 }
 
