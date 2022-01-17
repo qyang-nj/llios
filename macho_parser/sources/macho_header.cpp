@@ -34,60 +34,72 @@ static std::string stringifyCPUSubType(cpu_type_t cputype,  cpu_subtype_t cpusub
 static std::string stringifyFileType(uint32_t filetype);
 static std::string stringifyHeaderFlags(uint32_t flags);
 
-struct mach_header_64 *parseMachHeader(uint8_t *base) {
-    uint32_t magic = readMagic(base, 0);
-    int machHeaderOffset = 0;
+bool FatMacho::isFatMacho(uint8_t *fileBase, size_t fileSize) {
+    if (fileSize < 4) return false;
+    uint32_t magic = readMagic(fileBase, 0);
+    return (magic == FAT_MAGIC || magic == FAT_CIGAM);
+}
+
+std::tuple<uint8_t*, uint32_t> FatMacho::getSliceByArch(uint8_t *fileBase, size_t fileSize, char *arch) {
+    assert(isFatMacho(fileBase, fileSize));
+
+    uint32_t magic = readMagic(fileBase, 0);
     const char *cpuType;
+    uint32_t sliceOffset = 0;
+    uint32_t sliceSize = 0;
 
-    if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
-        struct fat_header header = readFatHeader(base, NEEDS_SWAP(magic));
-        struct fat_arch *fat_archs = readFatArchs(base, header, NEEDS_SWAP(magic));
+    struct fat_header header = readFatHeader(fileBase, NEEDS_SWAP(magic));
+    struct fat_arch *fat_archs = readFatArchs(fileBase, header, NEEDS_SWAP(magic));
 
-        if (show_header()) {
-            printFatHeader(magic, header);
-            printFatArchs(fat_archs, header.nfat_arch);
-        }
+    if (show_header()) {
+        printFatHeader(magic, header);
+        printFatArchs(fat_archs, header.nfat_arch);
+    }
 
-        for (int i = 0; i < header.nfat_arch; ++i) {
-            cpuType = stringifyCPUType(fat_archs[i].cputype).c_str();
-            if ((fat_archs[i].cputype & CPU_ARCH_ABI64) && is_selected_arch(cpuType)) {
-                machHeaderOffset = fat_archs[i].offset;
-                break;
-            }
-        }
-
-        free(fat_archs);
-
-        if (machHeaderOffset == 0) {
-            if (args.arch != NULL) {
-                fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
-            } else {
-                fprintf (stderr, "The binary doesn't contain any 64-bit architecture.\n");
-            }
-            exit(1);
+    for (int i = 0; i < header.nfat_arch; ++i) {
+        cpuType = stringifyCPUType(fat_archs[i].cputype).c_str();
+        if ((fat_archs[i].cputype & CPU_ARCH_ABI64) && is_selected_arch(cpuType)) {
+            sliceOffset = fat_archs[i].offset;
+            sliceSize = fat_archs[i].size;
+            break;
         }
     }
 
-    magic = readMagic(base, machHeaderOffset);
+    free(fat_archs);
+
+    if (sliceOffset == 0) {
+        if (args.arch != NULL) {
+            fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
+        } else {
+            fprintf (stderr, "The binary doesn't contain any 64-bit architecture.\n");
+        }
+        exit(1);
+    }
+
+    return std::make_tuple(fileBase + sliceOffset, sliceSize);
+}
+
+struct mach_header_64 *parseMachHeader(uint8_t *base) {
+    uint32_t magic = readMagic(base, 0);
+    const char *cpuType;
+
     if (magic != MH_MAGIC_64) {
         fprintf (stderr, "Magic %s is not recognized or supported. It may not be a Mach-O binary.\n", stringifyMagic(magic).c_str());
         exit(1);
     }
 
-    struct mach_header_64 header = readMachHeader(base, machHeaderOffset);
-    if (machHeaderOffset == 0) { // non-fat binary
-        cpuType = stringifyCPUType(header.cputype).c_str();
-        if (!is_selected_arch(cpuType)) {
-            fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
-            exit(1);
-        }
+    struct mach_header_64 header = readMachHeader(base, 0);
+    cpuType = stringifyCPUType(header.cputype).c_str();
+    if (!is_selected_arch(cpuType)) {
+        fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
+        exit(1);
     }
 
     if (show_header()) {
         printMachHeader(header);
     }
 
-    return (struct mach_header_64 *)(base + machHeaderOffset);
+    return (struct mach_header_64 *)base;
 }
 
 static uint32_t readMagic(uint8_t *filebase, int offset) {

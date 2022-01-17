@@ -42,23 +42,30 @@ int main(int argc, char **argv) {
     fd = open(args.file_name, O_RDONLY);
     fstat(fd, &sb);
 
-    uint8_t *fileBase = (uint8_t *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    uint32_t fileSize = sb.st_size;
+    uint8_t *fileBase = (uint8_t *)mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, fd, 0);
     if (fileBase == MAP_FAILED) {
         fprintf(stderr, "Cannot read file %s\n", args.file_name);
         return 1;
     }
 
-    if (isArchive(fileBase)) { // handle static library
-        enumerateObjectFileInArchive(fileBase, sb.st_size, [](char *objectFileName, uint8_t *objectFileBase) {
+    uint8_t *sliceBase = fileBase;
+    uint32_t sliceSize = fileSize;
+    if (FatMacho::isFatMacho(fileBase, fileSize)) {
+        std::tie(sliceBase, sliceSize) = FatMacho::getSliceByArch(fileBase, fileSize, args.arch);
+    }
+
+    if (Archive::isArchive(sliceBase, sliceSize)) { // handle static library
+        Archive::enumerateObjectFileInArchive(sliceBase, sliceSize, [](char *objectFileName, uint8_t *objectFileBase) {
             printf("\033[0;34m%s:\033[0m\n", objectFileName);
             printMacho(objectFileBase);
             printf("\n");
         });
     } else {
-        printMacho(fileBase);
+        printMacho(sliceBase);
     }
 
-    munmap(fileBase, sb.st_size);
+    munmap(fileBase, fileSize);
     return 0;
 }
 
