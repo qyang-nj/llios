@@ -49,9 +49,9 @@ int main(int argc, char **argv) {
     }
 
     if (isArchive(fileBase)) { // handle static library
-        enumerateObjectFileInArchive(fileBase, sb.st_size, [](char *fileName, uint8_t *fileBase) {
-            printf("\033[0;34m%s:\033[0m\n", fileName);
-            printMacho(fileBase);
+        enumerateObjectFileInArchive(fileBase, sb.st_size, [](char *objectFileName, uint8_t *objectFileBase) {
+            printf("\033[0;34m%s:\033[0m\n", objectFileName);
+            printMacho(objectFileBase);
             printf("\n");
         });
     } else {
@@ -66,8 +66,9 @@ static void printMacho(uint8_t *machoBase) {
     struct mach_header_64 *machHeader = parseMachHeader(machoBase);
     // the base address of a specific arch slice
     uint8_t *base = (uint8_t *)machHeader;
-    static std::vector<struct load_command *> allLoadCommands = parseLoadCommands(base, sizeof(struct mach_header_64), machHeader->ncmds);
+    std::vector<struct load_command *> allLoadCommands = parseLoadCommands(base, sizeof(struct mach_header_64), machHeader->ncmds);
 
+    memset(&machoBinary, 0x0, sizeof(machoBinary));
     machoBinary.base = base;
     machoBinary.allLoadCommands = allLoadCommands;
 
