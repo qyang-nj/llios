@@ -52,9 +52,10 @@ void printSymbol(int indent, uint8_t *base, struct symtab_command *symtab_cmd, i
         sprintf(formatted_value, "%016llx  ", nlist->n_value);
     }
 
-    printf("%*s%-4d: %s\033[0;34m%s:\033[0m  %s  %s\n",
-        indent, "", index, formatted_value, symbol,
+    printf("%*s%-4d: %18s%-18s  \033[0;34m%s:\033[0m  %s\n",
+        indent, "", index, formatted_value,
         stringifyType(nlist->n_type).c_str(),
+        symbol,
         stringifyDescription(nlist->n_type, nlist->n_desc).c_str());
 }
 
@@ -93,7 +94,7 @@ static std::string stringifyType(uint8_t type) {
 
     if (type & N_STAB) {
         char stab[16];
-        sprintf(stab, " STAB(%#02x)", type & N_STAB);
+        sprintf(stab, "STAB(%#02x)", type & N_STAB);
         attrs.push_back(stab); // debugging symbols
     }
 
