@@ -51,14 +51,14 @@ std::tuple<uint8_t*, uint32_t> FatMacho::getSliceByArch(uint8_t *fileBase, size_
     struct fat_header header = readFatHeader(fileBase, NEEDS_SWAP(magic));
     struct fat_arch *fat_archs = readFatArchs(fileBase, header, NEEDS_SWAP(magic));
 
-    if (show_header()) {
+    if (showHeader()) {
         printFatHeader(magic, header);
         printFatArchs(fat_archs, header.nfat_arch);
     }
 
     for (int i = 0; i < header.nfat_arch; ++i) {
         cpuType = stringifyCPUType(fat_archs[i].cputype).c_str();
-        if ((fat_archs[i].cputype & CPU_ARCH_ABI64) && is_selected_arch(cpuType)) {
+        if ((fat_archs[i].cputype & CPU_ARCH_ABI64) && isSelectedArch(cpuType)) {
             sliceOffset = fat_archs[i].offset;
             sliceSize = fat_archs[i].size;
             break;
@@ -90,12 +90,12 @@ struct mach_header_64 *parseMachHeader(uint8_t *base) {
 
     struct mach_header_64 header = readMachHeader(base, 0);
     cpuType = stringifyCPUType(header.cputype).c_str();
-    if (!is_selected_arch(cpuType)) {
+    if (!isSelectedArch(cpuType)) {
         fprintf (stderr, "The binary doesn't contain %s architecture.\n", args.arch);
         exit(1);
     }
 
-    if (show_header()) {
+    if (showHeader()) {
         printMachHeader(header);
     }
 

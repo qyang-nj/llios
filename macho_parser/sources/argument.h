@@ -45,20 +45,25 @@ struct argument {
 // global variable that holds command line arguments
 extern struct argument args;
 
-// parse the command line arguments and save the result to args
-void parse_arguments(int argc, char **argv);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// convert a string to the load command number, "LC_SYMTAB" -> 0x2 (LC_SYMTAB)
-unsigned int string_to_load_command(char *cmd_str);
+// parse the command line arguments and save the result to args
+void parseArguments(int argc, char **argv);
 
 // whether to show header
-bool show_header();
+bool showHeader();
 
 // whether to show a command
-bool show_command(unsigned int cmd);
+bool showCommand(uint8_t cmd);
 
-bool show_section(int section);
+bool showSection(int section);
 
-bool is_selected_arch(const char *arch);
+bool isSelectedArch(const char *arch);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ARGUMENT_H */
