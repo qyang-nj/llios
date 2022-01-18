@@ -5,23 +5,28 @@ on:
   pull_request:
     branches: [ main ]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Allows running this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  test:
+  macho-parser:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
       - name: Install OpenSSL
         run: brew install openssl
-      - name: Build Mach-O Parser
+      - name: Build
         run: |
           cd macho_parser
           ./build.sh
           ./build.sh --debug
           ./build.sh --openssl
-      - name: Build an iOS App
+
+  build-ios-app:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
         run: |
           cd build_ios_app
           ./build.sh
