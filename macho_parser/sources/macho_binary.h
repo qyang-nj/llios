@@ -10,6 +10,7 @@ struct MachoBinary {
     uint8_t *base;
     std::vector<struct load_command *> allLoadCommands;
     std::vector<struct segment_command_64 *> segmentCommands;
+    std::vector<std::string> sectionNames;
 
     std::vector<struct dylib_command *> &getDylibCommands() {
         if (this->dylibCommands.size() == 0) {
@@ -62,24 +63,23 @@ struct MachoBinary {
     }
 
     std::string getSectionNameByOrdinal(int ordinal) {
-        int index = 1;
-        for (auto segCmd : segmentCommands) {
-            struct section_64 *sections =
-                (struct section_64 *)((uint8_t *)segCmd + sizeof(struct segment_command_64));
+        if (this->sectionNames.size() == 0) {
+            // section ordinal starts with 1, set the first element to empty string
+            this->sectionNames.push_back("");
+            for (auto segCmd : segmentCommands) {
+                struct section_64 *sections =
+                    (struct section_64 *)((uint8_t *)segCmd + sizeof(struct segment_command_64));
 
-            for (int i = 0; i < segCmd->nsects; ++i) {
-                struct section_64 *sect = sections + i;
-                if (index == ordinal) {
-                    std::string segname(sect->segname);
-                    std::string sectname(sect->sectname);
+                for (int i = 0; i < segCmd->nsects; ++i) {
+                    struct section_64 *sect = sections + i;
+                    std::string segname(sect->segname, 16);
+                    std::string sectname(sect->sectname, 16);
                     std::string fullName = std::string("(") + segname.c_str() + ", " + sectname.c_str() + ")";
-                    return fullName;
+                    this->sectionNames.push_back(fullName);
                 }
-                index++;
             }
         }
-
-        return nullptr;
+        return this->sectionNames[ordinal];
     }
 
 private:

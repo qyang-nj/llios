@@ -25,7 +25,8 @@ struct argument {
     int show_entitlement;
     int show_blob_wrapper;
 
-    // dynamic symbol table options
+    // symbol table options
+    int show_symtab;
     int show_dysymtab;
     int show_local;
     int show_extdef;
