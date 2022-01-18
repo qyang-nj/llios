@@ -42,14 +42,13 @@ void printSymbol(int indent, uint8_t *base, struct symtab_command *symtabCmd, in
     uint8_t *strTable = base + symtabCmd->stroff;
 
     struct nlist_64 *nlist = (struct nlist_64 *)(symTable + sizeof(struct nlist_64) * index);
-    char *symbol = (char *)(strTable + nlist->n_un.n_strx);
 
     char formatted_value[32] = {'\0'};
     if ((nlist->n_type & N_TYPE) != N_UNDF) {
         sprintf(formatted_value, "%016llx", nlist->n_value);
     }
 
-    printf("%*s%-4d: %16s  %-10s  %-40s  %s\n",
+    printf("%*s%-4d: %16s  %-10s  %-60s  %s\n",
         indent, "", index, formatted_value,
         stringifyType(nlist->n_type).c_str(),
         formatSymbol(nlist, strTable).c_str(),
@@ -58,15 +57,14 @@ void printSymbol(int indent, uint8_t *base, struct symtab_command *symtabCmd, in
 
 static std::string formatSymbol(struct nlist_64 *nlist, uint8_t *strTable) {
     char buf[1024];
-
     char *symbol = (char *)(strTable + nlist->n_un.n_strx);
     if (nlist->n_type & N_STAB) {
-        snprintf(buf, sizeof(buf), "%04d %5s %s", nlist->n_desc, stringifyStabType(nlist->n_type).c_str(), symbol);
+        snprintf(buf, sizeof(buf), "%04d %5s %s \033[0;34m\033[0m", nlist->n_desc, stringifyStabType(nlist->n_type).c_str(), symbol);
     } else {
         snprintf(buf, sizeof(buf), "\033[0;34m%s\033[0m", symbol);
     }
 
-    return buf;
+    return std::string(buf);
 }
 
 static std::string stringifyType(uint8_t type) {
@@ -165,8 +163,6 @@ static std::string stringifyDescription(struct nlist_64 *nlist) {
         if (desc & N_WEAK_DEF) {
             attrs.push_back("WEAK_DEF");
         }
-
-
     }
 
     if (attrs.size() == 0) {
