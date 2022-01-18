@@ -13,9 +13,13 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run a one-line script
-        run: echo Hello, world!
-      - name: Run a multi-line script
+      - name: Build Mach-O Parser
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          cd macho_parser
+          ./build.sh
+          ./build.sh --debug
+      - name: Build an iOS App
+        run: |
+          cd build_ios_app
+          ./build.sh
+          ./build.sh --release
