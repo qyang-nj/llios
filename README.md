@@ -1,5 +1,5 @@
-# Lower Level iOS
-This repo is mostly my study notes about lower level iOS.
+# Low Level iOS
+This repo is mostly my study notes about low level iOS.
 
 If you find anything in my notes is incorrect, please create an [issue](https://github.com/qyang-nj/llios/issues)! If you have any questions, feel free to use [Discussions](https://github.com/qyang-nj/llios/discussions) so that we can learn something together.
 
