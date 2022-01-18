@@ -21,7 +21,7 @@ done
 CFLAGS=""
 
 if [ "$OPT_OPENSSL" == 1 ]; then
-    CFLAGS="$CFLAGS -D OPENSSL"
+    CFLAGS="$CFLAGS -D OPENSSL -I$(brew --prefix openssl)/include"
     LDFLAGS="$LDFLAGS -lssl -lcrypto -L$(brew --prefix openssl)/lib -D OPENSSL"
 fi
 

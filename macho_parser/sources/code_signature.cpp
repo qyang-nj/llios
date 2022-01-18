@@ -165,12 +165,8 @@ static void printPKCS7(const unsigned char *data, size_t size) {
 }
 
 static void sha256(const unsigned char *data, size_t size, char *output) {
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, data, size);
-    SHA256_Final(hash, &sha256);
-    format_hex(hash, SHA256_DIGEST_LENGTH, output);
+    unsigned char *result = SHA256(data, size, NULL);
+    format_hex(result, SHA256_DIGEST_LENGTH, output);
 }
 
 #else
