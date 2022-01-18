@@ -7,9 +7,10 @@
 #include <vector>
 #include <sstream>
 #include <iterator>
-#include "argument.h"
 
+#include "argument.h"
 #include "macho_binary.h"
+
 #include "symtab.h"
 
 static std::string formatSymbol(struct nlist_64 *nlist, uint8_t *strTable);
