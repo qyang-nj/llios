@@ -32,6 +32,7 @@ static struct option longopts[] = {
     {"ent", no_argument, &(args.show_entitlement), 1},
     {"blob-wrapper", no_argument, &(args.show_blob_wrapper), 1},
 
+    {"symtab", no_argument, &(args.show_symtab), 1},
     {"dysymtab", no_argument, &(args.show_dysymtab), 1},
     {"local", no_argument, &(args.show_local), 1},
     {"extdef", no_argument, &(args.show_extdef), 1},
@@ -67,7 +68,8 @@ void usage() {
     puts("    --ent, --entitlement                 show the embedded entitlement");
     puts("           --blob-wrapper                show the blob wrapper (signature blob)");
     puts("");
-    puts("Dynamic Symbol Table Options:");
+    puts("Symbol Table Options:");
+    puts("    -s, --symtab                         equivalent to '--command LC_SYMTAB'");
     puts("    --dysymtab                           equivalent to '--command LC_DYSYMTAB'");
     puts("    --local                              show local symbols");
     puts("    --extdef                             show externally (public) defined symbols");
@@ -151,6 +153,10 @@ void parseArguments(int argc, char **argv) {
 
     if (args.show_code_signature || args.show_code_direcotry || args.show_entitlement || args.show_blob_wrapper) {
         args.commands[args.command_count++] = LC_CODE_SIGNATURE;
+    }
+
+    if (args.show_symtab) {
+        args.commands[args.command_count++] = LC_SYMTAB;
     }
 
     if (args.show_dysymtab || args.show_local || args. show_extdef || args.show_undef || args.show_indirect) {

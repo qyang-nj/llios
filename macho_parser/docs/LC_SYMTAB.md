@@ -71,7 +71,7 @@ The format of `n_type`:
 ```
 
 ### n_sect
-If the symbol type is `N_SECT` (`nlist.n_type & N_TYPE`), this field is the ordinal of sections that appear in the Mach-O binary. Otherwise this field should be 0 (`NO_SECT`).
+If the value of `n_sect` is not 0 (`NO_SECT`), this field indicates the ordinal of sections that appear in the Mach-O binary. It means the symbol is referring to a location in that section.
 
 ### n_desc
 The format of `n_desc`:
