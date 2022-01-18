@@ -181,7 +181,7 @@ static void formatPointerFormat(uint16_t pointer_format, char *formatted) {
 }
 
 static std::string getDylibName(uint16_t dylibOrdinal) {
-    const char * dylibName  = "";
+    std::string dylibName;
 
     switch (dylibOrdinal) {
         case (uint8_t)BIND_SPECIAL_DYLIB_SELF:
@@ -197,9 +197,8 @@ static std::string getDylibName(uint16_t dylibOrdinal) {
             dylibName = "weak lookup";
             break;
         default:
-            struct dylib_command *dylibCmd = machoBinary.getDylibCommands()[dylibOrdinal - 1];
-            dylibName = (dylibCmd == NULL ? "" : get_dylib_name(dylibCmd, true));
+            dylibName = machoBinary.getDylibNameByOrdinal(dylibOrdinal);
     }
 
-    return std::to_string(dylibOrdinal) + std::string(" (") + std::string(dylibName) + std::string(")");
+    return std::to_string(dylibOrdinal) + std::string(" (") + dylibName + std::string(")");
 }

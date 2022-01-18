@@ -552,8 +552,7 @@ static std::string getDylibName(int dylibOrdinal) {
     }
 
     if (dylibOrdinal > 0) {
-        struct dylib_command *dylibCmd = machoBinary.getDylibCommands()[dylibOrdinal - 1];
-        return std::string(get_dylib_name(dylibCmd, true));
+        return machoBinary.getDylibNameByOrdinal(dylibOrdinal);
     }
 
     throw std::runtime_error(std::string("Invalid or unhandled dylib ordinal: ") + std::to_string(dylibOrdinal));

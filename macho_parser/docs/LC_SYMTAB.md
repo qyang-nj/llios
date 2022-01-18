@@ -70,6 +70,9 @@ The format of `n_type`:
  └─ N_STAB (debugging symbol)
 ```
 
+### n_sect
+If the symbol type is `N_SECT` (`nlist.n_type & N_TYPE`), this field is the ordinal of sections that appear in the Mach-O binary. Otherwise this field should be 0 (`NO_SECT`).
+
 ### n_desc
 The format of `n_desc`:
 ```
@@ -93,7 +96,7 @@ Enabled by `__attribute__((constructor))`. It tells the linker (`ld`) to keep th
 Enabled by `__attribute__((weak))`. It tells dynamic loader (`dyld`) if the symbol cannot be found at runtime, set NULL to its address.
 
 ##### LIBRARY_ORDINAL
-The index of the library which defines the symbol. See below "Two Level Namespace".
+The index of the library where the symbols is defined. The number 1~253 (inclusive) is the ordinal of `LC_*_DYLIB` load commands that appear in the Mach-O binary. The number 254 (`DYNAMIC_LOOKUP_ORDINAL`), which is for backward compatibility, means the symbol is not two-level namespace. The number 255 (`EXECUTABLE_ORDINAL`), existing in `MH_BUNDLE`, means this symbol is defined in the executable. See below "Two Level Namespace".
 
 ## Two Level Namespace
 The linker enables [the two-level namespace](http://mirror.informatimago.com/next/developer.apple.com/releasenotes/DeveloperTools/TwoLevelNamespaces.html) (`-twolevel_namespace`) by default. It can be disabled by `-flat_namespace` option. The first level of the two-level namespace is the name of the library that contains the symbol, and the second is the name of the symbol. Once enabled, the macho header has `MH_TWOLEVEL` flag set. Each undefined symbol records its library information in `LIBRARY_ORDINAL` of `nlist.n_desc`.

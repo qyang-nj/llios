@@ -9,7 +9,7 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 static bool symtab_load_command(struct load_command *lcmd);
-static void print_symbols(void *base, struct symtab_command *symtab_cmd, int offset, int num);
+static void printSymbols(void *base, struct symtab_command *symtab_cmd, int offset, int num);
 static void print_indirect_symbols(void *base, struct symtab_command *symtab_cmd, uint32_t *indirect_symtab, int size);
 
 void parse_dynamic_symbol_table(void *base, struct dysymtab_command *dysymtab_cmd) {
@@ -34,19 +34,19 @@ void parse_dynamic_symbol_table(void *base, struct dysymtab_command *dysymtab_cm
 
     if (args.show_local) {
         printf("  Local symbols (ilocalsym %d, nlocalsym:%d)\n", dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
-        print_symbols(base, symtab_cmd, dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
+        printSymbols(base, symtab_cmd, dysymtab_cmd->ilocalsym, dysymtab_cmd->nlocalsym);
         printf("\n");
     }
 
     if (args.show_extdef) {
         printf("  Externally defined symbols (iextdefsym: %d, nextdefsym:%d)\n", dysymtab_cmd->iextdefsym, dysymtab_cmd->nextdefsym);
-        print_symbols(base, symtab_cmd, dysymtab_cmd->iextdefsym, dysymtab_cmd->nextdefsym);
+        printSymbols(base, symtab_cmd, dysymtab_cmd->iextdefsym, dysymtab_cmd->nextdefsym);
         printf("\n");
     }
 
     if (args.show_undef) {
         printf("  Undefined symbols (iundefsym: %d, nundefsym:%d)\n", dysymtab_cmd->iundefsym, dysymtab_cmd->nundefsym);
-        print_symbols(base, symtab_cmd, dysymtab_cmd->iundefsym, dysymtab_cmd->nundefsym);
+        printSymbols(base, symtab_cmd, dysymtab_cmd->iundefsym, dysymtab_cmd->nundefsym);
         printf("\n");
     }
 
@@ -61,10 +61,10 @@ static bool symtab_load_command(struct load_command *lcmd) {
     return lcmd->cmd == LC_SYMTAB;
 }
 
-static void print_symbols(void *base, struct symtab_command *symtab_cmd, int offset, int num) {
+static void printSymbols(void *base, struct symtab_command *symtab_cmd, int offset, int num) {
     int max_number = args.no_truncate ? num : MIN(num, 10);
     for (int i = 0; i < max_number; ++i) {
-        print_symbol(4, base, symtab_cmd, offset + i);
+        printSymbol(4, base, symtab_cmd, offset + i);
     }
 
     if (!args.no_truncate && num > 10) {
@@ -95,7 +95,7 @@ static void print_indirect_symbols(void *base, struct symtab_command *symtab_cmd
         } else {
             printf("    %-2d -> ", i);
             if (index >= 0 && index < symtab_cmd->nsyms) {
-                print_symbol(0, base, symtab_cmd, index);
+                printSymbol(0, base, symtab_cmd, index);
             } else {
                 printf("%d (The index is out of bounds of symtab.)\n", index);
             }
