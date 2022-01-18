@@ -18,6 +18,7 @@ jobs:
           cd macho_parser
           ./build.sh
           ./build.sh --debug
+          ./build.sh --openssl
       - name: Build an iOS App
         run: |
           cd build_ios_app
