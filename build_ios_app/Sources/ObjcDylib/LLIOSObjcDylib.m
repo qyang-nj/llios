@@ -1,7 +1,8 @@
 #include "LLIOSObjcDylib.h"
 
 @implementation LLIOSObjcDylib
-- (void)sayHello:(NSString *)name; {
-    NSLog(@"[ObjcDylib] Hello, %@!", name);
+- (NSString *)message:(NSString *)name; {
+    NSString *msg = [NSString stringWithFormat:@"Hello, %@!", name];
+    return msg;
 }
 @end

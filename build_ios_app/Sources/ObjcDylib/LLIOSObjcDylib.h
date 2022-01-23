@@ -1,5 +1,5 @@
 @import Foundation;
 
 @interface LLIOSObjcDylib : NSObject
-- (void)sayHello:(NSString *)name;
+- (NSString *)message:(NSString *)name;;
 @end

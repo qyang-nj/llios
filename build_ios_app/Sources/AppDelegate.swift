@@ -3,10 +3,12 @@
 
 import UIKit
 import SwiftUI
+import os
 
 import StaticLib
 import SwiftDylib
 import ObjcDylib
+import MixedModule
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,8 +16,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     let window = UIWindow(frame: UIScreen.main.bounds)
-
-    callMethods()
 
     if #available(iOS 13.0, *) {
       window.rootViewController = UIHostingController(rootView: SwiftUIView())
@@ -25,10 +25,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // Show the window
     window.makeKeyAndVisible()
     self.window = window
+
+    callMethods()
+
     return true
   }
 
   func callMethods() {
+    let logger = Logger()
+
     // StaticLib
     let _ = BarClass()
 
@@ -37,7 +42,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // ObjcDylib
     let objcDylib = LLIOSObjcDylib()
-    objcDylib.sayHello("LLIOS")
+    logger.log("### [ObjcDylib] \(objcDylib.message("Objc Dylib"))")
+
+    // MixedModule
+    let producer = MySwiftProducer()
+    logger.log("### [MixedModule.MySwiftProducer] \(producer.product!.name)");
+
+    let product = MyObjcProduct(name: "")
+    logger.log("### [MixedModule.MyObjcProduct] \(product!.name)")
+    logger.log("### [MixedModule.MyObjcProduct] \(product!.materialType())")
   }
 }
 
