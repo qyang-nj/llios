@@ -49,7 +49,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     logger.log("### [MixedModule.MySwiftProducer] \(producer.product!.name)");
 
     let product = MyObjcProduct(name: "")
-    logger.log("### [MixedModule.MyObjcProduct] \(product!.name)")
+    logger.log("### [MixedModule.MyObjcProduct] \(product!.material)")
     logger.log("### [MixedModule.MyObjcProduct] \(product!.materialType())")
   }
 }

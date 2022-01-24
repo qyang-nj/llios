@@ -84,19 +84,21 @@ EOL
 
 function build_mixed_module() {
     echo ">>> Build mixed language module."
+    local BUILD_DIR="Build/MixedModule"
+    mkdir -p $BUILD_DIR
+
     local SWIFT_PARAMS=(
         -parse-as-library
         -emit-object
         -emit-module
         -module-name MixedModule
-        -emit-module-path Build/MixedModule.swiftmodule
+        -emit-module-path $BUILD_DIR/MixedModule.swiftmodule
         -import-underlying-module
         -I Sources/MixedModule # for underlying module's module.modulemap
         -emit-objc-header
-        -emit-objc-header-path Build/MixedModule-Swift.h
-        # -import-objc-header Sources/MixedModule/MixedModule-Bridging-Header.h
-        -o Build/MixedModule_Swift.o
-        -wmo # enable generate a single .o file with multiple .swift source files
+        -emit-objc-header-path $BUILD_DIR/MixedModule-Swift.h
+        -o $BUILD_DIR/MixedModule_Swift.o
+        -wmo # generate a single .o file with multiple .swift source files
         Sources/MixedModule/MySwiftProducer.swift
         Sources/MixedModule/MySwiftMaterial.swift
     )
@@ -106,13 +108,13 @@ function build_mixed_module() {
         -c
         -fmodules
         -ObjC
-        -I Build
-        -o Build/MixedModule_MyObjcProduct.o
+        -I $BUILD_DIR
+        -o $BUILD_DIR/MixedModule_MyObjcProduct.o
         Sources/MixedModule/MyObjcProduct.m
     )
     xcrun clang ${CFLAGS[@]} ${OBJC_PARAMS[@]}
-    xcrun libtool -static -o Build/MixedModule.a \
-        Build/MixedModule_Swift.o Build/MixedModule_MyObjcProduct.o
+    xcrun libtool -static -o $BUILD_DIR/MixedModule.a \
+        $BUILD_DIR/MixedModule_Swift.o $BUILD_DIR/MixedModule_MyObjcProduct.o
 }
 
 function build_swift_dylib() {
@@ -149,11 +151,12 @@ function build_executable() {
         -emit-executable
         -I Build
         -I Sources/ObjcDylib
+        -I Build/MixedModule # for MixedModule.swiftmodule
         -I Sources/MixedModule # for MixedModule underlying module
         -o "Build/$APP_NAME"
         -Xlinker -rpath -Xlinker @executable_path/
         Build/StaticLib.a
-        BUild/MixedModule.a
+        BUild/MixedModule/MixedModule.a
         Build/SwiftDylib.dylib
         Build/ObjcDylib.dylib
         Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
