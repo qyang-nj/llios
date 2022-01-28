@@ -56,6 +56,7 @@ function prepare() {
 }
 
 function build_swift_static_lib() {
+    echo ">>> Build Swift static library."
     local OUTPUT_FILE_MAP_JSON="Build/StaticLib_OutputFileMap.json"
     cat > $OUTPUT_FILE_MAP_JSON <<EOL
 {
@@ -81,7 +82,53 @@ EOL
     xcrun libtool -static -o Build/StaticLib.a Build/foo.o Build/bar.o
 }
 
+function build_mixed_module() {
+    echo ">>> Build mixed language module."
+    local BUILD_DIR="Build/MixedModule"
+    mkdir -p $BUILD_DIR
+
+    local SWIFT_PARAMS=(
+        -parse-as-library
+        -emit-object
+        -emit-module
+        -module-name MixedModule
+        -emit-module-path $BUILD_DIR/MixedModule.swiftmodule
+        -output-file-map Sources/MixedModule/MixedModule_OutputFileMap.json
+        -emit-objc-header
+        -emit-objc-header-path $BUILD_DIR/MixedModule-Swift.h
+        Sources/MixedModule/MySwiftProducer.swift
+        Sources/MixedModule/MySwiftMaterial.swift
+    )
+
+    # Use underlying module to import objc module
+    SWIFT_PARAMS+=(
+        -import-underlying-module
+        -I Sources/MixedModule # for underlying module's module.modulemap
+    )
+
+    # We can also use bridging header to import Objc code.
+    # Uncomment below code and remove MixedModule/module.modulemap.
+    # SWIFT_PARAMS+=(
+    #     -import-objc-header Sources/MixedModule/MixedModule.h
+    # )
+
+    xcrun swiftc ${SWIFT_FLAGS[@]} ${SWIFT_PARAMS[@]}
+
+    local OBJC_PARAMS=(
+        -c
+        -fmodules
+        -ObjC
+        -I $BUILD_DIR # for MixedModule-Swift.h
+        -o $BUILD_DIR/MyObjcProduct.o
+        Sources/MixedModule/MyObjcProduct.m
+    )
+    xcrun clang ${CFLAGS[@]} ${OBJC_PARAMS[@]}
+    xcrun libtool -static -o $BUILD_DIR/MixedModule.a \
+        $BUILD_DIR/MySwiftProducer.o $BUILD_DIR/MySwiftMaterial.o $BUILD_DIR/MyObjcProduct.o
+}
+
 function build_swift_dylib() {
+    echo ">>> Build Swift dynamic library."
     local PARAMS=(
         -emit-library
         -emit-module
@@ -96,6 +143,7 @@ function build_swift_dylib() {
 }
 
 function build_objc_dylib() {
+    echo ">>> Build Objective-C dynamic library."
     local PARAMS=(
         -shared
         -fmodules  # enable modules feature
@@ -108,13 +156,17 @@ function build_objc_dylib() {
 }
 
 function build_executable() {
+    echo ">>> Build executable"
     local PARAMS=(
         -emit-executable
         -I Build
         -I Sources/ObjcDylib
+        -I Build/MixedModule  # for MixedModule.swiftmodule
+        -I Sources/MixedModule  # for MixedModule underlying module
         -o "Build/$APP_NAME"
         -Xlinker -rpath -Xlinker @executable_path/
         Build/StaticLib.a
+        BUild/MixedModule/MixedModule.a
         Build/SwiftDylib.dylib
         Build/ObjcDylib.dylib
         Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
@@ -123,6 +175,7 @@ function build_executable() {
 }
 
 function process_info_plist() {
+    echo ">>> Process Info.plist."
     PLIST_BUDDY="/usr/libexec/PlistBuddy"
     cp Sources/Info.plist Build/Info.plist
     $PLIST_BUDDY -c "Set :CFBundleDevelopmentRegion en" Build/Info.plist
@@ -133,6 +186,7 @@ function process_info_plist() {
 }
 
 function package_app_bundle() {
+    echo ">>> Package app bundle."
     mkdir -p "Build/$APP_NAME.app"
     mkdir -p "Build/$APP_NAME.app/Frameworks"
     mv "Build/$APP_NAME" "Build/$APP_NAME.app"
@@ -147,6 +201,7 @@ function package_app_bundle() {
 # You also need to change the app id and modify Entitlements.plist.
 # (It doesn't seem to be necessary to copy the provisioning profile. Idk why.)
 function sign_app() {
+    echo ">>> Sign the app"
     identity=$(security find-identity -v -p codesigning | grep "Apple Development" | head -1 | awk '{print $2}')
     # The embedded dylibs need to be signed separately and before signing the app bundle.
     codesign --force --sign "$identity" "Build/$APP_NAME.app/Frameworks/"*.dylib
@@ -155,6 +210,7 @@ function sign_app() {
 
 prepare
 build_swift_static_lib
+build_mixed_module
 build_swift_dylib
 build_objc_dylib
 build_executable
