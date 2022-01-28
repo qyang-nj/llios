@@ -93,28 +93,38 @@ function build_mixed_module() {
         -emit-module
         -module-name MixedModule
         -emit-module-path $BUILD_DIR/MixedModule.swiftmodule
-        -import-underlying-module
-        -I Sources/MixedModule # for underlying module's module.modulemap
+        -output-file-map Sources/MixedModule/MixedModule_OutputFileMap.json
         -emit-objc-header
         -emit-objc-header-path $BUILD_DIR/MixedModule-Swift.h
-        -o $BUILD_DIR/MixedModule_Swift.o
-        -wmo # generate a single .o file with multiple .swift source files
         Sources/MixedModule/MySwiftProducer.swift
         Sources/MixedModule/MySwiftMaterial.swift
     )
+
+    # Use underlying module to import objc module
+    SWIFT_PARAMS+=(
+        -import-underlying-module
+        -I Sources/MixedModule # for underlying module's module.modulemap
+    )
+
+    # We can also use bridging header to import Objc code.
+    # Uncomment below code and remove MixedModule/module.modulemap.
+    # SWIFT_PARAMS+=(
+    #     -import-objc-header Sources/MixedModule/MixedModule.h
+    # )
+
     xcrun swiftc ${SWIFT_FLAGS[@]} ${SWIFT_PARAMS[@]}
 
     local OBJC_PARAMS=(
         -c
         -fmodules
         -ObjC
-        -I $BUILD_DIR
-        -o $BUILD_DIR/MixedModule_MyObjcProduct.o
+        -I $BUILD_DIR # for MixedModule-Swift.h
+        -o $BUILD_DIR/MyObjcProduct.o
         Sources/MixedModule/MyObjcProduct.m
     )
     xcrun clang ${CFLAGS[@]} ${OBJC_PARAMS[@]}
     xcrun libtool -static -o $BUILD_DIR/MixedModule.a \
-        $BUILD_DIR/MixedModule_Swift.o $BUILD_DIR/MixedModule_MyObjcProduct.o
+        $BUILD_DIR/MySwiftProducer.o $BUILD_DIR/MySwiftMaterial.o $BUILD_DIR/MyObjcProduct.o
 }
 
 function build_swift_dylib() {
@@ -151,8 +161,8 @@ function build_executable() {
         -emit-executable
         -I Build
         -I Sources/ObjcDylib
-        -I Build/MixedModule # for MixedModule.swiftmodule
-        -I Sources/MixedModule # for MixedModule underlying module
+        -I Build/MixedModule  # for MixedModule.swiftmodule
+        -I Sources/MixedModule  # for MixedModule underlying module
         -o "Build/$APP_NAME"
         -Xlinker -rpath -Xlinker @executable_path/
         Build/StaticLib.a

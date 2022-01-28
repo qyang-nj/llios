@@ -1,0 +1,13 @@
+{
+    "": {
+        "swift-dependencies": "Build/MixedModule/MixedModule-master.swiftdeps"
+    },
+    "Sources/MixedModule/MySwiftProducer.swift": {
+        "object": "Build/MixedModule/MySwiftProducer.o",
+        "swift-dependencies": "Build/MixedModule/MySwiftProducer.swiftdeps"
+    },
+    "Sources/MixedModule/MySwiftMaterial.swift": {
+        "object": "Build/MixedModule/MySwiftMaterial.o",
+        "swift-dependencies": "Build/MixedModule/MySwiftMaterial.swiftdeps"
+    }
+}
