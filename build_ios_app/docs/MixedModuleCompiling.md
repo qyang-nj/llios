@@ -4,12 +4,12 @@ Mixed language compiling is one of the daunting tasks in the area of iOS buildin
 Although technically C, C++ and Objective-C are mixed language, here we specifically mean Objective-C and Swift. Compiling those two language are particularly challenging because they use different compilers (`clang` and `swiftc`) and have different interface formats (`.h` and `.swiftmodule`).
 
 ## Interface files
-Besides invoking the compiler, the building process is mostly about dealing with interfaces - finding the interfaces of the dependencies and providing the interfaces for the users. Here are some common types of interface.
+Besides invoking the compiler, the building process is mostly about dealing with interfaces - finding the interfaces of the dependencies and providing the interfaces for the downstream modules. Here are some common types of interface.
 
 * **header file (`.h`)**: The traditional interface for `.c`, `.cpp` or `.m` files.
 * **umbrella header (`.h`)** A header file that only includes other headers files, grouping related header files together.
-* **module map (`module.modulemap`)**: A file that includes an umbrella header and defines an a [module](https://clang.llvm.org/docs/Modules.html), which is an important concept for clang.
-* **swift module (`.swiftmodule`)**: The interface of a Swift module. It's like a module map for Swift. Different than all above interfaces, this is in a compiler generated binary format.
+* **module map (`module.modulemap`)**: A file that includes an umbrella header and defines a [module](https://clang.llvm.org/docs/Modules.html), which is an important concept in clang.
+* **swift module (`.swiftmodule`)**: The interface of a Swift module. It's like a module map for Swift. Different than all above interfaces, this is compiler generated and in a binary format.
 
 ## Inter-module compiling
 For the sake of simplicity, we will discuss the case between two libraries. The process is almost identical between executable and libraries. For frameworks, since they are just libraries in a predefined directory structure, the underlying mechanism is the same.
@@ -35,7 +35,7 @@ swiftc ... -I/directory/of/module.modulemap MySwiftModule.swift ...
 ```
 
 ### Objc uses Swift
-For this scenario, we need to deal with Swift module first. In Swift code, we annotate the classes or methods with `@objc`. For the obvious reason, the Swift-only features, e.g. struct, tuple, generic, cannot be used in Objc.
+For this scenario, we need to deal with Swift module first. In Swift code, we annotate the classes or methods with `@objc`. The Swift-only features, e.g. struct, tuple, generic, cannot be used in Objc.
 ``` swift
 // MySwiftModule.swift
 @objc public class MySwiftMoulde : NSObject {}
@@ -63,7 +63,7 @@ First, we still need to annotate Swift classes or functions with `@objc`. If the
 // MySwiftClass.swift
 @objc class MySwiftClass : NSObject {}
 ```
-Then we still need to generate `-Swift.h` header file. The compiler flag is the same as above inter-module compiling. However, by default, the generated header contains interfaces for Swift declarations marked with the public or open modifier. Using `-emit-objc-header`  with `-import-objc-header` (see below bridging header) make generated header also include interfaces marked with the internal modifier.
+Then we still need to generate `-Swift.h` header file. The compiler flag is also `-emit-objc-header`. However, by default, the generated header contains interfaces for Swift declarations marked with the public or open modifier. Using `-emit-objc-header`  with `-import-objc-header` (see below bridging header) make generated header also include interfaces marked with the internal modifier.
 ```
 swiftc -c ... -emit-objc-header -emit-objc-header-path MixedModule-Swift.h ...
 ```
@@ -90,9 +90,9 @@ swiftc ... -import-underlying-module -I /directory/of/module.modulemap ...
 ```
 
 #### 2. Use bridging header
-We can also use a bridging header, which usually has `-Bridging-Header.h` suffix. A bridging header is basically an umbrella header. When compile swift code, we use `-import-objc-header` flag.
+We can also use a bridging header, which usually has `-Bridging-Header.h` suffix. A bridging header is basically an umbrella header. When compile Swift code, we use `-import-objc-header` flag.
 ```
-swiftc ... -import-objc-header Sources/MixedModule/MixedModule-Bridging-Header.h ...
+swiftc ... -import-objc-header MixedModule-Bridging-Header.h ...
 ```
 
 Please note that `-import-underlying-module` and `-import-objc-header` cannot be used at the same time.
@@ -104,9 +104,9 @@ error: using bridging headers with framework targets is unsupported
 In reality, it's pretty common that Swift and Objc code are entwined in the same module. Here is a general way to a build it.
 
 1. Generate a `module.modulemap` file for Objc underlying module. It's easier to just include all `.h` in the module.
-2. Compile swift code and generate objects (`.o`). Make sure the import the underlying module (`-import-underlying-module`). In the mean time, let the compiler generate `.swiftmodule` (`-emit-module`) and `-Swift.h` (`-emit-objc-header`).
+2. Compile Swift code and generate objects (`.o`). Make sure to import the underlying module (`-import-underlying-module`). In the mean time, let the compiler generate `.swiftmodule` (`-emit-module`) and `-Swift.h` (`-emit-objc-header`).
 3. Compile Objc code and generate objects (`.o`). Make sure the generated `-Swift.h` is in one of the search paths.
-4. Make a library using `libtool`.
+4. Make a library from all object files.
 4. Make a public `module.modulemap`. This public one should include the generated Swift header file (`*-Swift.h`).
 
 * For a Swift module that depends on this mixed module, provide the search path for `.swiftmodule` and the underlying `module.modulemap`.
