@@ -21,7 +21,7 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [LC_CODE_SIGNATURE](./macho_parser/docs/LC_CODE_SIGNATURE.md) - code signing and code signature format
 * Building
     * [Build iOS App](./build_ios_app) - build and debug an iOS app without an IDE
-    * [Mixed Language Compiling](./build_ios_app/docs/MixedModuleCompiling.md)
+    * [Mixed Language Compiling](./articles/MixedModuleCompiling.md)
     * [Import Search Path](./import_search_path) - how import search path (`-I`) affects build time
     * [Dead Code Elimination](./dce)
 * Dynamic Linking
