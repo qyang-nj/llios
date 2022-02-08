@@ -38,7 +38,7 @@ swiftc ... -I/directory/of/module.modulemap MySwiftModule.swift ...
 For this scenario, we need to deal with Swift module first. In Swift code, we annotate the classes or methods with `@objc`. The Swift-only features, e.g. struct, tuple, generic, cannot be used in Objc.
 ``` swift
 // MySwiftModule.swift
-@objc public class MySwiftMoulde : NSObject {}
+@objc public class MySwiftModule : NSObject {}
 ```
 Then we need to let Swift compiler generate a header file that can be imported by a Objc module. This is done by using `-emit-objc-header`. By convention, this header file has `-Swift` suffix.
 ```
