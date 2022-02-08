@@ -38,7 +38,7 @@ swiftc ... -I/directory/of/module.modulemap MySwiftModule.swift ...
 For this scenario, we need to deal with Swift module first. In Swift code, we annotate the classes or methods with `@objc`. The Swift-only features, e.g. struct, tuple, generic, cannot be used in Objc.
 ``` swift
 // MySwiftModule.swift
-@objc public class MySwiftMoulde : NSObject {}
+@objc public class MySwiftModule : NSObject {}
 ```
 Then we need to let Swift compiler generate a header file that can be imported by a Objc module. This is done by using `-emit-objc-header`. By convention, this header file has `-Swift` suffix.
 ```
@@ -101,7 +101,7 @@ error: using bridging headers with framework targets is unsupported
 ```
 
 ### Swift and Objc uses each other (General Case)
-In reality, it's pretty common that Swift and Objc code are entwined in the same module. Here is a general way to a build it.
+In reality, it's pretty common that Swift and Objc code are entwined in the same module. Here is a general way to build it.
 
 1. Generate a `module.modulemap` file for Objc underlying module. It's easier to just include all `.h` in the module.
 2. Compile Swift code and generate objects (`.o`). Make sure to import the underlying module (`-import-underlying-module`). In the mean time, let the compiler generate `.swiftmodule` (`-emit-module`) and `-Swift.h` (`-emit-objc-header`).
