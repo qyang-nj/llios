@@ -101,7 +101,7 @@ error: using bridging headers with framework targets is unsupported
 ```
 
 ### Swift and Objc uses each other (General Case)
-In reality, it's pretty common that Swift and Objc code are entwined in the same module. Here is a general way to a build it.
+In reality, it's pretty common that Swift and Objc code are entwined in the same module. Here is a general way to build it.
 
 1. Generate a `module.modulemap` file for Objc underlying module. It's easier to just include all `.h` in the module.
 2. Compile Swift code and generate objects (`.o`). Make sure to import the underlying module (`-import-underlying-module`). In the mean time, let the compiler generate `.swiftmodule` (`-emit-module`) and `-Swift.h` (`-emit-objc-header`).
