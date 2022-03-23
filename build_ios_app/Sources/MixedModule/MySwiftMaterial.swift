@@ -24,7 +24,7 @@ public class MySwiftMaterial: NSObject {
 }
 
 //
-// ## a public class subclasses NSObject, @objc annotation on class
+// ## a public class subclasses NSObject, @objc annotation on class but not on function
 //
 // @interface FooClass1 : NSObject
 // - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
@@ -35,7 +35,7 @@ public class MySwiftMaterial: NSObject {
 }
 
 //
-// ## a public class subclasses NSObject, @objc annotation on function
+// ## a public class subclasses NSObject, @objc annotation on function but not on class
 //
 // @interface FooClass2 : NSObject
 // - (void)barFunction;
@@ -48,7 +48,7 @@ public class FooClass2: NSObject {
 
 //
 // ## a public class subclasses NSObject, @objc annotation on an internal function
-// ## An internal function doesn't generate an interface, event though it's annotated.
+// !! An internal function doesn't generate an interface, even though it's annotated.
 //
 // @interface FooClass3 : NSObject
 // - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
@@ -60,7 +60,7 @@ public class FooClass3: NSObject {
 
 //
 // ## a public class subclasses NSObject, no @objc annotation
-// ## Even without @objc annotation, a class interface and its init method are still generated.
+// !! Even without @objc annotation, a class interface and its init method are still generated.
 //
 // @interface FooClass4 : NSObject
 // - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
@@ -90,7 +90,7 @@ public class FooClass6 {
 
 //
 // ## an internal class doesn't subclass NSObject, @objc annotation on function
-// ## Surprisingly this code can build.
+// !! Surprisingly this code can build.
 //
 // No objc interface is generated
 //
