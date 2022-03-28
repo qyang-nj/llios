@@ -1,0 +1,1 @@
+../building/swift_generated_objc_header/README.md

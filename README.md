@@ -23,6 +23,7 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [Build iOS App](./build_ios_app) - build and debug an iOS app without an IDE
     * [Mixed Language Compiling](./articles/MixedModuleCompiling.md)
     * [Import Search Path](./import_search_path) - how import search path (`-I`) affects build time
+    * [Swift Generated ObjC Header](./building/swift_generated_objc_header/README.md)
     * [Dead Code Elimination](./dce)
 * Dynamic Linking
     * [How does dynamic linking works](./dynamic_linking)
