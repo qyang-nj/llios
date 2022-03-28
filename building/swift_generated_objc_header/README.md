@@ -84,6 +84,8 @@ public class FooClass {
 
 #### public class, internal method, NSObject subclass
 
+⚠️ Those are actually the same as public method above, so the access modifiers on the method don't really matter.
+
 ``` swift
 // @interface FooClass : NSObject
 // - (void)barFunction;
@@ -127,6 +129,7 @@ public class FooClass: NSObject {
 ```
 
 #### internal class, internal method, NSObject subclass
+⚠️ Non-public classes won't generate ObjC interface, even with `@objc` annotation.
 ``` swift
 // No ObjC interface is generated
 
