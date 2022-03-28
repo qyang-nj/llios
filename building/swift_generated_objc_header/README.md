@@ -4,7 +4,7 @@ By using `-emit-objc-header` on swift compiler, we can generate a header file fr
 
 We can create [a sample file](FooClass.swift) and enumerate all the variances to observe the different behaviors.
 
-#### public class, public method, NSObject subclass
+### public class, public method, NSObject subclass
 
 ``` swift
 // @interface FooClass : NSObject
@@ -49,7 +49,7 @@ public class FooClass: NSObject {
 }
 ```
 
-#### public class, public method, not NSObject subclass
+### public class, public method, not NSObject subclass
 
 ⛔️ Build error: only classes that inherit from NSObject can be declared @objc
 ``` swift
@@ -82,7 +82,7 @@ public class FooClass {
 }
 ```
 
-#### public class, internal method, NSObject subclass
+### public class, internal method, NSObject subclass
 
 ⚠️ Those are actually the same as public method above, so the access modifiers on the method don't really matter.
 
@@ -128,7 +128,7 @@ public class FooClass: NSObject {
 }
 ```
 
-#### internal class, internal method, NSObject subclass
+### internal class, internal method, NSObject subclass
 ⚠️ Non-public classes won't generate ObjC interface, even with `@objc` annotation.
 ``` swift
 // No ObjC interface is generated
