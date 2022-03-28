@@ -1,0 +1,4 @@
+*.o
+*.swiftdoc
+*.swiftmodule
+*.swiftsourceinfo
