@@ -77,7 +77,7 @@ Contents of (__DATA_CONST,__got) section
 0000000100004000	00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 ```
 
-The `__got` section is the global offset table, a table for non-lazy imported globals. This section contains an array of 64-bit pointers. In this case there are two elements. Each element is associated to an indirect symbol. (For how indirect symbol works, check [here](../macho_parser#indirect-symbol-table).)
+The `__got` section is the global offset table, a table for non-lazy imported globals. This section contains an array of 64-bit pointers. In this case there are two elements. Each element is associated to an indirect symbol. (For how indirect symbol works, check [here](../macho_parser/docs/LC_DYSYMTAB.md#indirect-symbol-table).)
 
 ```
 $ otool -Iv a.out
@@ -113,7 +113,7 @@ Contents of (__DATA,__la_symbol_ptr) section
 
 Same as `__got` section, `__la_symbol_ptr` is also an array 64-bit pointers which are associated to indirect symbols. Using the same approach, we know `0x100008000` is indeed for the symbol `_llios_lib_func`. This confirms our guess.
 ```
-$ otool -I a.out
+$ otool -Iv a.out
 Indirect symbols for (__DATA,__la_symbol_ptr) 1 entries
 address            index name
 0x0000000100008000     3 _llios_lib_func
