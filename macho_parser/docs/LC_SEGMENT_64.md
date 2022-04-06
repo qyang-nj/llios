@@ -17,10 +17,23 @@ struct segment_command_64 {     /* for 64-bit architectures */
 ```
 
 ## __PAGEZERO
-`__PAGEZERO` segment has zero size on disk but 4GB in VM. Its main purpose is to trap NULL dereference, causing segment fault.
+`__PAGEZERO` segment is **not** readable (`VM_PROT_READ`), writable (`VM_PROT_WRITE`) or executable (`VM_PROT_EXECUTE`). It has zero size on disk but X size in virtual memory. Its main purpose is to trap NULL dereference, causing segment fault. By default, `__PAGEZERO` segment is [4KB on 32-bit systems and 4GB on 64-bit systems](https://github.com/qyang-nj/llios/blob/a61ad95bca9df1c0085d78b0b3165efc8b83f791/apple_open_source/ld64/src/ld/Options.cpp#L6113-L6131). The size can be changed by `-pagezero_size` linker flag.
+
+Please note this segment can catch common programmer errors but not intentional violations. For example, although the following code is dereferencing a NULL pointer `a`, it won't crash, as `a[i]` is out of the `__PAGEZERO` segment.
+
+``` c
+#include <stdio.h>
+int main() {
+    char *a = NULL;
+    char *b = "hello";
+    int64_t i = (int64_t)b;
+
+    printf("%p %c\n", b, a[i]); // deference a NULL pointer but its value is 'h'.
+}
+```
 
 ## __TEXT
-`__TEXT` segment is readable (`VM_PROT_READ`) and executable (`VM_PROT_EXECUTE`), but not writable (`VM_PROT_WRITE`). It starts at the beginning of the file and includes Mach-O header and load commands, as those are also read-only. 
+`__TEXT` segment is readable (`VM_PROT_READ`) and executable (`VM_PROT_EXECUTE`), but not writable (`VM_PROT_WRITE`). It starts at the beginning of the file and includes Mach-O header and load commands, as those are also read-only.
 
 ### __text
 This section is where the executable code is. It usually starts at the beginning of a whole page. If the page size is 0x4000, which is usually enough for the Mach-O header, load commands and paddings, the `__text` section starts at the second page, 0x4000 from the file.
