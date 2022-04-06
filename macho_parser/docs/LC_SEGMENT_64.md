@@ -17,7 +17,7 @@ struct segment_command_64 {     /* for 64-bit architectures */
 ```
 
 ## __PAGEZERO
-`__PAGEZERO` segment has zero size on disk but X size in virtual memory. Its main purpose is to trap NULL dereference, causing segment fault. By default, `__PAGEZERO` segment is 4KB on 32bit systems and 4GB on 64bit systems. The size can be changed by `-pagezero_size` linker flag.
+`__PAGEZERO` segment is **not** readable (`VM_PROT_READ`), writable (`VM_PROT_WRITE`) or executable (`VM_PROT_EXECUTE`). It has zero size on disk but X size in virtual memory. Its main purpose is to trap NULL dereference, causing segment fault. By default, `__PAGEZERO` segment is 4KB on 32-bit systems and 4GB on 64-bit systems. The size can be changed by `-pagezero_size` linker flag.
 
 Please note this segment only catches common programmer errors but not intentional violations. For example, although the following code is dereferencing a NULL pointer `a`, it won't crash, as `a[i]` is out of the `__PAGEZERO` segment.
 
