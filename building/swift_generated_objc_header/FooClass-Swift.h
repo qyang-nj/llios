@@ -207,80 +207,52 @@ typedef unsigned int swift_uint4  __attribute__((__ext_vector_type__(4)));
 #endif
 
 
-SWIFT_CLASS("_TtC8FooClass9FooClass0")
-@interface FooClass0 : NSObject
+SWIFT_CLASS("_TtC8FooClass10FooClass00")
+@interface FooClass00 : NSObject
 - (void)barFunction;
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
 
-SWIFT_CLASS("_TtC8FooClass9FooClass1")
-@interface FooClass1 : NSObject
+SWIFT_CLASS("_TtC8FooClass10FooClass01")
+@interface FooClass01 : NSObject
+- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
+@end
+
+
+SWIFT_CLASS("_TtC8FooClass10FooClass02")
+@interface FooClass02 : NSObject
+- (void)barFunction;
+- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
+@end
+
+
+SWIFT_CLASS("_TtC8FooClass10FooClass03")
+@interface FooClass03 : NSObject
+- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
+@end
+
+
+SWIFT_CLASS("_TtC8FooClass10FooClass08")
+@interface FooClass08 : NSObject
+- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
+@end
+
+
+SWIFT_CLASS("_TtC8FooClass10FooClass09")
+@interface FooClass09 : NSObject
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
 
 SWIFT_CLASS("_TtC8FooClass10FooClass10")
 @interface FooClass10 : NSObject
-- (void)barFunction;
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
 
 SWIFT_CLASS("_TtC8FooClass10FooClass11")
 @interface FooClass11 : NSObject
-- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
-@end
-
-
-SWIFT_CLASS("_TtC8FooClass10FooClass12")
-@interface FooClass12 : NSObject
-- (void)barFunction;
-- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
-@end
-
-
-SWIFT_CLASS("_TtC8FooClass10FooClass13")
-@interface FooClass13 : NSObject
-- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
-@end
-
-
-SWIFT_CLASS("_TtC8FooClass10FooClass14")
-@interface FooClass14 : NSObject
-- (void)barFunction;
-- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
-@end
-
-
-SWIFT_CLASS("_TtC8FooClass10FooClass15")
-@interface FooClass15 : NSObject
-- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
-@end
-
-
-SWIFT_CLASS("_TtC8FooClass9FooClass2")
-@interface FooClass2 : NSObject
-- (void)barFunction;
-- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
-@end
-
-
-SWIFT_CLASS("_TtC8FooClass9FooClass3")
-@interface FooClass3 : NSObject
-- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
-@end
-
-
-SWIFT_CLASS("_TtC8FooClass9FooClass8")
-@interface FooClass8 : NSObject
-- (void)barFunction;
-- (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
-@end
-
-
-SWIFT_CLASS("_TtC8FooClass9FooClass9")
-@interface FooClass9 : NSObject
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
