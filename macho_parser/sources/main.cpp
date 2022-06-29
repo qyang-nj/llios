@@ -144,6 +144,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
             case LC_LINKER_OPTIMIZATION_HINT:
             case LC_DYLD_EXPORTS_TRIE:
             case LC_DYLD_CHAINED_FIXUPS:
+            case LC_SEGMENT_SPLIT_INFO:
                 parse_linkedit_data(base, (struct linkedit_data_command *)lcmd);
                 break;
             case LC_BUILD_VERSION:
