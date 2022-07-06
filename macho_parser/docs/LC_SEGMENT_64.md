@@ -50,6 +50,9 @@ printf("hello world");
 ### __la_symbol_ptr
 This section is used to store lazy symbol pointers. It's used for lazy binding during [dynamic linking](../../dynamic_linking).
 
+### __interpose
+This section contains an array of tuple. Each tuple is a pair of function addresses. See [dynamic interposing](../../dynamic_linking/dynamic_interposing.md).
+
 ## __DATA_CONST
 `__DATA_CONST` segment stores constant data, some of which needs to be initialized. At the time of `mmap`, `__DATA_CONST`, same as `__DATA`, is readable and writable. Once initialized, `dyld` will change this segment to just readable via `mprotect`. Then it becomes real constant. One of use cases for this is the non-lazy biding (`__got`).
 

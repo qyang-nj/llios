@@ -31,6 +31,7 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [Exported Symbols](./exported_symbol/) - details of how exported symbols are stored
     * [Binding Info](./dynamic_linking/docs/BindingInfo.md) - details of binding opcodes
     * [Chained Fixups](./dynamic_linking/chained_fixups.md) - the new way to store dyld info
+    * [Dynamic Interposing](./dynamic_linking/dynamic_interposing.md) - replace function implementation at runtime
 * Testing
     * [XCTest](./xctest) - bare-bones of iOS testing
 
