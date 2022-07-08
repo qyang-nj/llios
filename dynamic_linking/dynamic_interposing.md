@@ -46,8 +46,8 @@ dyld[49176]:   interpose replaced 0x197A19FB8 with 0x1003FFF30 in /opt/homebrew/
 ...
 ```
 
-## Mach-O
-Using [macho parser](../macho_parser/README.md), we found that `interpose.dylib` has a section `__DATA,__interpose`.
+## Interposing in Mach-O
+Using [macho parser](../macho_parser/README.md), we found that `interpose.dylib` has a section `__DATA,__interpose`. This is a special section that is dedicated to interposing.
 ```
 $ macho_parser interpose.dylib --segments
 ...
@@ -68,7 +68,7 @@ $ xxd -s 32768 -l 16 /Users/qyang/Projects/llios/macho_parser/interpose.dylib
 
 Because of the addresses in `__DATA,__interpose` need to be bound or rebased, **interposing will happen after fix-up**.
 
-## dyld
+## Interposing in dyld
 [This is the snippet](https://github.com/qyang-nj/llios/blob/badce36ff3ccc8dc10e937e7d55aef8e5450673d/apple_open_source/dyld/src/ImageLoaderMachO.cpp#L1228-L1276) from dyld source code that directly processes `__DATA,__interpose` section. Most of the code is pretty self explanatory, except one line being a little confusing.
 
 ``` c
@@ -88,4 +88,4 @@ struct InterposeTuple {
 
 It means the method replacement won't be applied to the binary that defines the interpose. In the sample above, the `open` function inside `interpose.dylb` itself will invoke the `libSystem`'s `open`, while the `open` function in other images (dylib or executable) will be replaced by `my_open` from `interpose.dylb`. Unlike Objective-C's swizzling or interposing on Linux, we can have a clean code to call the original implementation.
 
-Other than hard-coded section, `dyld` also provides the API [`dyld_dynamic_interpose`](https://github.com/qyang-nj/llios/blob/badce36ff3ccc8dc10e937e7d55aef8e5450673d/apple_open_source/dyld/dyld3/APIs.h#L180) to allow interposing at runtime.
+Other than hard-coded the section, `dyld` also provides the API [`dyld_dynamic_interpose`](https://github.com/qyang-nj/llios/blob/badce36ff3ccc8dc10e937e7d55aef8e5450673d/apple_open_source/dyld/dyld3/APIs.h#L180) to allow interposing at runtime.
