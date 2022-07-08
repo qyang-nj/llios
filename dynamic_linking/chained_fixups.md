@@ -3,7 +3,7 @@ Chained fixups is a new way to store information that will be used by `dyld`. Re
 
 Traditionally, `dyld`, at launch time, needs to slide the fixed addresses with a random number, known as ASLR. This operation is called rebasing. Also, `dyld` needs to connect symbols from current binary with its linked dynamic libraries. This is called binding. Under the new format, both rebasing and binding have a new name, **fixup**, because they need to be "fixed up" before main function.
 
-Chained fixups is [enabled by default if the binary is built for device and targeted at iOS 14+](https://github.com/qyang-nj/llios/blob/1f111edc87adbca68c336d3ab501e3ca4a1f2356/apple_open_source/ld64/src/ld/Options.cpp#L5233-L5238). We can also manually enable it by passing `-fixup_chains` to `ld`.
+Chained fixups is [enabled by default if the binary is built for device and targeted at iOS 14+](https://github.com/qyang-nj/llios/blob/1f111edc87adbca68c336d3ab501e3ca4a1f2356/apple_open_source/ld64/src/ld/Options.cpp#L5233-L5238). We can also manually enable it by passing `-fixup_chains` to `ld`. To disable it, use `-no_fixup_chains`.
 
 ## `LC_DYLD_CHAINED_FIXUPS` and `LC_DYLD_EXPORTS_TRIE`
 Once chained fixups is enabled, a Mach-O binary on longer uses `LC_DYLD_INFO`. Instead, it has two new load commands, `LC_DYLD_CHAINED_FIXUPS` and `LC_DYLD_EXPORTS_TRIE`. Interestingly, the lazy binding section `__DATA,__la_symbol_ptr` is gone too.
