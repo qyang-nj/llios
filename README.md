@@ -34,4 +34,5 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [Dynamic Interposing](./dynamic_linking/dynamic_interposing.md) - replace function implementation at runtime
 * Testing
     * [XCTest](./xctest) - bare-bones of iOS testing
-
+* Xcode
+    * [Behind the scenes: SwiftUI Previews](./articles/SwiftUIPreview.md)
