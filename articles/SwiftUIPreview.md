@@ -1,4 +1,4 @@
-# Behind the scenes: SwiftUI Preview
+# Behind the scenes: SwiftUI Previews
 SwiftUI was first announced in WWDC 2019, and SwiftUI Previews was shipped with Xcode since version 11. It’s intriguing to me that how Swift can act like Javascript in a browser, so I did some investigations. I certainly don’t know it inside out, but I’d like to document some interesting observations.
 
 In this article, the module of interest is called `SamplePreview`  and its build target is `SamplePreview.framework` . The file that contains SwiftUI code is `MySwiftUIView.swift`.

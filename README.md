@@ -35,4 +35,4 @@ If you find anything in my notes is incorrect, please create an [issue](https://
 * Testing
     * [XCTest](./xctest) - bare-bones of iOS testing
 * Xcode
-    * [Behind the scenes: Swift UI Preview](./articles/SwiftUIPreview.md)
+    * [Behind the scenes: SwiftUI Previews](./articles/SwiftUIPreview.md)
