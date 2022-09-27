@@ -33,6 +33,7 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [Chained Fixups](./dynamic_linking/chained_fixups.md) - the new way to store dyld info
     * [Dynamic Interposing](./dynamic_linking/dynamic_interposing.md) - replace function implementation at runtime
 * Testing
-    * [XCTest](./xctest) - bare-bones of iOS testing
+    * [Behind the scenes: iOS Testing](./articles/iOSTesting.md)
+    * (Archived)[XCTest](./xctest)
 * Xcode
     * [Behind the scenes: SwiftUI Previews](./articles/SwiftUIPreview.md)
