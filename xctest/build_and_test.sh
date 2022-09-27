@@ -1,5 +1,5 @@
 #!/bin/zsh
-# This script was tested on XCode 13.1
+# This script was tested on Xcode 14.0
 set -e
 
 # Change the target to arm64 to run tests natively on M1 machine
