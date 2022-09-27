@@ -4,10 +4,12 @@ This article uncovers what happens behind the scenes when building and running i
 ## XCTest
 The xctest is everywhere in the realm of iOS testing, and it can mean different things. It's a test framework, a test bundle, or a test runner.
 
-### XCTests is a framework
-If you have written any iOS tests, it’s impossible that you don’t know `XCTest.framework`. It’s a dynamic framework and provides some basic classes for writing test cases. It lives in `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks` and is the only framework in that directory. Other common frameworks, like `Foundation.framework`, are in  `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks`. Because of the special locations, if your application (not test target) accidentally linked with `XCTest.framework` (which is pretty common), you will notice a runtime crash immediately.
+### XCTest is a framework
+If you have written any iOS tests, it’s impossible that you don’t know `XCTest.framework`. It’s a dynamic framework which provides some basic classes for writing test cases, e.g. `XCTestCase`. It's located in `PLATFORM_DIR/Developer/Library/Frameworks`[^1] and is the only framework in that directory. Other common frameworks, like `Foundation.framework`, are in `PLATFORM_DIR/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks`. Because of the unique location, if your application (not test target) accidentally linked with `XCTest.framework` (which is a pretty common mistake), you will notice a runtime crash immediately
 
-`XCTest.framework` links with other test related frameworks, `XCTestCore.framework`, `XCUnit.framework` and `XCUIAutomation.framework`. They are private frameworks, and we don’t need to deal with them directly.
+`XCTest.framework` links with other test related frameworks, `XCTestCore.framework`, `XCUnit.framework` and `XCUIAutomation.framework`. They are private frameworks, and we normally don’t need to deal with them directly.
+
+[^1]: `PLATFORM_DIR=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform`
 
 ### xctest is a test bundle
 #### bundle is a directory
