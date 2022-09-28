@@ -40,12 +40,15 @@ xcrun simctl spawn SIMULATOR PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest 
 [Here](../testing/logic_test/build_and_test.sh) is a full sample to build and run a logic test without Xcode.
 
 ### Hosted Tests
-These tests require an app to run, known as hosted app. They usually depend on some features provided by the hosted app, like the size of a view. The runner is the host app instead of `xctest` and the test bundle is loaded into the host app.
+Some tests require an app to run, known as hosted app. They usually depend on some features provided by the host app, like UIApplication. They are called hosted tests or app tests. The runner is the host app instead of `xctest` and the test bundle is loaded into the host app.
 
 How does the host app know it should load and run the test? It’s through the injected `libXCTestBundleInject.dylib`. Check [Dynamic Interposing](../dynamic_linking/dynamic_interposing.md) for more details.
 ```
-DYLD_INSERT_LIBRARIES=PLATFORM_DIR/Developer/usr/lib/libXCTestBundleInject.dylib
+export SIMCTL_CHILD_DYLD_INSERT_LIBRARIES=$PLATFORM_DIR/Developer/usr/lib/libXCTestBundleInject.dylib
+xcrun simctl launch --console-pty "iPhone 14 Pro" me.qyang.HostApp
 ```
 
+[Here](../testing/hosted_test/build_and_test.sh) is a full sample to build and run a hosted test without Xcode.
+
 ### UI Tests
-UI tests let us test our app like the end user. It can mimic user behaviors, like tapping a button. In this case, our app is a standalone application, called target app. There is a separate runner app that loads the test bundle to test against our application. I'll add more details for this one later.
+UI tests let us test our app like the end user. It can mimic the end user behaviors, like tapping a button. In this case, our app is a standalone application, called target app. There is a separate runner app that loads the test bundle to test against our application. I'll add more details for this one later.

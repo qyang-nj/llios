@@ -36,11 +36,14 @@ xcrun ld -bundle -o build/HostApp.app/PlugIns/HostedTests.xctest/HostedTests bui
     -F "$SDKROOT/System/Library/Frameworks" \
     -lSystem
 
-
 # Install the app
-xcrun simctl install "iPhone 14 Pro" "$(realpath build/HostApp.app)"
+xcrun simctl shutdown all
+xcrun simctl boot "iPhone 14 Pro"
+xcrun simctl install booted "$(realpath build/HostApp.app)"
 
 # Launch the app and run the tests
 export SIMCTL_CHILD_DYLD_INSERT_LIBRARIES=$PLATFORM_DIR/Developer/usr/lib/libXCTestBundleInject.dylib
 export SIMCTL_CHILD_DYLD_LIBRARY_PATH=$PLATFORM_DIR/Developer/usr/lib
-xcrun simctl launch --console-pty "iPhone 14 Pro" me.qyang.HostApp
+# XCTestBundlePath env var is not required, if the .xctest is under PlugIns/.
+export SIMCTL_CHILD_XCTestBundlePath=PlugIns/HostedTests.xctest
+xcrun simctl launch --console-pty booted me.qyang.HostApp
