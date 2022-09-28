@@ -51,4 +51,4 @@ xcrun simctl launch --console-pty "iPhone 14 Pro" me.qyang.HostApp
 [Here](../testing/hosted_test/build_and_test.sh) is a full sample to build and run a hosted test without Xcode.
 
 ### UI Tests
-UI tests let us test our app like the end user. It can mimic the end user behaviors, like tapping a button. In this case, our app is a standalone application, called target app. There is a separate runner app that loads the test bundle to test against our application. I'll add more details for this one later.
+UI tests let us test our app like the end user. It can mimic the user behaviors, e.g. tapping a button. In this case, our app is a standalone application, called target app. There is a separate runner app that loads the test bundle to test against our application. I'll add more details for this one later.
