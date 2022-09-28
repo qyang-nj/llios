@@ -1,5 +1,5 @@
 #!/bin/zsh
-# This script was tested on XCode 13.1
+# This script was tested on Xcode 14.0
 set -e
 
 # Change the target to arm64 to run tests natively on M1 machine
@@ -32,6 +32,6 @@ xcrun ld -bundle -o build/Test.xctest/Test build/Test.o \
 # export SIMCTL_CHILD_DYLD_PRINT_ENV=1
 # export SIMCTL_CHILD_DYLD_PRINT_LIBRARIES=1
 
-xcrun simctl spawn --arch=$ARCH --standalone "iPhone 8"  \
+xcrun simctl spawn --arch=$ARCH --standalone "iPhone 14 Pro"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
     $(realpath build/Test.xctest)
