@@ -32,6 +32,6 @@ xcrun ld -bundle -o build/Test.xctest/Test build/Test.o \
 # export SIMCTL_CHILD_DYLD_PRINT_ENV=1
 # export SIMCTL_CHILD_DYLD_PRINT_LIBRARIES=1
 
-xcrun simctl spawn --arch=$ARCH --standalone "iPhone 8"  \
+xcrun simctl spawn --arch=$ARCH --standalone "iPhone 14 Pro"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
     $(realpath build/Test.xctest)
