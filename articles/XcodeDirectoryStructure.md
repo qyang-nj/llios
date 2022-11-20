@@ -22,14 +22,14 @@ $DEVELOPER_DIR/Platforms
 │         │  ├──  UIKit.framework
 │         │  ├──  Foundation.framework
 │         │  └──  ... (more system frameworks)
-|         ├── /usr/lib
-|         │  ├── libc++.tbd
-|         │  ├── libobjc.tb
-|         |  └── ... (more lib*.tb)
-|         └── /usr/lib/swift
-|            ├── Swift.swiftmodule
-|            ├── libswiftCore.tbd
-|            └── ... (more libswift*.tbd and *.swiftmodule)
+│         ├── /usr/lib
+│         │  ├── libc++.tbd
+│         │  ├── libobjc.tb
+│         │  └── ... (more lib*.tb)
+│         └── /usr/lib/swift
+│            ├── Swift.swiftmodule
+│            ├── libswiftCore.tbd
+│            └── ... (more libswift*.tbd and *.swiftmodule)
 ├── iPhoneOS.platform
 ├── MacOSX.platform
 └── ... (more platforms)
@@ -51,23 +51,23 @@ Toolchains contain the build tools, e.g. compiler, linker, and support static li
 ```
 $DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain
 ├── user/bin ($DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/user/bin)
-|  ├── clang
-|  ├── swift-frontend
-|  ├── swift -> swift-frontend (symlink)
-|  ├── swiftc -> swift-frontend (symlink)
-|  ├── swift-drivier
-|  └── ...
+│  ├── clang
+│  ├── swift-frontend
+│  ├── swift -> swift-frontend (symlink)
+│  ├── swiftc -> swift-frontend (symlink)
+│  ├── swift-drivier
+│  └── ...
 ├── /usr/lib
-|  └── ...
+│  └── ...
 ├── /usr/lib/swift
-|  ├── iphonesimulator
-|  |  ├── libswiftCompatibility50.a
-|  |  ├── libswiftCompatibility51.a
-|  |  ├── libswiftCompatibilityConcurrency.a
-|  |  ├── libswiftCompatibilityDynamicReplacements.a
-|  |  └── ...
-|  ├── iphoneos
-|  └── ...
+│  ├── iphonesimulator
+│  │  ├── libswiftCompatibility50.a
+│  │  ├── libswiftCompatibility51.a
+│  │  ├── libswiftCompatibilityConcurrency.a
+│  │  ├── libswiftCompatibilityDynamicReplacements.a
+│  │  └── ...
+│  ├── iphoneos
+│  └── ...
 └── Developer/Platforms (only 3 platforms relevant to development)
    ├── iPhoneSimulator.platform
    ├── MacOSX.platform
