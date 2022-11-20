@@ -19,9 +19,9 @@ $DEVELOPER_DIR/Platforms
 │      │  └── XCTest.framework
 │      └── SDKs/iPhoneSimulator.sdk
 │         └── System/Library/Frameworks
-│         │  ├──  UIKit.framework
-│         │  ├──  Foundation.framework
-│         │  └──  ... (more system frameworks)
+│         │  ├── UIKit.framework
+│         │  ├── Foundation.framework
+│         │  └── ... (more system frameworks)
 │         ├── /usr/lib
 │         │  ├── libc++.tbd
 │         │  ├── libobjc.tb
