@@ -35,6 +35,12 @@ $DEVELOPER_DIR/Platforms
 └── ... (more platforms)
 ```
 
+Compiler Flags
+* SDK path: `-sdk $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk`
+* System framework search path `-F $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks`
+* `XCTest.framework` search path `-F $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks`
+* `XCTest.swiftmodule` search path `-I $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/usr/lib`
+
 Notes
 * `XCTest.framework` is at a special location, as it shouldn't be linked in production.
 * Most system dylibs are actually `.tbd` instead of real binaries.
@@ -70,6 +76,6 @@ $DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain
 
 Notes
 * `$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/user/bin` is where `xcrun` to locate tools.
-* `swiftc` and `swiftc` are just simlinks pointing to `swift-frontend`.
+* `swift` and `swiftc` are just symlinks pointing to `swift-frontend`.
 
 [^1]: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer/`
