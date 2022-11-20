@@ -37,3 +37,4 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [Archived] [XCTest](./xctest)
 * Xcode
     * [Behind the scenes: SwiftUI Previews](./articles/SwiftUIPreview.md)
+    * [Xcode.app Directory Structure](./articles/XcodeDirectoryStructure.md)
