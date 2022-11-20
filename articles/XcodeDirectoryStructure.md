@@ -39,10 +39,10 @@ Compiler Flags
 * SDK path: `-sdk $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk`
 * System framework search path `-F $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks`
 * `XCTest.framework` search path `-F $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks`
-* `XCTest.swiftmodule` search path `-I $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/usr/lib`
+* XCTest swift support search path `-I $DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/usr/lib`
 
 Notes
-* `XCTest.framework` is at a special location, as it shouldn't be linked in production.
+* `XCTest.framework` is at a special location. Unlike other frameworks, `XCTest.framework` shouldn't be linked in production.
 * Most system dylibs are actually `.tbd` instead of real binaries.
 
 ## Toolchains
@@ -50,16 +50,18 @@ Toolchains contain the build tools, e.g. compiler, linker, and support static li
 
 ```
 $DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain
-├── user/bin ($DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/user/bin)
+├── usr/bin
 │  ├── clang
+|  ├── cc -> clang (symlink)
+|  ├── c++ -> clang (symlink)
 │  ├── swift-frontend
 │  ├── swift -> swift-frontend (symlink)
 │  ├── swiftc -> swift-frontend (symlink)
 │  ├── swift-drivier
 │  └── ...
-├── /usr/lib
+├── usr/lib
 │  └── ...
-├── /usr/lib/swift
+├── usr/lib/swift
 │  ├── iphonesimulator
 │  │  ├── libswiftCompatibility50.a
 │  │  ├── libswiftCompatibility51.a
@@ -75,7 +77,8 @@ $DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain
 ```
 
 Notes
-* `$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/user/bin` is where `xcrun` to locate tools.
-* `swift` and `swiftc` are just symlinks pointing to `swift-frontend`.
+* `$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin` is where `xcrun` to locate tools.
+* `swift` and `swiftc` are just symlinks to `swift-frontend`.
+* `clang++`, `c++`, `cc` are symlinks to `clang`.
 
 [^1]: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer/`
