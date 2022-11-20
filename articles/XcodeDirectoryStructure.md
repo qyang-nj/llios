@@ -11,14 +11,14 @@ Platforms have the dynamic libraries/frameworks that are used at runtime.
 $DEVELOPER_DIR/Platforms
 ├── iPhoneSimulator.platform
 │  └── Developer
-│      ├── usr/lib ($DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/usr/lib)
+│      ├── usr/lib
 │      │  ├── libXCTestBundleInject.dylib
 │      │  ├── libXCTestSwiftSupport.dylib
 │      │  └── XCTest.swiftmodule
-│      ├── Library/Frameworks ($DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks)
+│      ├── Library/Frameworks
 │      │  └── XCTest.framework
-│      └── SDKs/iPhoneSimulator.sdk ($DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk)
-│         └── System/Library/Frameworks ($DEVELOPER_DIR/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks)
+│      └── SDKs/iPhoneSimulator.sdk
+│         └── System/Library/Frameworks
 │         │  ├──  UIKit.framework
 │         │  ├──  Foundation.framework
 │         │  └──  ... (more system frameworks)
