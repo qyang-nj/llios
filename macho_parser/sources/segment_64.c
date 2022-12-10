@@ -152,6 +152,8 @@ static void format_section_type(uint8_t type, char *out) {
         strcpy(out, "S_4BYTE_LITERALS");
     } else if (type == S_8BYTE_LITERALS) {
         strcpy(out, "S_8BYTE_LITERALS");
+    } else if (type == S_16BYTE_LITERALS) {
+        strcpy(out, "S_16BYTE_LITERALS");
     } else if (type == S_LITERAL_POINTERS) {
         strcpy(out, "S_LITERAL_POINTERS");
     } else if (type == S_NON_LAZY_SYMBOL_POINTERS) {
@@ -168,7 +170,9 @@ static void format_section_type(uint8_t type, char *out) {
         strcpy(out, "S_THREAD_LOCAL_ZEROFILL");
     } else if (type == S_THREAD_LOCAL_VARIABLES) {
         strcpy(out, "S_THREAD_LOCAL_VARIABLES");
-    }else {
+    } else if (type == S_COALESCED) {
+        strcpy(out, "S_COALESCED");
+    } else {
         sprintf(out, "OTHER(0x%x)", type);
     }
 }
