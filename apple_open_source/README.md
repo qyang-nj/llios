@@ -1,8 +1,3 @@
 # Apple Open Source
-https://opensource.apple.com/
+The source code of some low-level libraries from Apple. Putting them together for easy code search.
 
-* [cctools](./cctools)
-* [ld64](./ld64)
-* [dyld](./dyld)
-* [libsecurity_codesigning](./libsecurity_codesigning)
-* [xnu](./xnu)
