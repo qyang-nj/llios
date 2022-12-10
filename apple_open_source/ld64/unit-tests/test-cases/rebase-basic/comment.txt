@@ -1,1 +1,0 @@
-The point of this test is to see that a dylib run through the rebase tool is the same as if the dylib was originally built at that address
