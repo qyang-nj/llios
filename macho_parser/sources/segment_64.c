@@ -168,7 +168,9 @@ static void format_section_type(uint8_t type, char *out) {
         strcpy(out, "S_THREAD_LOCAL_ZEROFILL");
     } else if (type == S_THREAD_LOCAL_VARIABLES) {
         strcpy(out, "S_THREAD_LOCAL_VARIABLES");
-    }else {
+    } else if (type == S_COALESCED) {
+        strcpy(out, "S_COALESCED");
+    } else {
         sprintf(out, "OTHER(0x%x)", type);
     }
 }
