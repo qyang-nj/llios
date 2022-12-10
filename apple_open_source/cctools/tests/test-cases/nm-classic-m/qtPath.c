@@ -1,1 +1,0 @@
-void qtPath(void) {}

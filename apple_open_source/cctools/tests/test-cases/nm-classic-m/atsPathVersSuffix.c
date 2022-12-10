@@ -1,1 +1,0 @@
-void atsPathVersSuffix(void) {}

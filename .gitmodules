@@ -1,0 +1,15 @@
+[submodule "apple_open_source/cctools"]
+	path = apple_open_source/cctools
+	url = https://github.com/apple-oss-distributions/cctools
+[submodule "apple_open_source/ld64"]
+	path = apple_open_source/ld64
+	url = https://github.com/apple-oss-distributions/ld64
+[submodule "apple_open_source/dyld"]
+	path = apple_open_source/dyld
+	url = https://github.com/apple-oss-distributions/dyld
+[submodule "apple_open_source/xnu"]
+	path = apple_open_source/xnu
+	url = https://github.com/apple-oss-distributions/xnu
+[submodule "apple_open_source/libsecurity_codesigning"]
+	path = apple_open_source/libsecurity_codesigning
+	url = https://github.com/apple-oss-distributions/libsecurity_codesigning
