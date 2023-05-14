@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Usage: build.sh --openssl
 #   --openssl    Build with OpenSSL library, enabling printing more details of code signature.
 set -e
@@ -18,21 +18,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-CFLAGS=""
+CFLAGS=()
+LDFLAGS=("-lz")
 
-if [ "$OPT_OPENSSL" == 1 ]; then
-    CFLAGS="$CFLAGS -D OPENSSL -I$(brew --prefix openssl)/include"
-    LDFLAGS="$LDFLAGS -lssl -lcrypto -L$(brew --prefix openssl)/lib -D OPENSSL"
+if [[ "$OPT_OPENSSL" == 1 ]]; then
+    CFLAGS+=("-DOPENSSL" "-I$(brew --prefix openssl)/include")
+    LDFLAGS+=("-lssl" "-lcrypto" "-L$(brew --prefix openssl)/lib" "-DOPENSSL")
 fi
 
-if [ "$OPT_DEBUG" == 1 ]; then
-    CFLAGS="$CFLAGS -g"
+if [[ "$OPT_DEBUG" == 1 ]]; then
+    CFLAGS+=("-g")
 fi
 
 mkdir -p build/
-rm -f build/*.o
+find build -name "*.o" -delete
 
-for src in sources/*.cpp; do
+for src in sources/**/*.cpp; do
     xcrun clang++ --std=c++17 -c -o "build/$(basename $src).o" $CFLAGS $src
 done
 

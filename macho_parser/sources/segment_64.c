@@ -68,7 +68,7 @@ static void print_section(void *base, struct section_64 sect, int section_index)
     format_size(sect.size, formatted_size);
 
     printf("  %2d: 0x%09llx-0x%09llx %-11s %-32s  type: %s  offset: %d",
-        section_index, sect.addr, sect.addr + sect.size, formatted_size, formatted_seg_sec, formatted_type, sect.offset);
+        section_index, sect.offset, sect.offset + sect.size, formatted_size, formatted_seg_sec, formatted_type, sect.offset);
 
     if (sect.reserved1 > 0) {
         printf("   reserved1: %2d", sect.reserved1);

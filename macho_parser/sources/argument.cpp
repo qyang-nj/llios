@@ -57,7 +57,7 @@ void usage() {
     puts("        --no-truncate                    do not truncate even the content is long");
     puts("    -h, --help                           show this help message");
     puts("");
-    puts("    --segments                           equivalent to '--command LC_SEGMENT_64");
+    puts("    --segments                           equivalent to '--command LC_SEGMENT_64'");
     puts("    --section INDEX                      show the section at INDEX");
     puts("    --dylibs                             show dylib related commands");
     puts("    --build-version                      equivalent to '--command LC_BUILD_VERSION --command LC_VERSION_MIN_*'");
