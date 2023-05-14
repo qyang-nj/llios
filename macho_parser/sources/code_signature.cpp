@@ -20,9 +20,9 @@ extern "C" {
 static void printCodeDirectory(CS_CodeDirectory *code_directory);
 static void printRequirement(unsigned char *data, int size);
 static void printPKCS7(const unsigned char* buffer, size_t size);
-static void formatBlobMagic(uint32_t magic, char *formated);
-static void formatHashType(uint8_t hash_type, char *formatted);
-static void sha256(const unsigned char *data, size_t size, char *output);
+static void formatBlobMagic(uint32_t magic, char *formatted, size_t output_size);
+static void formatHashType(uint8_t hash_type, char *formatted, size_t output_size);
+static void sha256(const unsigned char *data, size_t size, char *output, size_t output_size);
 
 void printCodeSignature(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
     char magic_name[256];
@@ -31,7 +31,7 @@ void printCodeSignature(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
 
     // Code signature is always encoded in network byte ordering,
     // so we need to use ntohl to covert byte order from network to host.
-    formatBlobMagic(ntohl(super_blob->magic), magic_name);
+    formatBlobMagic(ntohl(super_blob->magic), magic_name, sizeof(magic_name));
     printf("SuperBlob: magic: %s, length: %d, count: %d\n", magic_name, ntohl(super_blob->length), ntohl(super_blob->count));
     for (int i = 0; i < ntohl(super_blob->count); ++i) {
         uint32_t blob_type = ntohl(super_blob->index[i].type);
@@ -39,7 +39,7 @@ void printCodeSignature(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
 
         CS_GenericBlob *blob = (CS_GenericBlob *)((uint8_t *)super_blob + blob_offset);
         uint32_t magic = ntohl(blob->magic);
-        formatBlobMagic(magic, magic_name);
+        formatBlobMagic(magic, magic_name, sizeof(magic_name));
 
         printf("  Blob %d: type: %#07x, offset: %d, magic: %s, length: %d", i, blob_type, blob_offset, magic_name, ntohl(blob->length));
         if (blob_type == 0x7 && magic == 0xfade7172) {
@@ -111,7 +111,7 @@ static void printCodeDirectory(CS_CodeDirectory *code_directory) {
     uint32_t identity_offset = ntohl(code_directory->identOffset);
 
     char hash_type[32];
-    formatHashType(code_directory->hashType, hash_type);
+    formatHashType(code_directory->hashType, hash_type, sizeof(hash_type));
 
     printf("    version      : %#x\n", ntohl(code_directory->version));
     printf("    flags        : %#x\n", ntohl(code_directory->flags));
@@ -127,7 +127,7 @@ static void printCodeDirectory(CS_CodeDirectory *code_directory) {
     printf("    identity     : %s\n", (char *)code_directory + identity_offset);
 
     char cdhash[64];
-    sha256((unsigned char *)code_directory, ntohl(code_directory->length), cdhash);
+    sha256((unsigned char *)code_directory, ntohl(code_directory->length), cdhash, sizeof(cdhash));
     printf("    CDHash       : %s\n", cdhash);
     printf("\n");
 
@@ -164,7 +164,7 @@ static void printPKCS7(const unsigned char *data, size_t size) {
     BIO_free(bio);
 }
 
-static void sha256(const unsigned char *data, size_t size, char *output) {
+static void sha256(const unsigned char *data, size_t size, char *output, size_t output_size) {
     unsigned char *result = SHA256(data, size, NULL);
     format_hex(result, SHA256_DIGEST_LENGTH, output);
 }
@@ -175,12 +175,12 @@ static void printPKCS7(const unsigned char *data, size_t size) {
     puts("    Info: To show detailed PKCS7 information, use 'build.sh --openssl' and run again.");
 }
 
-static void sha256(const unsigned char *data, size_t size, char *output) {
-    sprintf(output, "%s", "Unavailable. Use 'build.sh --openssl' and run again.");
+static void sha256(const unsigned char *data, size_t size, char *output, size_t output_size) {
+    snprintf(output, output_size, "%s", "Unavailable. Use 'build.sh --openssl' and run again.");
 }
 #endif
 
-static void formatBlobMagic(uint32_t magic, char *formatted) {
+static void formatBlobMagic(uint32_t magic, char *formatted, size_t output_size) {
     switch(magic) {
         case CSMAGIC_REQUIREMENT: strcpy(formatted, "CSMAGIC_REQUIREMENT"); break;
         case CSMAGIC_REQUIREMENTS: strcpy(formatted, "CSMAGIC_REQUIREMENTS"); break;
@@ -190,16 +190,16 @@ static void formatBlobMagic(uint32_t magic, char *formatted) {
         case CSMAGIC_EMBEDDED_ENTITLEMENTS: strcpy(formatted, "CSMAGIC_EMBEDDED_ENTITLEMENTS"); break;
         case CSMAGIC_DETACHED_SIGNATURE: strcpy(formatted, "CSMAGIC_DETACHED_SIGNATURE"); break;
         case CSMAGIC_BLOBWRAPPER: strcpy(formatted, "CSMAGIC_BLOBWRAPPER"); break;
-        default: sprintf(formatted, "%#08x", magic);
+        default: snprintf(formatted, output_size, "%#08x", magic);
     }
 }
 
-static void formatHashType(uint8_t hash_type, char *formatted) {
+static void formatHashType(uint8_t hash_type, char *formatted, size_t output_size) {
     switch(hash_type) {
         case CS_HASHTYPE_SHA1: strcpy(formatted, "SHA1"); break;
         case CS_HASHTYPE_SHA256: strcpy(formatted, "SHA256"); break;
         case CS_HASHTYPE_SHA256_TRUNCATED: strcpy(formatted, "SHA256_TRUNCATED"); break;
         case CS_HASHTYPE_SHA384: strcpy(formatted, "SHA384"); break;
-        default: sprintf(formatted, "UNKNOWN(%#08x)", hash_type);
+        default: snprintf(formatted, output_size, "UNKNOWN(%#08x)", hash_type);
     }
 }

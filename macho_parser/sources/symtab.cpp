@@ -46,7 +46,7 @@ void printSymbol(int indent, uint8_t *base, struct symtab_command *symtabCmd, in
 
     char formatted_value[32] = {'\0'};
     if ((nlist->n_type & N_TYPE) != N_UNDF) {
-        sprintf(formatted_value, "%016llx", nlist->n_value);
+        snprintf(formatted_value, sizeof(formatted_value), "%016llx", nlist->n_value);
     }
 
     printf("%*s%-4d: %16s  %-10s  %-60s  %s\n",
