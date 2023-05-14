@@ -10,8 +10,8 @@ extern "C"
 }
 
 size_t printCovMapHeader(uint8_t *covMapBase);
-size_t printFilenamesRegion(u_int8_t *filenamesBase);
-void printFilenames(u_int8_t *uncompressedFileNames, int numFilenames);
+size_t printFilenamesRegion(uint8_t *filenamesBase);
+void printFilenames(uint8_t *uncompressedFileNames, int numFilenames);
 
 // https://llvm.org/docs/CoverageMappingFormat.html
 

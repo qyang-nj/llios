@@ -2,7 +2,7 @@
 #include <iostream>
 
 // This function is mostly written by ChatGPT.
-void decompressZlibData(u_int8_t* inputData, size_t inputSize, u_int8_t* outputData, size_t outputSize) {
+void decompressZlibData(const uint8_t *inputData, size_t inputSize, uint8_t *outputData, size_t outputSize) {
     z_stream strm;
     strm.zalloc = Z_NULL;
     strm.zfree = Z_NULL;
