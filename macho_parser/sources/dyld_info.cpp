@@ -457,16 +457,16 @@ static std::string stringifySymbolFlagForTable(int flag) {
     char formatted[64];
     switch(flag) {
         case 0:
-            sprintf(formatted, "%s", "");
+            snprintf(formatted, sizeof(formatted), "%s", "");
             break;
         case BIND_SYMBOL_FLAGS_WEAK_IMPORT:
-            sprintf(formatted, "(%s)", "weak import");
+            snprintf(formatted, sizeof(formatted), "(%s)", "weak import");
             break;
         case BIND_SYMBOL_FLAGS_NON_WEAK_DEFINITION:
-            sprintf(formatted, "(%s)", "non weak definition");
+            snprintf(formatted, sizeof(formatted), "(%s)", "non weak definition");
             break;
         default:
-            sprintf(formatted, "(%s)", "unknown");
+            snprintf(formatted, sizeof(formatted), "(%s)", "unknown");
             break;
     }
     return std::string(formatted);

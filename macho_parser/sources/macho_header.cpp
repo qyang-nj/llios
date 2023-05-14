@@ -110,7 +110,10 @@ static uint32_t readMagic(uint8_t *filebase, int offset) {
 static struct fat_header readFatHeader(uint8_t *base, bool needs_swap) {
     struct fat_header header = *(struct fat_header *)base;
     if (needs_swap) {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
         swap_fat_header(&header, NX_UnknownByteOrder);
+        #pragma clang diagnostic pop
     }
     return header;
 }
@@ -121,7 +124,10 @@ static struct fat_arch *readFatArchs(uint8_t *base, struct fat_header header, bo
     memcpy(archs, base + sizeof(header), archs_size);
 
     if (needs_swap) {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
         swap_fat_arch(archs, header.nfat_arch, NX_UnknownByteOrder);
+        #pragma clang diagnostic pop
     }
     return archs;
 }
