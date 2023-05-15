@@ -19,6 +19,7 @@ xcrun swiftc -c -o build/Test.o Test.swift Lib.swift \
     -sdk "$SDKROOT" -target "$TARGET" \
     -F "$PLATFORM_DIR/Developer/Library/Frameworks" \
     -I "$PLATFORM_DIR/Developer/usr/lib" \
+    -coverage-prefix-map $PWD=. \
     -profile-coverage-mapping \
     -profile-generate
 
@@ -33,10 +34,6 @@ xcrun clang -bundle -o $TEST_BINARY build/Test.o \
     -F "$SDKROOT/System/Library/Frameworks" \
     -lSystem \
     -fprofile-instr-generate
-
-# To set environment variables in the simulator, use SIMCTL_CHILD_ prefix
-# export SIMCTL_CHILD_DYLD_PRINT_ENV=1
-# export SIMCTL_CHILD_DYLD_PRINT_LIBRARIES=1
 
 PROFRAW_FILE="/tmp/test.profraw"
 PROFDATA_FILE="/tmp/test.profdata"
@@ -55,6 +52,5 @@ xcrun llvm-profdata merge -sparse "$PROFRAW_FILE" -o "$PROFDATA_FILE"
 # xcrun llvm-cov report -instr-profile "$PROFDATA_FILE" build/Test.xctest/Test
 
 # Generate HTML report
-set -x
-xcrun llvm-cov show -format=html -output-dir=report -instr-profile $PROFDATA_FILE -compilation-dir $PWD $TEST_BINARY
+xcrun llvm-cov show -format=html -output-dir=report -instr-profile $PROFDATA_FILE $TEST_BINARY # -compilation-dir $PWD
 echo "Generated HTML report at $(realpath report/index.html)"
