@@ -8,26 +8,48 @@ on:
   # Allows running this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Cancel previous jobs if a new one is started
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   macho-parser:
+    name: Macho Parser
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ./macho_parser
     steps:
       - uses: actions/checkout@v2
-      - name: Install OpenSSL
-        run: brew install openssl
-      - name: Build
-        run: |
-          cd macho_parser
-          ./build.sh
-          ./build.sh --debug
-          ./build.sh --openssl
+      - run: brew install openssl
+      - run: ./build.sh
+      - run: ./build.sh --debug
+      - run: ./build.sh --openssl
+      # Tests with sample.out
+      - run: ./build_sample.sh
+      - run: ./macho_parser --help
+      - run: ./macho_parser sample.out
+      - run: ./macho_parser sample.out --segments
+      - run: ./macho_parser sample.out --symtab
+
+  macho-parser-bazel:
+    name: Macho Parser (Bazel)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ./macho_parser
+    steps:
+      - uses: actions/checkout@v2
+      - run: bazelisk build //:macho_parser
 
   build-ios-app:
+    name: Build iOS App without Xcode
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ./build_ios_app
     steps:
       - uses: actions/checkout@v2
-      - name: Build
-        run: |
-          cd build_ios_app
-          ./build.sh
-          ./build.sh --release
+      - run: ./build.sh
+      - run: ./build.sh --release

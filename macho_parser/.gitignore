@@ -1,3 +1,5 @@
 macho_parser
 macho_parser.dSYM/
 sample.out
+
+bazel-*
