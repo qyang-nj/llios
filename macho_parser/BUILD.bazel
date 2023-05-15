@@ -1,0 +1,21 @@
+cc_binary(
+    name = "macho_parser",
+    srcs = glob([
+        "sources/**/*.c",
+        "sources/**/*.cpp",
+        "sources/**/*.h",
+    ]),
+    includes = [
+        "sources",
+    ],
+    linkopts = [
+        "-framework",
+        "CoreFoundation",
+        "-framework",
+        "Security",
+    ],
+    defines = ["OPENSSL"],
+    deps = [
+       "@openssl//:openssl",
+    ]
+)

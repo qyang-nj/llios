@@ -1,0 +1,3 @@
+build --spawn_strategy=local
+build --compilation_mode=dbg
+build --cxxopt='-std=c++17'

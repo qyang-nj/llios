@@ -2,7 +2,9 @@
 To learn the Mach-O format, no way is better than building a parser from scratch. This helps me understand, byte by byte, how Mach-O format is laid out. This parser actually turns out to be a super light version of the combination of  `otool`, `nm`, `strings`, `dyldinfo`, `codesign` etc.
 
 #### Usage
-To build the parser, run `./build.sh --openssl`. (OpenSSL is not required if not parsing code signature.)
+There are two ways to build the sources code:
+1. Use Bazel, `bazel build //:macho_parser`. (Preferred)
+2. Run `./build.sh --openssl`. (OpenSSL is not required if not parsing code signature.)
 
 ```
 $ ./macho_parser --help
