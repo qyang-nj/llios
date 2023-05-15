@@ -252,6 +252,10 @@ bool showCommand(uint8_t cmd) {
     return show;
 }
 
+bool hasSectionSpecifed() {
+    return args.section_count > 0 || specifiedSectNames.size() > 0;
+}
+
 bool showSection(int sectIndex, char *sectName) {
     if (!hasSectionSpecifed()) {
         // if no command is specified, show all sections
@@ -268,7 +272,7 @@ bool showSection(int sectIndex, char *sectName) {
 
     if (!show) {
         // check if the section name is specified
-        show = std::find(specifiedSectNames.begin(), specifiedSectNames.end(), std::string(sectName)) != specifiedSectNames.end();
+        show = std::find(specifiedSectNames.begin(), specifiedSectNames.end(), sectName) != specifiedSectNames.end();
     }
 
     return show;
@@ -283,6 +287,3 @@ bool isSelectedArch(const char *arch) {
     return strcasecmp(args.arch, arch) == 0;
 }
 
-bool hasSectionSpecifed() {
-    return args.section_count > 0 || specifiedSectNames.size() > 0;
-}
