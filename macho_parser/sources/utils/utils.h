@@ -1,9 +1,7 @@
 #ifndef MACHO_PARSER_UTILS_H
 #define MACHO_PARSER_UTILS_H
 
-// #include <cstdint>
 #include <stdlib.h>
-
 
 #ifdef __cplusplus
 extern "C" {
