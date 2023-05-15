@@ -52,5 +52,5 @@ xcrun llvm-profdata merge -sparse "$PROFRAW_FILE" -o "$PROFDATA_FILE"
 # xcrun llvm-cov report -instr-profile "$PROFDATA_FILE" build/Test.xctest/Test
 
 # Generate HTML report
-xcrun llvm-cov show -format=html -output-dir=report -instr-profile $PROFDATA_FILE $TEST_BINARY # -compilation-dir $PWD
+xcrun llvm-cov show --format=html --output-dir=report --instr-profile $PROFDATA_FILE --compilation-dir $PWD $TEST_BINARY
 echo "Generated HTML report at $(realpath report/index.html)"
