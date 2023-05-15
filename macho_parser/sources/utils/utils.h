@@ -15,6 +15,9 @@ int readULEB128(const uint8_t *p, uint64_t *out);
 // This method assumes the input correctness and doesn't handle error cases.
 int readSLEB128(const uint8_t *p, int64_t *out);
 
+// Decompress that data using zlib.
+void decompressZlibData(const uint8_t *inputData, size_t inputSize, uint8_t *outputData, size_t outputSize);
+
 #ifdef __cplusplus
 }
 #endif

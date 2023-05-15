@@ -7,6 +7,7 @@
 #include "symtab.h"
 
 #include "segment_64.h"
+#include "llvm_cov.h"
 
 static void print_section(void *base, struct section_64 sect, int section_index);
 static void print_cstring_section(void *base, struct section_64 *sect);
@@ -86,8 +87,12 @@ static void print_section(void *base, struct section_64 sect, int section_index)
         return;
     }
 
+    if (strncmp(sect.sectname, "__llvm_covmap", 16) == 0) {
+        printCovMapSection(base, &sect);
+    }
     // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
-    if (type == S_CSTRING_LITERALS) {
+    else if (type == S_CSTRING_LITERALS) {
+
         print_cstring_section(base, &sect);
     }
     // (__DATA_CONST,__mod_init_func)

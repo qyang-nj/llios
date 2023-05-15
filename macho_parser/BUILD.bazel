@@ -9,6 +9,7 @@ cc_binary(
         "sources",
     ],
     linkopts = [
+        "-lz",
         "-framework",
         "CoreFoundation",
         "-framework",

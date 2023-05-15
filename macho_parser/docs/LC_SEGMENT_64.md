@@ -88,3 +88,11 @@ The difference between `+load` and `__mod_init_func` is that the former guarante
 
 ## __LINKEDIT
 `__LINKEDIT` segment contains data that's used by the linker. Unlike other segments, this one doesn't have sections. Its contents are described by other load commands, e.g. `LC_SYMTAB`, `LC_DYSYMTAB`.
+
+## __LLVM_COV
+`__LINKEDIT` is used for code coverage.
+
+### __llvm_covfun
+
+### __llvm_covmap
+See [CoverageMapping.h](https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/ProfileData/Coverage/CoverageMapping.h)
