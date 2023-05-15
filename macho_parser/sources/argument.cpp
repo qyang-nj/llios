@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <map>
+#include <vector>
 #include <string>
 #include <algorithm>
 
