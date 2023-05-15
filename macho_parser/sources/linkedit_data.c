@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "util.h"
+#include "utils/utils.h"
 #include "load_command.h"
 #include "argument.h"
 #include "chained_fixups.h"
@@ -91,7 +91,7 @@ static void parse_function_starts(void *base, uint32_t dataoff, uint32_t datasiz
         }
 
         uint64_t num = 0;
-        i += read_uleb128(func_starts + i, &num);
+        i += readULEB128(func_starts + i, &num);
         address += num;
 
         char *symbol = lookup_symbol_by_address(address, base, symtab_cmd);

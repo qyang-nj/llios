@@ -3,10 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-extern "C" {
-#include "util.h"
-}
-
+#include "utils/utils.h"
 #include "exports_trie.h"
 
 static void printExportRecursion(uint8_t *exportStart, uint8_t *nodePtr, int level);
@@ -18,7 +15,7 @@ void printExportTrie(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
 
 static void printExportRecursion(uint8_t *exportStart, uint8_t *nodePtr, int level) {
     uint64_t terminalSize;
-    int byteCount = read_uleb128(nodePtr, &terminalSize);
+    int byteCount = readULEB128(nodePtr, &terminalSize);
     uint8_t *childrenCountPtr = nodePtr + byteCount + terminalSize;
 
     if (terminalSize != 0) {
@@ -40,7 +37,7 @@ static void printExportRecursion(uint8_t *exportStart, uint8_t *nodePtr, int lev
         s += strlen((char *)s) + 1;
 
         uint64_t child_offset;
-        byteCount = read_uleb128(s, &child_offset);
+        byteCount = readULEB128(s, &child_offset);
         s += byteCount; // now s points to the next child's edge string
         printExportRecursion(exportStart, exportStart + child_offset, level + 1);
     }

@@ -1,9 +1,9 @@
 cc_binary(
     name = "macho_parser",
     srcs = glob([
-        "sources/**/*.c",
-        "sources/**/*.cpp",
-        "sources/**/*.h",
+        "sources/*.c",
+        "sources/*.cpp",
+        "sources/*.h",
     ]),
     includes = [
         "sources",
@@ -16,6 +16,30 @@ cc_binary(
     ],
     defines = ["OPENSSL"],
     deps = [
-       "@openssl//:openssl",
+        ":utils",
+        "@openssl//:openssl",
+    ]
+)
+
+cc_library(
+    name = "utils",
+    srcs = glob([
+        "sources/utils/*.cpp",
+        "sources/utils/*.h",
+    ]),
+    hdrs =["sources/utils/utils.h"],
+)
+
+cc_test(
+    name = "unit_tests",
+    srcs = glob([
+        "tests/*.cpp",
+    ]),
+    includes = [
+        "sources",
+    ],
+    deps = [
+        "@com_google_googletest//:gtest_main",
+        ":utils",
     ]
 )

@@ -5,10 +5,10 @@
 
 extern "C" {
 #include "argument.h"
-#include "util.h"
 #include "dylib.h"
 }
 
+#include "utils/utils.h"
 #include "macho_binary.h"
 #include "exports_trie.h"
 #include "dyld_info.h"
@@ -129,13 +129,13 @@ static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size) {
                 type = imm;
                 break;
             case REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB: {
-                i += read_uleb128(rebase + i, &uleb);
+                i += readULEB128(rebase + i, &uleb);
                 segmentOrdinal = imm;
                 segmentOffset = uleb;
                 break;
             }
             case REBASE_OPCODE_ADD_ADDR_ULEB:
-                i += read_uleb128(rebase + i, &uleb);
+                i += readULEB128(rebase + i, &uleb);
                 segmentOffset += uleb;
                 break;
             case REBASE_OPCODE_ADD_ADDR_IMM_SCALED:
@@ -148,7 +148,7 @@ static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size) {
                 }
                 break;
             case REBASE_OPCODE_DO_REBASE_ULEB_TIMES:
-                i += read_uleb128(rebase + i, &uleb);
+                i += readULEB128(rebase + i, &uleb);
                 for (int j = 0; j < uleb; ++j) {
                     printTableRow();
                     segmentOffset += ptrSize;
@@ -156,13 +156,13 @@ static void printRebaseTable(uint8_t *base, uint32_t offset, uint32_t size) {
                 break;
             case REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB:
                 printTableRow();
-                i += read_uleb128(rebase + i, &uleb);
+                i += readULEB128(rebase + i, &uleb);
                 segmentOffset += uleb + ptrSize;
                 break;
             case REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB: {
                 uint64_t count, skip;
-                i += read_uleb128(rebase + i, &count);
-                i += read_uleb128(rebase + i, &skip);
+                i += readULEB128(rebase + i, &count);
+                i += readULEB128(rebase + i, &skip);
                 for (int j = 0; j < count; ++j) {
                     printTableRow();
                     segmentOffset += skip + ptrSize;
@@ -198,13 +198,13 @@ static void printRebaseOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
                 break;
             case REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB: {
                 struct segment_command_64 *segCmd = machoBinary.segmentCommands[imm];
-                i += read_uleb128(rebase + i, &uleb);
+                i += readULEB128(rebase + i, &uleb);
                 printf("REBASE_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB (%d, 0x%08llx) -- %s\n",
                      imm, uleb, segCmd->segname);
                 break;
             }
             case REBASE_OPCODE_ADD_ADDR_ULEB:
-                i += read_uleb128(rebase + i, &uleb);
+                i += readULEB128(rebase + i, &uleb);
                 printf("REBASE_OPCODE_ADD_ADDR_ULEB (0x%08llx)\n", uleb);
                 break;
             case REBASE_OPCODE_ADD_ADDR_IMM_SCALED:
@@ -214,17 +214,17 @@ static void printRebaseOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
                 printf("REBASE_OPCODE_DO_REBASE_IMM_TIMES (%d)\n", imm);
                 break;
             case REBASE_OPCODE_DO_REBASE_ULEB_TIMES:
-                i += read_uleb128(rebase + i, &uleb);
+                i += readULEB128(rebase + i, &uleb);
                 printf("REBASE_OPCODE_DO_REBASE_ULEB_TIMES (%llu)\n", uleb);
                 break;
             case REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB:
-                i += read_uleb128(rebase + i, &uleb);
+                i += readULEB128(rebase + i, &uleb);
                 printf("REBASE_OPCODE_DO_REBASE_ADD_ADDR_ULEB (0x%08llx)\n", uleb);
                 break;
             case REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB: {
                 uint64_t count, skip;
-                i += read_uleb128(rebase + i, &count);
-                i += read_uleb128(rebase + i, &skip);
+                i += readULEB128(rebase + i, &count);
+                i += readULEB128(rebase + i, &skip);
                 printf("REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB (count: %llu, skip: %llu)\n", uleb, skip);
                 break;
             }
@@ -293,7 +293,7 @@ static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enu
                 dylibOrdinal = imm;
                 break;
             case BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB:
-                i += read_uleb128(bind + i, &uleb);
+                i += readULEB128(bind + i, &uleb);
                 dylibOrdinal = uleb;
                 break;
             case BIND_OPCODE_SET_DYLIB_SPECIAL_IMM:
@@ -309,16 +309,16 @@ static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enu
                 type = imm;
                 break;
             case BIND_OPCODE_SET_ADDEND_SLEB:
-                i += read_sleb128(bind + i, &sleb);
+                i += readSLEB128(bind + i, &sleb);
                 addend = sleb;
                 break;
             case BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB:
-                i += read_uleb128(bind + i, &uleb);
+                i += readULEB128(bind + i, &uleb);
                 segmentOrdinal = imm;
                 segmentOffset = uleb;
                 break;
             case BIND_OPCODE_ADD_ADDR_ULEB:
-                i += read_uleb128(bind + i, &uleb);
+                i += readULEB128(bind + i, &uleb);
                 segmentOffset += uleb;
                 break;
             case BIND_OPCODE_DO_BIND:
@@ -327,7 +327,7 @@ static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enu
                 break;
             case BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB:
                 printTableRow();
-                i += read_uleb128(bind + i, &uleb);
+                i += readULEB128(bind + i, &uleb);
                 segmentOffset += uleb + ptrSize;
                 break;
             case BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED:
@@ -336,8 +336,8 @@ static void printBindingTable(uint8_t *base, uint32_t offset, uint32_t size, enu
                 break;
             case BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB: {
                 uint64_t count, skip;
-                i += read_uleb128(bind + i, &count);
-                i += read_uleb128(bind + i, &skip);
+                i += readULEB128(bind + i, &count);
+                i += readULEB128(bind + i, &skip);
                 for (int j = 0; j < count; ++j) {
                     printTableRow();
                     segmentOffset += skip + ptrSize;
@@ -378,7 +378,7 @@ static void printBindingOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
                     imm, getDylibName(imm).c_str());
                 break;
             case BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB:
-                i += read_uleb128(bind + i, &uleb);
+                i += readULEB128(bind + i, &uleb);
                 printf("BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB (%llu) -- %s\n",
                     uleb, getDylibName(uleb).c_str());
                 break;
@@ -395,25 +395,25 @@ static void printBindingOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
                 printf("BIND_OPCODE_SET_TYPE_IMM (%s)\n", stringifyBindTypeImmForOpcode(imm).c_str());
                 break;
             case BIND_OPCODE_SET_ADDEND_SLEB:
-                i += read_sleb128(bind + i, &sleb);
+                i += readSLEB128(bind + i, &sleb);
                 printf("BIND_OPCODE_SET_ADDEND_SLEB (%lld)\n", sleb);
                 break;
             case BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB: {
                 struct segment_command_64 *segCmd = machoBinary.segmentCommands[imm];
-                i += read_uleb128(bind + i, &uleb);
+                i += readULEB128(bind + i, &uleb);
                 printf("BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB (%d, 0x%08llx) -- %s\n",
                     imm, uleb, segCmd->segname);
                 break;
             }
             case BIND_OPCODE_ADD_ADDR_ULEB:
-                i += read_uleb128(bind + i, &uleb);
+                i += readULEB128(bind + i, &uleb);
                 printf("BIND_OPCODE_ADD_ADDR_ULEB (0x%08llx)\n", uleb);
                 break;
             case BIND_OPCODE_DO_BIND:
                 printf("BIND_OPCODE_DO_BIND ()\n");
                 break;
             case BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB:
-                i += read_uleb128(bind + i, &uleb);
+                i += readULEB128(bind + i, &uleb);
                 printf("BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB (0x%08llx)\n", uleb);
                 break;
             case BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED:
@@ -421,8 +421,8 @@ static void printBindingOpcodes(uint8_t *base, uint32_t offset, uint32_t size) {
                 break;
             case BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB: {
                 uint64_t count, skip;
-                i += read_uleb128(bind + i, &count);
-                i += read_uleb128(bind + i, &skip);
+                i += readULEB128(bind + i, &count);
+                i += readULEB128(bind + i, &skip);
                 printf("BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB (count: %llu, skip: %llu)\n", uleb, skip);
                 break;
             }

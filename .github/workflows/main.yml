@@ -42,6 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: bazelisk build //:macho_parser
+      - run: bazelisk test --test_output=all //:unit_tests
 
   build-ios-app:
     name: Build iOS App without Xcode
