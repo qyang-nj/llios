@@ -16,7 +16,7 @@ struct argument {
     int show_build_version;
     int show_segments;
     int section_count;
-    int sections[12];
+    int sections[32];
     int show_dylibs;
 
     // code signature options
@@ -59,7 +59,9 @@ bool showHeader();
 // whether to show a command
 bool showCommand(uint8_t cmd);
 
-bool showSection(int section);
+bool hasSectionSpecifed();
+
+bool showSection(int sectIndex, char *sectName);
 
 bool isSelectedArch(const char *arch);
 
