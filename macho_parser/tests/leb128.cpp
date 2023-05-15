@@ -27,12 +27,3 @@ TEST(LEB128, MultiBytesSLEB128) {
     EXPECT_EQ(num, -123456);
     EXPECT_EQ(size, 3);
 }
-
-TEST(LEB128, MultiBytesSLEB128) {
-    uint8_t bytes[] = {0xC0, 0xBB, 0x78};
-    int64_t num;
-    int size = readSLEB128(bytes, &num);
-
-    EXPECT_EQ(num, -123456);
-    EXPECT_EQ(size, 3);
-}
