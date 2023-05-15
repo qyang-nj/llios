@@ -4,12 +4,16 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <map>
+#include <vector>
 #include <string>
 #include <algorithm>
 
 #include "argument.h"
 
 struct argument args;
+
+// store the section names specified by -s option.
+std::vector<std::string> specifiedSectNames;
 
 static uint8_t getCommandTypeFromString(char *commandString);
 
@@ -58,7 +62,7 @@ void usage() {
     puts("    -h, --help                           show this help message");
     puts("");
     puts("    --segments                           equivalent to '--command LC_SEGMENT_64'");
-    puts("    --section INDEX                      show the section at INDEX");
+    puts("    --section NAME/INDEX                 show the section with Name or at INDEX");
     puts("    --dylibs                             show dylib related commands");
     puts("    --build-version                      equivalent to '--command LC_BUILD_VERSION --command LC_VERSION_MIN_*'");
     puts("");
@@ -102,7 +106,13 @@ void parseArguments(int argc, char **argv) {
                 usage();
                 exit(0);
             case 's':
-                args.sections[args.section_count++] = atoi(optarg);
+                // If the length is <= 2, it's an section index.
+                // Otherwise, it's a section name.
+                if (strlen(optarg) <= 2) {
+                    args.sections[args.section_count++] = atoi(optarg);
+                } else {
+                    specifiedSectNames.push_back(std::string(optarg));
+                }
                 break;
             case 0:
                 // all long options that don't have short options
@@ -128,10 +138,10 @@ void parseArguments(int argc, char **argv) {
         exit(1);
     }
 
-    if (args.show_segments || args.section_count > 0) {
+    if (args.show_segments || hasSectionSpecifed()) {
         args.commands[args.command_count++] = LC_SEGMENT_64;
 
-        if (args.section_count > 0) {
+        if (hasSectionSpecifed()) {
             args.verbosity += 1;
         }
     }
@@ -243,19 +253,29 @@ bool showCommand(uint8_t cmd) {
     return show;
 }
 
-bool showSection(int section) {
-    if (args.section_count == 0) {
+bool hasSectionSpecifed() {
+    return args.section_count > 0 || specifiedSectNames.size() > 0;
+}
+
+bool showSection(int sectIndex, char *sectName) {
+    if (!hasSectionSpecifed()) {
         // if no command is specified, show all sections
         return true;
     }
 
     bool show = false;
     for (int i = 0; i < args.section_count; ++i) {
-        if (args.sections[i] == section) {
+        if (args.sections[i] == sectIndex) {
             show = true;
             break;
         }
     }
+
+    if (!show) {
+        // check if the section name is specified
+        show = std::find(specifiedSectNames.begin(), specifiedSectNames.end(), sectName) != specifiedSectNames.end();
+    }
+
     return show;
 }
 
@@ -267,3 +287,4 @@ bool isSelectedArch(const char *arch) {
 
     return strcasecmp(args.arch, arch) == 0;
 }
+

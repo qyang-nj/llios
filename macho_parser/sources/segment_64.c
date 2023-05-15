@@ -12,11 +12,11 @@ static void print_section(void *base, struct section_64 sect, int section_index)
 static void print_cstring_section(void *base, struct section_64 *sect);
 static void print_pointer_section(void *base, struct section_64 *sect);
 static void format_section_type(uint8_t type, char *out);
-static bool has_section_to_show(int section_index, int count);
+static bool has_section_to_show(struct segment_command_64 *seg_cmd, int start_index);
 
 void parse_segment(void *base, struct segment_command_64 *seg_cmd, int section_index) {
-    if (args.section_count > 0 && !has_section_to_show(section_index, seg_cmd->nsects)) {
-        // If --section is specificied and no section needs to be show in this segment, just return.
+    if (hasSectionSpecifed() && !has_section_to_show(seg_cmd, section_index)) {
+        // If --section is specified and no section needs to be show in this segment, just return.
         return;
     }
 
@@ -41,15 +41,17 @@ void parse_segment(void *base, struct segment_command_64 *seg_cmd, int section_i
 
     for (int i = 0; i < seg_cmd->nsects; ++i) {
         struct section_64 sect = sections[i];
-        if (showSection(section_index + i)) {
+        if (showSection(section_index + i, sect.sectname)) {
             print_section(base, sect, section_index + i);
         }
     }
 }
 
-static bool has_section_to_show(int section_index, int count) {
-    for (int i = 0; i < count; ++i) {
-        if (showSection(section_index + i)) {
+static bool has_section_to_show(struct segment_command_64 *seg_cmd, int start_index) {
+    struct section_64 *sections = (void *)seg_cmd + sizeof(struct segment_command_64);
+    for (int i = 0; i < seg_cmd->nsects; ++i) {
+        struct section_64 sect = sections[i];
+        if (showSection(start_index + i, sect.sectname)) {
             return true;
         }
     }
