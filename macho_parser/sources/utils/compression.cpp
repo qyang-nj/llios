@@ -1,6 +1,8 @@
 #include <zlib.h>
 #include <iostream>
 
+#include "utils.h"
+
 // This function is mostly written by ChatGPT.
 void decompressZlibData(const uint8_t *inputData, size_t inputSize, uint8_t *outputData, size_t outputSize) {
     z_stream strm;

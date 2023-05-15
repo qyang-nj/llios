@@ -1,13 +1,8 @@
 #include <stdio.h>
 #include <iostream>
 
-#include "utils/compression.h"
+#include "utils/utils.h"
 #include "llvm_cov.h"
-
-extern "C"
-{
-  #include "util.h"
-}
 
 size_t printCovMapHeader(uint8_t *covMapBase);
 size_t printFilenamesRegion(uint8_t *filenamesBase);
@@ -48,9 +43,9 @@ size_t printFilenamesRegion(uint8_t *filenamesBase) {
 
     size_t offset = 0;
 
-    offset += read_uleb128(filenamesBase + offset, &numFilenames);
-    offset += read_uleb128(filenamesBase + offset, &uncompressedLength);
-    offset += read_uleb128(filenamesBase + offset, &compressedLength);
+    offset += readULEB128(filenamesBase + offset, &numFilenames);
+    offset += readULEB128(filenamesBase + offset, &uncompressedLength);
+    offset += readULEB128(filenamesBase + offset, &compressedLength);
 
     printf("    Filenames: (NFilenames: %llu, UncompressedLen: %llu, CompressedLen: %llu)\n", numFilenames, uncompressedLength, compressedLength);
 
@@ -75,7 +70,7 @@ void printFilenames(uint8_t *uncompressedFileNames, int numFilenames) {
     int offset = 0;
     for (int i = 0; i < numFilenames; i++) {
         uint64_t filenameLength = 0;
-        offset += read_uleb128(uncompressedFileNames + offset, &filenameLength);
+        offset += readULEB128(uncompressedFileNames + offset, &filenameLength);
 
         printf("     %2d: %.*s\n", i, (int)filenameLength, uncompressedFileNames + offset);
         offset += filenameLength;
