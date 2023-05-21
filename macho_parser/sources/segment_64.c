@@ -90,6 +90,9 @@ static void print_section(void *base, struct section_64 sect, int section_index)
     if (strncmp(sect.sectname, "__llvm_covmap", 16) == 0) {
         printCovMapSection(base, &sect);
     }
+    else if (strncmp(sect.sectname, "__llvm_covfun", 16) == 0) {
+        printCovFunSection(base, &sect);
+    }
     // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
     else if (type == S_CSTRING_LITERALS) {
 
