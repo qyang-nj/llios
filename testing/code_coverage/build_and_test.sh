@@ -44,7 +44,7 @@ rm -f $PROFRAW_FILE $PROFDATA_FILE
 
 xcrun simctl spawn --arch=$ARCH --standalone "iPhone 14 Pro"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
-    $(realpath build/Test.xctest)
+    $PWD/build/Test.xctest
 
 xcrun llvm-profdata merge -sparse "$PROFRAW_FILE" -o "$PROFDATA_FILE"
 
@@ -56,8 +56,8 @@ echo ""
 
 # Export json report
 xcrun llvm-cov export $COMMON_OPTIONS --format=text $TEST_BINARY > coverage.json
-echo "Generated JSON report at $(realpath coverage.json)"
+echo "Generated JSON report at $PWD/coverage.json"
 
 # Generate HTML report
 xcrun llvm-cov show $COMMON_OPTIONS --format=html --output-dir=report $TEST_BINARY
-echo "Generated HTML report at $(realpath report/index.html)"
+echo "Generated HTML report at $PWD/report/index.html"
