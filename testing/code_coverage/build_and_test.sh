@@ -2,8 +2,7 @@
 # This script was tested on Xcode 14.3
 set -e
 
-# Change the target to arm64 to run tests natively on M1 machine
-TARGET="arm64-apple-ios15.2-simulator"
+TARGET="$(uname -m)-apple-ios15.2-simulator"
 
 SDKROOT=$(xcrun --show-sdk-path --sdk iphonesimulator)
 PLATFORM_DIR="$(xcode-select -p)/Platforms/iPhoneSimulator.platform"
@@ -44,7 +43,7 @@ rm -f $PROFRAW_FILE $PROFDATA_FILE
 
 xcrun simctl spawn --arch=$ARCH --standalone "iPhone 14 Pro"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
-    $(realpath build/Test.xctest)
+    $PWD/build/Test.xctest
 
 xcrun llvm-profdata merge -sparse "$PROFRAW_FILE" -o "$PROFDATA_FILE"
 
@@ -56,8 +55,8 @@ echo ""
 
 # Export json report
 xcrun llvm-cov export $COMMON_OPTIONS --format=text $TEST_BINARY > coverage.json
-echo "Generated JSON report at $(realpath coverage.json)"
+echo "Generated JSON report at $PWD/coverage.json"
 
 # Generate HTML report
 xcrun llvm-cov show $COMMON_OPTIONS --format=html --output-dir=report $TEST_BINARY
-echo "Generated HTML report at $(realpath report/index.html)"
+echo "Generated HTML report at $PWD/report/index.html"

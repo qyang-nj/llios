@@ -32,6 +32,10 @@ jobs:
       - run: ./macho_parser sample.out
       - run: ./macho_parser sample.out --segments
       - run: ./macho_parser sample.out --symtab
+      # Tests with coverage
+      - run: cd ../testing/code_coverage && ./build_and_test.sh && cd -
+      - run: ./macho_parser ../testing/code_coverage/build/Test.xctest/Test --section __llvm_covmap
+      - run: ./macho_parser ../testing/code_coverage/build/Test.xctest/Test --section __llvm_covfun
 
   macho-parser-bazel:
     name: Macho Parser (Bazel)
