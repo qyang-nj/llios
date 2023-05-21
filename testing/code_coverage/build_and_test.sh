@@ -2,8 +2,7 @@
 # This script was tested on Xcode 14.3
 set -e
 
-# Change the target to arm64 to run tests natively on M1 machine
-TARGET="arm64-apple-ios15.2-simulator"
+TARGET="$(uname -m)-apple-ios15.2-simulator"
 
 SDKROOT=$(xcrun --show-sdk-path --sdk iphonesimulator)
 PLATFORM_DIR="$(xcode-select -p)/Platforms/iPhoneSimulator.platform"
