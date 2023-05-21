@@ -204,6 +204,27 @@ static std::string formatCounter(uint64_t counter, const std::vector<std::pair<u
 
     if (tag == 0) {
         result += "pseudo-counter";
+        uint8_t expansionRegionTag = counterIndex & 0x1;
+        uint64_t kind = counterIndex >> 1;
+        if (expansionRegionTag) {
+            result += " (expansion region, file id: " + std::to_string(kind) + ")";
+        } else {
+            switch (kind)
+            {
+            case 0:
+                result += " (code region with a counter of zero)";
+                break;
+            case 2:
+                result += " (skipped region)";
+                break;
+            case 4:
+                result += " (branch region)";
+                break;
+            default:
+                result += " (unkown)";
+                break;
+            }
+        }
     } else if (tag == 1) {
         // The counter is a reference to the profile instrumentation counter.
         result += std::to_string(counterIndex);

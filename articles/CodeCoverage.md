@@ -59,17 +59,39 @@ After running the binary, we will have the numbers from every counter. Then a to
 ### Binary
 With the extra compiler flags, multiple segments and sections are added in the Mach-O binary to support running coverage. Here is a list of these sections.
 
-```
-__DATA,__llvm_prf_cnts
-__DATA,__llvm_prf_data
-__DATA,__llvm_prf_vnds
-__DATA,__llvm_orderfile
-__LLVM_COV,__llvm_covfun
-__LLVM_COV,__llvm_covmap
-```
+* `__DATA,__llvm_prf_cnts`
+* `__DATA,__llvm_prf_data`
+* `__DATA,__llvm_prf_vnds`
+* `__DATA,__llvm_orderfile`
+* `__LLVM_COV,__llvm_covfun`
+* `__LLVM_COV,__llvm_covmap`
+
 
 #### __llvm_covmap
-In the early version, this section is used to store function mapping data. In the modern version, it just stores a list of filenames. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp).
+In the modern version, this section just stores a list of filenames. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp). The actual mapping is stored in `__llvm_covfun`.
+```
+CovMap Header: (NRecords: 0, FilenamesSize: 31, CoverageSize: 0, Version: 5)
+    Filenames: (NFilenames: 2, UncompressedLen: 25, CompressedLen: 28)
+      0: ./Test.swift
+      1: ./Lib.swift
+```
+
+#### __llvm_covfun
+This section restores function records, which contains the region-to-counter mapping mentioned above. There is one record per function. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp).
+```
+0: FuncNameHash: 0x8793d595ad4c2cdb, DataLen: 36, FuncHash: 0x0, FileNameHash: 0xbcb137dd4d3ff841
+    FileIDMapping: (NFiles: 1)
+      0: 1
+    MappingRegions: (NRegionArrays: 1)
+      0: (NRegions: 6)
+         0: 2:31 => 8:6 : 0
+         1: 3:12 => 3:18 : 0
+         2: 3:19 => 5:10 : 1
+         3: 5:10 => 8:6 : (0 - 1)
+         4: 5:16 => 7:10 : (0 - 1)
+         5: 7:10 => 8:6 : pseudo-counter
+```
+
 
 ## Conclusion
 Overall, LLVM code coverage operates by instrumenting the code, collecting execution data, mapping it back to the original source code, and generating reports to provide insights into the coverage achieved during testing. (*written by ChatGPT*)
