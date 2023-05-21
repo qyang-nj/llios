@@ -9,7 +9,7 @@ To get code coverage, we need a binary with instrument code, which requires extr
 * swiftc: `-profile-coverage-mapping -profile-generate`
 * ld: `-fprofile-instr-generate`
 
-When running the binary, wet set `LLVM_PROFILE_FILE` environment variable to specify where we want the instrument data to be. After running, we will get `.profraw` files, which can be processed by `llvm-profdata` and `llvm-cov` to generate the coverage report.
+When running the binary, wet set `LLVM_PROFILE_FILE` environment variable to specify where we want the instrument data to be. After running, we will get `.profraw` files, which can be processed by [`llvm-profdata`](https://llvm.org/docs/CommandGuide/llvm-profdata.html) and [`llvm-cov`](https://llvm.org/docs/CommandGuide/llvm-cov.html) to generate the coverage report.
 
 I have sample code [here](../testing/code_coverage) to demonstrate the entire process of building, running and showing the coverage.
 
@@ -26,7 +26,7 @@ func foo(a: Int) -> Int {
   }
 }
 ```
-```
+```bash
 $ xcrun swiftc -emit-sil Lib.swift -o Lib.sil.1
 $ xcrun swiftc -emit-sil Lib.swift -o Lib.sil.2 -profile-coverage-mapping -profile-generate
 ```
@@ -56,16 +56,16 @@ func foo(a: Int) -> Int {
 
 After running the binary, we will have the numbers from every counter. Then a tool (e.g. `llvm-cov`) can calculate how many times each region has been executed. Therefore, we can get the coverage information.
 
-### Binary
+### Coverage Sections in Binary
 With the extra compiler flags, multiple segments and sections are added in the Mach-O binary to support running coverage. Here is a list of these sections.
 
 * `__DATA,__llvm_prf_cnts`
 * `__DATA,__llvm_prf_data`
+* `__DATA,__llvm_prf_names`
 * `__DATA,__llvm_prf_vnds`
 * `__DATA,__llvm_orderfile`
 * `__LLVM_COV,__llvm_covfun`
 * `__LLVM_COV,__llvm_covmap`
-
 
 #### __llvm_covmap
 In the modern version, this section just stores a list of filenames. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp). The actual mapping is stored in `__llvm_covfun`.
@@ -89,9 +89,7 @@ This section restores function records, which contains the region-to-counter map
          2: 3:19 => 5:10 : 1
          3: 5:10 => 8:6 : (0 - 1)
          4: 5:16 => 7:10 : (0 - 1)
-         5: 7:10 => 8:6 : pseudo-counter
 ```
-
 
 ## Conclusion
 Overall, LLVM code coverage operates by instrumenting the code, collecting execution data, mapping it back to the original source code, and generating reports to provide insights into the coverage achieved during testing. (*written by ChatGPT*)
