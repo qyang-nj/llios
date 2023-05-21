@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <iostream>
+#include <vector>
 
 #include "utils/utils.h"
 #include "llvm_cov.h"
