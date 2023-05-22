@@ -25,9 +25,6 @@ void printSymbolTable(uint8_t *base, struct symtab_command *symtabCmd) {
 
     if (args.verbosity == 0) { return; }
 
-    void *symTable = base + symtabCmd->symoff;
-    void *strTable = base + symtabCmd->stroff;
-
     for (int i = 0; i < symtabCmd->nsyms; ++i) {
         printSymbol(2, base, symtabCmd, i);
     }

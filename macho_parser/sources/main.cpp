@@ -12,7 +12,6 @@
 extern "C" {
 #include "argument.h"
 #include "util.h"
-#include "segment_64.h"
 #include "symtab.h"
 #include "dysymtab.h"
 #include "dylib.h"
@@ -27,6 +26,9 @@ extern "C" {
 #include "encryption_info.h"
 #include "small_cmds.h"
 #include "ar_parser.h"
+
+// segment_64.cpp
+void printSegment(uint8_t *base, struct segment_command_64 *segCmd, int firstSectionIndex);
 
 static void printMacho(uint8_t *machoBase);
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
@@ -100,7 +102,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
 
         switch (lcmd->cmd) {
             case LC_SEGMENT_64:
-                parse_segment(base, (struct segment_command_64 *)lcmd, sectionIndex);
+                printSegment(base, (struct segment_command_64 *)lcmd, sectionIndex);
                 sectionIndex += ((struct segment_command_64 *)lcmd)->nsects;
                 break;
             case LC_SYMTAB:
