@@ -273,7 +273,8 @@ bool showSection(int sectIndex, char *sectName) {
 
     if (!show) {
         // check if the section name is specified
-        show = std::find(specifiedSectNames.begin(), specifiedSectNames.end(), sectName) != specifiedSectNames.end();
+        auto sectionName = std::string(sectName, std::min<size_t>(strlen(sectName), 16));
+        show = std::find(specifiedSectNames.begin(), specifiedSectNames.end(), sectionName) != specifiedSectNames.end();
     }
 
     return show;

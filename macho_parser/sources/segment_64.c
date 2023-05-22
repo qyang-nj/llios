@@ -89,19 +89,17 @@ static void print_section(void *base, struct section_64 sect, int section_index)
 
     if (strncmp(sect.sectname, "__llvm_covmap", 16) == 0) {
         printCovMapSection(base, &sect);
-    }
-    else if (strncmp(sect.sectname, "__llvm_covfun", 16) == 0) {
+    } else if (strncmp(sect.sectname, "__llvm_covfun", 16) == 0) {
         printCovFunSection(base, &sect);
-    }
-    // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
-    else if (type == S_CSTRING_LITERALS) {
-
+    } else if (strncmp(sect.sectname, "__llvm_prf_names", 16) == 0) {
+        printPrfNamesSection(base, &sect);
+    } else if (type == S_CSTRING_LITERALS) {
+        // (__TEXT,__cstring), (__TEXT,__objc_classname__TEXT), (__TEXT,__objc_methname), etc..
         print_cstring_section(base, &sect);
-    }
-    // (__DATA_CONST,__mod_init_func)
-    else if (type == S_MOD_INIT_FUNC_POINTERS
+    } else if (type == S_MOD_INIT_FUNC_POINTERS
         || type == S_NON_LAZY_SYMBOL_POINTERS
         || type == S_LAZY_SYMBOL_POINTERS) {
+        // (__DATA_CONST,__mod_init_func)
         print_pointer_section(base, &sect);
     }
 }

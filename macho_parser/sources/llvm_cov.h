@@ -11,6 +11,8 @@ void printCovMapSection(uint8_t *base, struct section_64 *sect);
 
 void printCovFunSection(uint8_t *base, struct section_64 *sect);
 
+void printPrfNamesSection(uint8_t *base, struct section_64 *sect);
+
 #ifdef __cplusplus
 }
 #endif
