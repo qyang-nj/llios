@@ -18,7 +18,7 @@ void printPrfNamesSection(uint8_t *sectBase, size_t sectSize);
 
 static bool hasSectionToShow(struct segment_command_64 *segCmd, int firstSectionIndex);
 static void printSection(uint8_t *base, struct section_64 sect, int sectionIndex);
-static void printCStringSection(uint8_t *base, struct section_64 *sect);
+static void printCStringSection(uint8_t *sectBase, size_t sectSize);
 static void printPointerSection(uint8_t *base, struct section_64 *sect);
 
 static std::string formatSectionType(uint8_t type);
