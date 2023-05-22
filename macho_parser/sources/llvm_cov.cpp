@@ -227,7 +227,7 @@ std::vector<std::string> splitString(const std::string& input, char delimiter);
 void printPrfNamesSection(uint8_t *base, struct section_64 *sect) {
     uint8_t *prfNamesBase = base + sect->offset;
 
-    std::cout << std::endl;
+    int index = 0;
 
     size_t offset = 0;
     while (offset < sect->size) {
@@ -245,6 +245,8 @@ void printPrfNamesSection(uint8_t *base, struct section_64 *sect) {
             memcpy(uncompressedData, prfNamesBase + offset, uncompressedSize);
             offset += uncompressedSize;
         }
+
+        std::cout << "  === " << index++ << " ===" << std::endl;
 
         auto names = splitString((char *)uncompressedData, '\1');
         for (auto name : names) {
