@@ -67,13 +67,23 @@ With the extra compiler flags, multiple segments and sections are added in the M
 * `__LLVM_COV,__llvm_covfun`
 * `__LLVM_COV,__llvm_covmap`
 
+#### __llvm_prf_names
+This section has a list a of mangled function names. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp).
+```
+  Test.swift:$s4Test5TestsC11testExampleyyKF
+  Test.swift:$s4Test5TestsC11testExampleyyKFSbyKXEfu_
+  Test.swift:$s4Test5TestsC11testExampleyyKFSbyKXEfu0_
+  Lib.swift:$s4Test3FooC5func11aS2i_tF
+  Lib.swift:$s4Test3FooC5func2SiyF
+```
+
 #### __llvm_covmap
 In the modern version, this section just stores a list of filenames. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp). The actual mapping is stored in `__llvm_covfun`.
 ```
-CovMap Header: (NRecords: 0, FilenamesSize: 31, CoverageSize: 0, Version: 5)
-    Filenames: (NFilenames: 2, UncompressedLen: 25, CompressedLen: 28)
-      0: ./Test.swift
-      1: ./Lib.swift
+  CovMap Header: (NRecords: 0, FilenamesSize: 31, CoverageSize: 0, Version: 5)
+  Filenames: (NFilenames: 2, UncompressedLen: 25, CompressedLen: 28)
+     0: ./Test.swift
+     1: ./Lib.swift
 ```
 
 #### __llvm_covfun
