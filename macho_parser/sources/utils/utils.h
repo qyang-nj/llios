@@ -23,4 +23,13 @@ void decompressZlibData(const uint8_t *inputData, size_t inputSize, uint8_t *out
 #endif
 
 
+#ifdef __cplusplus
+
+#include <string>
+// formatting
+std::string formatSize(uint64_t sizeInByte);
+
+#endif
+
+
 #endif //MACHO_PARSER_UTILS_H

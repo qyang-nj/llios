@@ -8,6 +8,7 @@
 
 #include "argument.h"
 #include "util.h"
+#include "utils/utils.h"
 #include "load_command.h"
 #include "symtab.h"
 
@@ -29,16 +30,13 @@ void printSegment(uint8_t *base, struct segment_command_64 *segCmd, int firstSec
         return;
     }
 
-    char formatted_filesize[16];
-    char formatted_vmsize[16];
-
-    format_size(segCmd->filesize, formatted_filesize);
-    format_size(segCmd->vmsize, formatted_vmsize);
+    auto formattedFileSize = formatSize(segCmd->filesize);
+    auto formattedVMSize = formatSize(segCmd->vmsize);
 
     printf("%-20s cmdsize: %-6d segname: %-12.16s   file: 0x%08llx-0x%08llx %-9s  vm: 0x%09llx-0x%09llx %-9s prot: %d/%d\n",
         "LC_SEGMENT_64", segCmd->cmdsize, segCmd->segname,
-        segCmd->fileoff, segCmd->fileoff + segCmd->filesize, formatted_filesize,
-        segCmd->vmaddr, segCmd->vmaddr + segCmd->vmsize, formatted_vmsize,
+        segCmd->fileoff, segCmd->fileoff + segCmd->filesize, formattedFileSize.c_str(),
+        segCmd->vmaddr, segCmd->vmaddr + segCmd->vmsize, formattedVMSize.c_str(),
         segCmd->initprot, segCmd->maxprot);
 
     if (args.verbosity < 1) {
@@ -69,16 +67,15 @@ static bool hasSectionToShow(struct segment_command_64 *segCmd, int firstSection
 
 static void printSection(uint8_t *base, struct section_64 sect, int sectionIndex) {
     char formattedSegSec[64];
-    char formattedSize[16];
 
     const uint8_t type = sect.flags & SECTION_TYPE;
 
     auto formattedType = formatSectionType(type);
     snprintf(formattedSegSec, sizeof(formattedSegSec), "(%.16s,%.16s)", sect.segname, sect.sectname);
-    format_size(sect.size, formattedSize);
+    auto formattedSize = formatSize(sect.size);
 
     printf("  %2d: 0x%09x-0x%09llx %-11s %-32s  type: %s  offset: %d",
-        sectionIndex, sect.offset, sect.offset + sect.size, formattedSize, formattedSegSec, formattedType.c_str(), sect.offset);
+        sectionIndex, sect.offset, sect.offset + sect.size, formattedSize.c_str(), formattedSegSec, formattedType.c_str(), sect.offset);
 
     if (sect.reserved1 > 0) {
         printf("   reserved1: %2d", sect.reserved1);
