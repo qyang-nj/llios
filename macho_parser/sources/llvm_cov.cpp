@@ -220,3 +220,58 @@ static std::string formatCounter(uint64_t counter, const std::vector<std::pair<u
 }
 
 // END __llvm_covfun
+
+// BEGIN __llvm_prf_names
+std::vector<std::string> splitString(const std::string& input, char delimiter);
+
+void printPrfNamesSection(uint8_t *base, struct section_64 *sect) {
+    uint8_t *prfNamesBase = base + sect->offset;
+
+    std::cout << std::endl;
+
+    size_t offset = 0;
+    while (offset < sect->size) {
+        uint64_t uncompressedSize = 0;
+        offset += readULEB128(prfNamesBase + offset, &uncompressedSize);
+
+        uint64_t compressedSize = 0;
+        offset += readULEB128(prfNamesBase + offset, &compressedSize);
+
+        uint8_t *uncompressedData = (uint8_t *)malloc(uncompressedSize);;
+        if (compressedSize > 0) {
+            decompressZlibData(prfNamesBase + offset, compressedSize, uncompressedData, uncompressedSize);
+            offset += compressedSize;
+        } else {
+            memcpy(uncompressedData, prfNamesBase + offset, uncompressedSize);
+            offset += uncompressedSize;
+        }
+
+        auto names = splitString((char *)uncompressedData, '\1');
+        for (auto name : names) {
+            std::cout << "  " << name << std::endl;
+        }
+
+        free(uncompressedData);
+    }
+}
+
+std::vector<std::string> splitString(const std::string& input, char delimiter) {
+    std::vector<std::string> result;
+    std::string substring;
+    std::size_t startPos = 0;
+    std::size_t endPos = 0;
+
+    while ((endPos = input.find(delimiter, startPos)) != std::string::npos) {
+        substring = input.substr(startPos, endPos - startPos);
+        result.push_back(substring);
+        startPos = endPos + 1;
+    }
+
+    // Push the remaining string after the last delimiter
+    substring = input.substr(startPos);
+    result.push_back(substring);
+
+    return result;
+}
+
+// END __llvm_prf_names
