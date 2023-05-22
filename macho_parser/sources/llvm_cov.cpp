@@ -16,11 +16,14 @@ static void printFilenames(uint8_t *uncompressedFileNames, int numFilenames);
 void printCovMapSection(uint8_t *base, struct section_64 *sect) {
     uint8_t *covMapBase = base + sect->offset;
 
+    int index = 0;
+
     size_t offset = 0;
     while (offset < sect->size) {
-        printf("\n");
+        std::cout << "  === " << index++ << " ===" << std::endl;
         offset += printCovMapHeader(covMapBase + offset);
         offset += printFilenamesRegion(covMapBase + offset);
+        std::cout << std::endl;
     }
 }
 
@@ -29,7 +32,7 @@ static size_t printCovMapHeader(uint8_t *covMapBase) {
     uint32_t * header = (uint32_t *)covMapBase;
     // https://github.com/apple/llvm-project/blob/4305e61a0d81cc071a88090fa8579440c2220e07/llvm/include/llvm/ProfileData/Coverage/CoverageMapping.h#L1011-L1029
     uint32_t version = header[3] + 1;
-    printf("CovMap Header: (NRecords: %d, FilenamesSize: %d, CoverageSize: %d, Version: %d)\n", header[0], header[1], header[2], version);
+    printf("  CovMap Header: (NRecords: %d, FilenamesSize: %d, CoverageSize: %d, Version: %d)\n", header[0], header[1], header[2], version);
 
     if (version < 4) {
         std::cerr << "Coverage map version lower than 4 is not supported." << std::endl;
@@ -50,7 +53,7 @@ static size_t printFilenamesRegion(uint8_t *filenamesBase) {
     offset += readULEB128(filenamesBase + offset, &uncompressedLength);
     offset += readULEB128(filenamesBase + offset, &compressedLength);
 
-    printf("    Filenames: (NFilenames: %llu, UncompressedLen: %llu, CompressedLen: %llu)\n", numFilenames, uncompressedLength, compressedLength);
+    printf("  Filenames: (NFilenames: %llu, UncompressedLen: %llu, CompressedLen: %llu)\n", numFilenames, uncompressedLength, compressedLength);
 
     uint8_t *uncompressedData = (uint8_t *)malloc(uncompressedLength);;
     if (compressedLength > 0) {
@@ -75,7 +78,7 @@ static void printFilenames(uint8_t *uncompressedFileNames, int numFilenames) {
         uint64_t filenameLength = 0;
         offset += readULEB128(uncompressedFileNames + offset, &filenameLength);
 
-        printf("     %2d: %.*s\n", i, (int)filenameLength, uncompressedFileNames + offset);
+        printf("    %2d: %.*s\n", i, (int)filenameLength, uncompressedFileNames + offset);
         offset += filenameLength;
     }
 }
