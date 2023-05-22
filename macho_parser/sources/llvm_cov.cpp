@@ -1,9 +1,10 @@
 #include <stdio.h>
+#include <mach-o/loader.h>
+
 #include <iostream>
 #include <vector>
 
 #include "utils/utils.h"
-#include "llvm_cov.h"
 
 // https://llvm.org/docs/CoverageMappingFormat.html
 
@@ -13,16 +14,13 @@ static size_t printCovMapHeader(uint8_t *covMapBase);
 static size_t printFilenamesRegion(uint8_t *filenamesBase);
 static void printFilenames(uint8_t *uncompressedFileNames, int numFilenames);
 
-void printCovMapSection(uint8_t *base, struct section_64 *sect) {
-    uint8_t *covMapBase = base + sect->offset;
-
+void printCovMapSection(uint8_t *sectBase, size_t sectSize) {
     int index = 0;
-
     size_t offset = 0;
-    while (offset < sect->size) {
+    while (offset < sectSize) {
         std::cout << "  === " << index++ << " ===" << std::endl;
-        offset += printCovMapHeader(covMapBase + offset);
-        offset += printFilenamesRegion(covMapBase + offset);
+        offset += printCovMapHeader(sectBase + offset);
+        offset += printFilenamesRegion(sectBase + offset);
         std::cout << std::endl;
     }
 }
@@ -93,25 +91,22 @@ static size_t parseCounterExpressions(uint8_t *counterExpressionBase, std::vecto
 static size_t printMappingRegions(uint8_t *mappingRegionBase, int numFiles, const std::vector<std::pair<uint64_t, uint64_t>> &counterExpressions);
 static std::string formatCounter(uint64_t counter, const std::vector<std::pair<uint64_t, uint64_t>> &counterExpressions);
 
-void printCovFunSection(uint8_t *base, struct section_64 *sect) {
-    uint8_t *covFunBase = base + sect->offset;
-
+void printCovFunSection(uint8_t *sectBase, size_t sectSize) {
     int index = 0;
-
     size_t offset = 0;
-    while (offset < sect->size) {
+    while (offset < sectSize) {
         // The hashes here are the lower 64 bits of the MD5 hash
-        int64_t funcNameHash = *(int64_t *)(covFunBase + offset);
+        int64_t funcNameHash = *(int64_t *)(sectBase + offset);
         offset += sizeof(int64_t);
-        int32_t dataLen = *(int32_t *)(covFunBase + offset);
+        int32_t dataLen = *(int32_t *)(sectBase + offset);
         offset += sizeof(int32_t);
-        int64_t funcHash = *(int64_t *)(covFunBase + offset);
+        int64_t funcHash = *(int64_t *)(sectBase + offset);
         offset += sizeof(int64_t);
-        int64_t fileNameHash = *(int64_t *)(covFunBase + offset);
+        int64_t fileNameHash = *(int64_t *)(sectBase + offset);
         offset += sizeof(int64_t);
 
         printf("%d: FuncNameHash: 0x%llx, DataLen: %d, FuncHash: 0x%llx, FileNameHash: 0x%llx\n", index++, funcNameHash, dataLen, funcHash, fileNameHash);
-        printFunctionEncoding(covFunBase + offset);
+        printFunctionEncoding(sectBase + offset);
 
         offset += dataLen;
         offset = (offset + 7) / 8 * 8; // align to 8 bytes
@@ -248,25 +243,22 @@ static std::string formatCounter(uint64_t counter, const std::vector<std::pair<u
 // BEGIN __llvm_prf_names
 std::vector<std::string> splitString(const std::string& input, char delimiter);
 
-void printPrfNamesSection(uint8_t *base, struct section_64 *sect) {
-    uint8_t *prfNamesBase = base + sect->offset;
-
+void printPrfNamesSection(uint8_t *sectBase, size_t sectSize) {
     int index = 0;
-
     size_t offset = 0;
-    while (offset < sect->size) {
+    while (offset < sectSize) {
         uint64_t uncompressedSize = 0;
-        offset += readULEB128(prfNamesBase + offset, &uncompressedSize);
+        offset += readULEB128(sectBase + offset, &uncompressedSize);
 
         uint64_t compressedSize = 0;
-        offset += readULEB128(prfNamesBase + offset, &compressedSize);
+        offset += readULEB128(sectBase + offset, &compressedSize);
 
         uint8_t *uncompressedData = (uint8_t *)malloc(uncompressedSize);;
         if (compressedSize > 0) {
-            decompressZlibData(prfNamesBase + offset, compressedSize, uncompressedData, uncompressedSize);
+            decompressZlibData(sectBase + offset, compressedSize, uncompressedData, uncompressedSize);
             offset += compressedSize;
         } else {
-            memcpy(uncompressedData, prfNamesBase + offset, uncompressedSize);
+            memcpy(uncompressedData, sectBase + offset, uncompressedSize);
             offset += uncompressedSize;
         }
 

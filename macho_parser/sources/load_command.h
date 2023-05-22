@@ -5,6 +5,7 @@
 #include <mach-o/loader.h>
 
 #ifdef __cplusplus
+#include <vector>
 std::vector<struct load_command *> parseLoadCommands(uint8_t *Base, int offset, uint32_t ncmds);
 #endif
 
