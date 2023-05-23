@@ -18,3 +18,12 @@ TEST(FormatBufferToHex, ALL) {
     EXPECT_EQ(formatBufferToHex((uint8_t *)"\x1a", 1), "1a");
     EXPECT_EQ(formatBufferToHex((uint8_t *)"\x01\x02\x0a\x0f\xff", 5), "01020a0fff");
 }
+
+
+TEST(FormatStringLiteral, ALL) {
+    EXPECT_EQ(formatStringLiteral(""), "");
+    EXPECT_EQ(formatStringLiteral("\n"), "\\n");
+    EXPECT_EQ(formatStringLiteral("\r"), "\\r");
+    EXPECT_EQ(formatStringLiteral("abc\nxyz"), "abc\\nxyz");
+    EXPECT_EQ(formatStringLiteral("\\"), "\\\\");
+}

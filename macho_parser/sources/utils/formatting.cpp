@@ -30,3 +30,26 @@ std::string formatBufferToHex(const uint8_t *buffer, size_t bufferSize) {
 
     return ss.str();
 }
+
+// If the string contains '\n', replace with literal "\n".
+std::string formatStringLiteral(const char *str) {
+    std::stringstream ss;
+    for (int i = 0; str[i] != '\0'; ++i) {
+        switch(str[i]) {
+            case '\n':
+                ss << "\\n";
+                break;
+            case '\r':
+                ss << "\\r";
+                break;
+            case '\\':
+                ss << "\\\\";
+                break;
+            default:
+                ss << str[i];
+                break;
+        }
+    }
+
+    return ss.str();
+}
