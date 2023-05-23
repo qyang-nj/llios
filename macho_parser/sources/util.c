@@ -18,8 +18,3 @@ void format_string(char *str, char *formatted) {
     formatted[j] = '\0';
 }
 
-void format_hex(void *buffer, size_t size, char *formatted) {
-    for (int i = 0; i < size; ++i) {
-        sprintf(formatted + i * 2, "%02x", *((uint8_t *)buffer + i));
-    }
-}

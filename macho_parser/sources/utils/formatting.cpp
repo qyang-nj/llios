@@ -19,3 +19,14 @@ std::string formatSize(uint64_t sizeInByte) {
 
     return sstream.str();
 }
+
+std::string formatBufferToHex(const uint8_t *buffer, size_t bufferSize) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+
+    for (size_t i = 0; i < bufferSize; ++i) {
+        ss << std::setw(2) << static_cast<unsigned int>(buffer[i]);
+    }
+
+    return ss.str();
+}

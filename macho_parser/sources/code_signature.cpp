@@ -11,18 +11,20 @@
 #endif
 
 extern "C" {
-#include "util.h"
 #include "argument.h"
 }
 
+#include "utils/utils.h"
 #include "code_signature.h"
 
-static void printCodeDirectory(CS_CodeDirectory *code_directory);
+static void printCodeDirectory(CS_CodeDirectory *codeDirectory);
 static void printRequirement(unsigned char *data, int size);
 static void printPKCS7(const unsigned char* buffer, size_t size);
 static void formatBlobMagic(uint32_t magic, char *formatted, size_t output_size);
 static void formatHashType(uint8_t hash_type, char *formatted, size_t output_size);
-static void sha256(const unsigned char *data, size_t size, char *output, size_t output_size);
+static std::string cdHash(CS_CodeDirectory *codeDirectory);
+static std::string sha1(const unsigned char *data, size_t size);
+static std::string sha256(const unsigned char *data, size_t size);
 
 void printCodeSignature(uint8_t *base, uint32_t dataoff, uint32_t datasize) {
     char magic_name[256];
@@ -103,48 +105,44 @@ static void printRequirement(unsigned char *data, int size) {
     CFRelease(requirement_data);
 }
 
-static void printCodeDirectory(CS_CodeDirectory *code_directory) {
-    uint32_t hash_offset = ntohl(code_directory->hashOffset);
-    uint8_t hash_size = code_directory->hashSize;
-    uint32_t special_slot_size = ntohl(code_directory->nSpecialSlots);
-    uint32_t slot_size = ntohl(code_directory->nCodeSlots);
-    uint32_t identity_offset = ntohl(code_directory->identOffset);
+static void printCodeDirectory(CS_CodeDirectory *codeDirectory) {
+    uint32_t hash_offset = ntohl(codeDirectory->hashOffset);
+    uint8_t hash_size = codeDirectory->hashSize;
+    uint32_t special_slot_size = ntohl(codeDirectory->nSpecialSlots);
+    uint32_t slot_size = ntohl(codeDirectory->nCodeSlots);
+    uint32_t identity_offset = ntohl(codeDirectory->identOffset);
 
     char hash_type[32];
-    formatHashType(code_directory->hashType, hash_type, sizeof(hash_type));
+    formatHashType(codeDirectory->hashType, hash_type, sizeof(hash_type));
 
-    printf("    version      : %#x\n", ntohl(code_directory->version));
-    printf("    flags        : %#x\n", ntohl(code_directory->flags));
+    printf("    version      : %#x\n", ntohl(codeDirectory->version));
+    printf("    flags        : %#x\n", ntohl(codeDirectory->flags));
     printf("    hashOffset   : %d\n", hash_offset);
     printf("    identOffset  : %d\n", identity_offset);
     printf("    nSpecialSlots: %d\n", special_slot_size);
-    printf("    nCodeSlots   : %d\n", ntohl(code_directory->nCodeSlots));
-    printf("    codeLimit    : %d\n", ntohl(code_directory->codeLimit));
+    printf("    nCodeSlots   : %d\n", ntohl(codeDirectory->nCodeSlots));
+    printf("    codeLimit    : %d\n", ntohl(codeDirectory->codeLimit));
     printf("    hashSize     : %d\n", hash_size);
     printf("    hashType     : %s\n", hash_type);
-    printf("    platform     : %d\n", (code_directory->platform));
-    printf("    pageSize     : %d\n", (int)pow(2, code_directory->pageSize));
-    printf("    identity     : %s\n", (char *)code_directory + identity_offset);
+    printf("    platform     : %d\n", (codeDirectory->platform));
+    printf("    pageSize     : %d\n", (int)pow(2, codeDirectory->pageSize));
+    printf("    identity     : %s\n", (char *)codeDirectory + identity_offset);
 
-    char cdhash[64];
-    sha256((unsigned char *)code_directory, ntohl(code_directory->length), cdhash, sizeof(cdhash));
-    printf("    CDHash       : %s\n", cdhash);
+    auto cdhash = cdHash(codeDirectory);
+    printf("    CDHash       : %s\n", cdhash.c_str());
     printf("\n");
 
-    uint8_t *hash_base = (uint8_t *)code_directory + hash_offset;
-    char hash[256];
+    uint8_t *hash_base = (uint8_t *)codeDirectory + hash_offset;
     for (int i = special_slot_size; i > 0; --i) {
-        bzero(hash, sizeof(hash));
-        format_hex(hash_base - i * hash_size, hash_size, hash);
-        printf("    Slot[%3d] : %s\n", -i, hash);
+        auto hash = formatBufferToHex(hash_base - i * hash_size, hash_size);
+        printf("    Slot[%3d] : %s\n", -i, hash.c_str());
     }
 
     int max_number = args.no_truncate ? slot_size : (slot_size > 10 ? 10 : slot_size);
 
     for (int i = 0; i < max_number; ++i) {
-        bzero(hash, sizeof(hash));
-        format_hex(hash_base + i * hash_size, hash_size, hash);
-        printf("    Slot[%3d] : %s\n", i, hash);
+        auto hash = formatBufferToHex(hash_base + i * hash_size, hash_size);
+        printf("    Slot[%3d] : %s\n", i, hash.c_str());
     }
 
     if (!args.no_truncate && slot_size > 10) {
@@ -164,9 +162,14 @@ static void printPKCS7(const unsigned char *data, size_t size) {
     BIO_free(bio);
 }
 
-static void sha256(const unsigned char *data, size_t size, char *output, size_t output_size) {
+static std::string sha256(const unsigned char *data, size_t size) {
     unsigned char *result = SHA256(data, size, NULL);
-    format_hex(result, SHA256_DIGEST_LENGTH, output);
+    return formatBufferToHex(result, SHA256_DIGEST_LENGTH);
+}
+
+static std::string sha1(const unsigned char *data, size_t size) {
+    unsigned char *result = SHA1(data, size, NULL);
+    return formatBufferToHex(result, SHA_DIGEST_LENGTH);
 }
 
 #else
@@ -175,10 +178,27 @@ static void printPKCS7(const unsigned char *data, size_t size) {
     puts("    Info: To show detailed PKCS7 information, use 'build.sh --openssl' and run again.");
 }
 
-static void sha256(const unsigned char *data, size_t size, char *output, size_t output_size) {
-    snprintf(output, output_size, "%s", "Unavailable. Use 'build.sh --openssl' and run again.");
+static std::string sha256(const unsigned char *data, size_t size) {
+    return "Unavailable. Use 'build.sh --openssl' and run again.";
 }
+
+static std::string sha1(const unsigned char *data, size_t size) {
+    return "Unavailable. Use 'build.sh --openssl' and run again.";
+}
+
 #endif
+
+static std::string cdHash(CS_CodeDirectory *codeDirectory) {
+    switch(codeDirectory->hashType) {
+        case CS_HASHTYPE_SHA1:
+            return sha1((unsigned char *)codeDirectory, ntohl(codeDirectory->length));
+        case CS_HASHTYPE_SHA256:
+        case CS_HASHTYPE_SHA256_TRUNCATED:
+            return sha256((unsigned char *)codeDirectory, ntohl(codeDirectory->length));
+        default:
+            return "Unsupported hash type.";
+    }
+}
 
 static void formatBlobMagic(uint32_t magic, char *formatted, size_t output_size) {
     switch(magic) {
