@@ -109,14 +109,12 @@ static void printSection(uint8_t *base, struct section_64 sect, int sectionIndex
 }
 
 static void printCStringSection(uint8_t *sectBase, size_t sectSize) {
-    char *formatted = (char *)malloc(1024 * 10);
-
     int count = 0;
     char *ptr = (char *)sectBase;
     while(ptr < (char *)(sectBase + sectSize)) {
         if (strlen(ptr) > 0) {
-            format_string(ptr, formatted);
-            printf("    \"%s\"\n", formatted);
+            auto formatted = formatStringLiteral(ptr);
+            printf("    \"%s\"\n", formatted.c_str());
             ptr += strlen(ptr);
 
             if (count >= 10 && !args.no_truncate) {
@@ -127,8 +125,6 @@ static void printCStringSection(uint8_t *sectBase, size_t sectSize) {
         ptr += 1;
     }
 
-    free(formatted);
-
     if (!args.no_truncate && ptr < (char *)(sectBase + sectSize)) {
         printf("    ... more ...\n");
     }
@@ -138,7 +134,7 @@ static void printPointerSection(uint8_t *base, struct section_64 *sect) {
     void *section = base + sect->offset;
 
     const size_t count = sect->size / sizeof(uintptr_t);
-    int max_count = args.no_truncate ? count : MIN(count, 10);
+    int max_count = args.no_truncate ? count : std::min<size_t>(count, 10);
 
     struct symtab_command *symtab_cmd = (struct symtab_command *)search_load_command(base, 0, is_symtab_load_command).lcmd;
 
