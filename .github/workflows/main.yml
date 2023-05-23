@@ -38,6 +38,9 @@ jobs:
       - run: ./macho_parser ../testing/code_coverage/build/Test.xctest/Test --section __llvm_covmap
       - run: ./macho_parser ../testing/code_coverage/build/Test.xctest/Test --section __llvm_covfun
       - run: ./macho_parser ../testing/code_coverage/build/Test.xctest/Test --section __llvm_prf_names
+      # Tests code signature
+      - run: ./macho_parser tests/fixtures/code_signature/main_sha1 --code-signature --code-directory --entitlement --blob-wrapper
+      - run: ./macho_parser tests/fixtures/code_signature/main_sha256 --code-signature --code-directory --entitlement --blob-wrapper
 
   macho-parser-bazel:
     name: Macho Parser (Bazel)
