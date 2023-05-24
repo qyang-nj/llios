@@ -10,8 +10,8 @@ extern "C" {
 
 static void printDylibDetail(struct dylib dylib);
 
-void printDylib(uint8_t *base, struct dylib_command *cmd) {
-    char *cmdName = "";
+void printDylib(const uint8_t *base, const struct dylib_command *cmd) {
+    const char *cmdName = "";
     if (cmd->cmd == LC_ID_DYLIB) {
         cmdName = "LC_ID_DYLIB";
     } else if (cmd->cmd == LC_LOAD_DYLIB) {

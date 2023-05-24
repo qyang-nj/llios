@@ -27,7 +27,7 @@ extern "C" {
 #include "ar_parser.h"
 
 // dylib.cpp
-void printDylib(uint8_t *base, struct dylib_command *cmd);
+void printDylib(const uint8_t *base, const struct dylib_command *cmd);
 
 // segment_64.cpp
 void printSegment(uint8_t *base, struct segment_command_64 *segCmd, int firstSectionIndex);
