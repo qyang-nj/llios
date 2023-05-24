@@ -1,23 +1,23 @@
 #include <string.h>
 
+#include "utils/utils.h"
 #include "argument.h"
 #include "build_version.h"
 
 static void get_tool_name(uint32_t tool, char *tool_name);
 static void get_platform_name(uint32_t platform, char *platform_name);
 
-void parse_build_version(void *base, struct build_version_command *build_version_cmd) {
+void printBuildVersion(const uint8_t *base, const struct build_version_command *build_version_cmd) {
     char platform_name[128];
-    char minos_string[128];
-    char sdk_string[128];
 
     get_platform_name(build_version_cmd->platform, platform_name);
-    format_version_string(build_version_cmd->minos, minos_string);
-    format_version_string(build_version_cmd->sdk, sdk_string);
+
+    auto minos = formatVersion(build_version_cmd->minos);
+    auto sdk = formatVersion(build_version_cmd->sdk);
 
     printf("%-20s cmdsize: %-6u platform: %s   minos: %s   sdk: %s\n", "LC_BUILD_VERSION",
         build_version_cmd->cmdsize,
-        platform_name, minos_string, sdk_string);
+        platform_name, minos.c_str(), sdk.c_str());
 
     if (args.verbosity == 0) {
         return;
@@ -25,21 +25,19 @@ void parse_build_version(void *base, struct build_version_command *build_version
 
     for (int i = 0; i < build_version_cmd->ntools; ++i) {
         char tool_name[128];
-        char tool_version_string[128];
 
-        struct build_tool_version *tool_version = (void *)build_version_cmd
-            + sizeof(struct build_version_command)
-            + i * sizeof(struct build_tool_version);
+        struct build_tool_version *tool_version = (struct build_tool_version *)((uint8_t *)build_version_cmd + sizeof(struct build_version_command) + i * sizeof(struct build_tool_version));
 
         get_tool_name(tool_version->tool, tool_name);
-        format_version_string(tool_version->version, tool_version_string);
 
-        printf ("    tool:  %s   version: %s\n", tool_name, tool_version_string);
+        auto toolVersionString = formatVersion(tool_version->version);
+
+        printf ("    tool:  %s   version: %s\n", tool_name, toolVersionString.c_str());
     }
 }
 
-void parse_version_min(void *base, struct version_min_command *version_min_cmd) {
-    char *cmd_name = NULL;
+void printVersionMin(const uint8_t *base, const struct version_min_command *version_min_cmd) {
+    const char *cmd_name = NULL;
     switch (version_min_cmd->cmd) {
         case LC_VERSION_MIN_MACOSX: cmd_name = "LC_VERSION_MIN_MACOSX"; break;
         case LC_VERSION_MIN_IPHONEOS: cmd_name = "LC_VERSION_MIN_IPHONEOS"; break;
@@ -47,22 +45,12 @@ void parse_version_min(void *base, struct version_min_command *version_min_cmd) 
         case LC_VERSION_MIN_TVOS: cmd_name = "LC_VERSION_MIN_TVOS"; break;
     }
 
-    char version_string[128];
-    char sdk_version[128];
-    format_version_string(version_min_cmd->version, version_string);
-    format_version_string(version_min_cmd->sdk, sdk_version);
+    auto version = formatVersion(version_min_cmd->version);
+    auto sdk = formatVersion(version_min_cmd->sdk);
 
     printf("%-20s cmdsize: %-6u version: %s   sdk: %s\n",
         cmd_name, version_min_cmd->cmdsize,
-        version_string, sdk_version);
-}
-
-void format_version_string(uint32_t version, char *version_string) {
-    int patch = (version & 0xFF);
-    int minor = (version & 0xFF00) >> 8;
-    int major = (version & 0xFFFF0000) >> 16;
-
-    sprintf(version_string, "%d.%d.%d", major, minor, patch);
+        version.c_str(), sdk.c_str());
 }
 
 static void get_platform_name(uint32_t platform, char *platform_name) {

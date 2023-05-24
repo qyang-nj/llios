@@ -53,3 +53,13 @@ std::string formatStringLiteral(const char *str) {
 
     return ss.str();
 }
+
+std::string formatVersion(uint32_t version) {
+    int patch = (version & 0xFF);
+    int minor = (version & 0xFF00) >> 8;
+    int major = (version & 0xFFFF0000) >> 16;
+
+    std::stringstream ss;
+    ss << major << "." << minor << "." << patch;
+    return ss.str();
+}
