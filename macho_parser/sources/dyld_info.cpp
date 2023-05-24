@@ -5,7 +5,6 @@
 
 extern "C" {
 #include "argument.h"
-#include "dylib.h"
 }
 
 #include "utils/utils.h"

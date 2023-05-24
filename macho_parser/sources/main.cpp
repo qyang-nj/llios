@@ -14,7 +14,6 @@ extern "C" {
 #include "util.h"
 #include "symtab.h"
 #include "dysymtab.h"
-#include "dylib.h"
 #include "linkedit_data.h"
 #include "build_version.h"
 }
@@ -26,6 +25,9 @@ extern "C" {
 #include "encryption_info.h"
 #include "small_cmds.h"
 #include "ar_parser.h"
+
+// dylib.cpp
+void printDylib(const uint8_t *base, const struct dylib_command *cmd);
 
 // segment_64.cpp
 void printSegment(uint8_t *base, struct segment_command_64 *segCmd, int firstSectionIndex);
@@ -130,7 +132,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
             case LC_LOAD_DYLIB:
             case LC_LOAD_WEAK_DYLIB:
             case LC_REEXPORT_DYLIB:
-                parse_dylib(base, (struct dylib_command *)lcmd);
+                printDylib(base, (struct dylib_command *)lcmd);
                 break;
             case LC_RPATH:
                 printRpath(base, (struct rpath_command *)lcmd);
