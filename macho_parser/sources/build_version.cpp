@@ -4,76 +4,70 @@
 #include "argument.h"
 #include "build_version.h"
 
-static void get_tool_name(uint32_t tool, char *tool_name);
-static void get_platform_name(uint32_t platform, char *platform_name);
+static std::string formatToolName(uint32_t tool) ;
+static std::string formatPlatformName(uint32_t platform);
 
-void printBuildVersion(const uint8_t *base, const struct build_version_command *build_version_cmd) {
-    char platform_name[128];
-
-    get_platform_name(build_version_cmd->platform, platform_name);
-
-    auto minos = formatVersion(build_version_cmd->minos);
-    auto sdk = formatVersion(build_version_cmd->sdk);
+void printBuildVersion(const uint8_t *base, const struct build_version_command *buildVersionCmd) {
+    auto platformName = formatPlatformName(buildVersionCmd->platform);
+    auto minos = formatVersion(buildVersionCmd->minos);
+    auto sdk = formatVersion(buildVersionCmd->sdk);
 
     printf("%-20s cmdsize: %-6u platform: %s   minos: %s   sdk: %s\n", "LC_BUILD_VERSION",
-        build_version_cmd->cmdsize,
-        platform_name, minos.c_str(), sdk.c_str());
+        buildVersionCmd->cmdsize,
+        platformName.c_str(), minos.c_str(), sdk.c_str());
 
     if (args.verbosity == 0) {
         return;
     }
 
-    for (int i = 0; i < build_version_cmd->ntools; ++i) {
-        char tool_name[128];
+    for (int i = 0; i < buildVersionCmd->ntools; ++i) {
+        struct build_tool_version *tool_version = (struct build_tool_version *)((uint8_t *)buildVersionCmd + sizeof(struct build_version_command) + i * sizeof(struct build_tool_version));
 
-        struct build_tool_version *tool_version = (struct build_tool_version *)((uint8_t *)build_version_cmd + sizeof(struct build_version_command) + i * sizeof(struct build_tool_version));
-
-        get_tool_name(tool_version->tool, tool_name);
-
+        auto toolName = formatToolName(tool_version->tool);
         auto toolVersionString = formatVersion(tool_version->version);
 
-        printf ("    tool:  %s   version: %s\n", tool_name, toolVersionString.c_str());
+        printf ("    tool:  %s   version: %s\n", toolName.c_str(), toolVersionString.c_str());
     }
 }
 
-void printVersionMin(const uint8_t *base, const struct version_min_command *version_min_cmd) {
+void printVersionMin(const uint8_t *base, const struct version_min_command *versionMinCmd) {
     const char *cmd_name = NULL;
-    switch (version_min_cmd->cmd) {
+    switch (versionMinCmd->cmd) {
         case LC_VERSION_MIN_MACOSX: cmd_name = "LC_VERSION_MIN_MACOSX"; break;
         case LC_VERSION_MIN_IPHONEOS: cmd_name = "LC_VERSION_MIN_IPHONEOS"; break;
         case LC_VERSION_MIN_WATCHOS: cmd_name = "LC_VERSION_MIN_WATCHOS"; break;
         case LC_VERSION_MIN_TVOS: cmd_name = "LC_VERSION_MIN_TVOS"; break;
     }
 
-    auto version = formatVersion(version_min_cmd->version);
-    auto sdk = formatVersion(version_min_cmd->sdk);
+    auto version = formatVersion(versionMinCmd->version);
+    auto sdk = formatVersion(versionMinCmd->sdk);
 
     printf("%-20s cmdsize: %-6u version: %s   sdk: %s\n",
-        cmd_name, version_min_cmd->cmdsize,
+        cmd_name, versionMinCmd->cmdsize,
         version.c_str(), sdk.c_str());
 }
 
-static void get_platform_name(uint32_t platform, char *platform_name) {
+static std::string formatPlatformName(uint32_t platform) {
     switch (platform) {
-        case PLATFORM_MACOS: strcpy(platform_name, "MACOS"); break;
-        case PLATFORM_IOS: strcpy(platform_name, "IOS"); break;
-        case PLATFORM_TVOS: strcpy(platform_name, "TVOS"); break;
-        case PLATFORM_WATCHOS: strcpy(platform_name, "WATCHOS"); break;
-        case PLATFORM_BRIDGEOS: strcpy(platform_name, "BRIDGEOS"); break;
-        case PLATFORM_MACCATALYST: strcpy(platform_name, "MACCATALYST"); break;
-        case PLATFORM_IOSSIMULATOR: strcpy(platform_name, "IOSSIMULATOR"); break;
-        case PLATFORM_TVOSSIMULATOR: strcpy(platform_name, "TVOSSIMULATOR"); break;
-        case PLATFORM_WATCHOSSIMULATOR: strcpy(platform_name, "WATCHOSSIMULATOR"); break;
-        case PLATFORM_DRIVERKIT: strcpy(platform_name, "PLATFORM_DRIVERKIT"); break;
-        default: strcpy(platform_name, "UNKNOWN"); break;
+        case PLATFORM_MACOS: return "MACOS";
+        case PLATFORM_IOS: return"IOS";
+        case PLATFORM_TVOS: return"TVOS";
+        case PLATFORM_WATCHOS: return"WATCHOS";
+        case PLATFORM_BRIDGEOS: return"BRIDGEOS";
+        case PLATFORM_MACCATALYST: return"MACCATALYST";
+        case PLATFORM_IOSSIMULATOR: return"IOSSIMULATOR";
+        case PLATFORM_TVOSSIMULATOR: return"TVOSSIMULATOR";
+        case PLATFORM_WATCHOSSIMULATOR: return"WATCHOSSIMULATOR";
+        case PLATFORM_DRIVERKIT: return"PLATFORM_DRIVERKIT";
+        default: return"UNKNOWN";
     }
 }
 
-static void get_tool_name(uint32_t tool, char *tool_name) {
+static std::string formatToolName(uint32_t tool) {
     switch (tool) {
-        case TOOL_CLANG: strcpy(tool_name, "CLANG"); break;
-        case TOOL_SWIFT: strcpy(tool_name, "SWIFT"); break;
-        case TOOL_LD: strcpy(tool_name, "LD"); break;
-        default: strcpy(tool_name, "UNKNOWN"); break;
+        case TOOL_CLANG: return "CLANG";
+        case TOOL_SWIFT: return "SWIFT";
+        case TOOL_LD: return "LD";
+        default: return "UNKNOWN";
     }
 }
