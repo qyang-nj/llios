@@ -1,35 +1,36 @@
 #include <stdio.h>
 #include <string.h>
 
+extern "C" {
+#include "build_version.h"
+}
+
 #include "load_command.h"
 #include "argument.h"
-#include "build_version.h"
 
-#include "dylib.h"
+static void printDylibDetail(struct dylib dylib);
 
-static void print_dylib_detail(struct dylib dylib);
-
-void parse_dylib(void *base, struct dylib_command *cmd) {
-    char *cmd_name = "";
+void printDylib(uint8_t *base, struct dylib_command *cmd) {
+    char *cmdName = "";
     if (cmd->cmd == LC_ID_DYLIB) {
-        cmd_name = "LC_ID_DYLIB";
+        cmdName = "LC_ID_DYLIB";
     } else if (cmd->cmd == LC_LOAD_DYLIB) {
-        cmd_name = "LC_LOAD_DYLIB";
+        cmdName = "LC_LOAD_DYLIB";
     } else if (cmd->cmd == LC_LOAD_WEAK_DYLIB) {
-        cmd_name = "LC_LOAD_WEAK_DYLIB";
+        cmdName = "LC_LOAD_WEAK_DYLIB";
     } else if (cmd->cmd == LC_REEXPORT_DYLIB) {
-        cmd_name = "LC_REEXPORT_DYLIB";
+        cmdName = "LC_REEXPORT_DYLIB";
     }
-    printf("%-20s cmdsize: %-6u %s\n", cmd_name, cmd->cmdsize, (char *)cmd + cmd->dylib.name.offset);
+    printf("%-20s cmdsize: %-6u %s\n", cmdName, cmd->cmdsize, (char *)cmd + cmd->dylib.name.offset);
 
     if (args.verbosity < 2) {
         return;
     }
 
-    print_dylib_detail(cmd->dylib);
+    printDylibDetail(cmd->dylib);
 }
 
-static void print_dylib_detail(struct dylib dylib) {
+static void printDylibDetail(struct dylib dylib) {
     char current_version[32];
     char compatibility_version[32];
 
@@ -38,5 +39,5 @@ static void print_dylib_detail(struct dylib dylib) {
 
     printf("  timestamp            : %u\n", dylib.timestamp);
     printf("  current version      : %s\n", current_version);
-    printf("  compatibilityversion : %s\n", compatibility_version);
+    printf("  compatibility version : %s\n", compatibility_version);
 }

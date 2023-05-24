@@ -10,7 +10,6 @@
 extern "C" {
 #include "argument.h"
 #include "util.h"
-#include "dylib.h"
 }
 
 #include "macho_binary.h"
