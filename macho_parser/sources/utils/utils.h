@@ -30,6 +30,7 @@ void decompressZlibData(const uint8_t *inputData, size_t inputSize, uint8_t *out
 std::string formatSize(uint64_t sizeInByte);
 std::string formatBufferToHex(const uint8_t *buffer, size_t bufferSize);
 std::string formatStringLiteral(const char *str);
+std::string formatVersion(uint32_t version);
 #endif
 
 

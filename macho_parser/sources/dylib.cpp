@@ -5,6 +5,7 @@ extern "C" {
 #include "build_version.h"
 }
 
+#include "utils/utils.h"
 #include "load_command.h"
 #include "argument.h"
 
@@ -34,10 +35,10 @@ static void printDylibDetail(struct dylib dylib) {
     char current_version[32];
     char compatibility_version[32];
 
-    format_version_string(dylib.current_version, current_version);
-    format_version_string(dylib.compatibility_version, compatibility_version);
+    auto currentVersion = formatVersion(dylib.current_version);
+    auto compabilityVersion = formatVersion(dylib.compatibility_version);
 
     printf("  timestamp            : %u\n", dylib.timestamp);
-    printf("  current version      : %s\n", current_version);
-    printf("  compatibility version : %s\n", compatibility_version);
+    printf("  current version      : %s\n", currentVersion.c_str());
+    printf("  compatibility version : %s\n", compabilityVersion.c_str());
 }

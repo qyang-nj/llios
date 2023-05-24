@@ -15,7 +15,6 @@ extern "C" {
 #include "symtab.h"
 #include "dysymtab.h"
 #include "linkedit_data.h"
-#include "build_version.h"
 }
 
 #include "macho_header.h"
@@ -25,6 +24,7 @@ extern "C" {
 #include "encryption_info.h"
 #include "small_cmds.h"
 #include "ar_parser.h"
+#include "build_version.h"
 
 // dylib.cpp
 void printDylib(const uint8_t *base, const struct dylib_command *cmd);
@@ -152,13 +152,13 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 parse_linkedit_data(base, (struct linkedit_data_command *)lcmd);
                 break;
             case LC_BUILD_VERSION:
-                parse_build_version(base, (struct build_version_command *)lcmd);
+                printBuildVersion(base, (struct build_version_command *)lcmd);
                 break;
             case LC_VERSION_MIN_MACOSX:
             case LC_VERSION_MIN_IPHONEOS:
             case LC_VERSION_MIN_WATCHOS:
             case LC_VERSION_MIN_TVOS:
-                parse_version_min(base, (struct version_min_command *)lcmd);
+                printVersionMin(base, (struct version_min_command *)lcmd);
                 break;
             case LC_UUID:
                 printUUID(base, (struct uuid_command *)lcmd);
