@@ -59,6 +59,9 @@ static char *command_name(uint32_t cmd) {
     case LC_DYLD_CHAINED_FIXUPS:
         cmd_name = "LC_DYLD_CHAINED_FIXUPS";
         break;
+    case LC_ATOM_INFO:
+        cmd_name = "LC_ATOM_INFO";
+        break;
     default:
         break;
     }

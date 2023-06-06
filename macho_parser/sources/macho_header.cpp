@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <cassert>
 
 extern "C" {
 #include "util.h"
