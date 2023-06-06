@@ -3,14 +3,10 @@
 #include <string.h>
 #include <string>
 
-extern "C" {
 #include "argument.h"
-}
-
 #include "utils/utils.h"
 #include "macho_binary.h"
 #include "exports_trie.h"
-#include "dyld_info.h"
 
 enum BindType {
     regular,

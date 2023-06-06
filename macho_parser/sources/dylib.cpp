@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 
-extern "C" {
-#include "build_version.h"
-}
-
 #include "utils/utils.h"
 #include "load_command.h"
 #include "argument.h"
@@ -32,13 +28,10 @@ void printDylib(const uint8_t *base, const struct dylib_command *cmd) {
 }
 
 static void printDylibDetail(struct dylib dylib) {
-    char current_version[32];
-    char compatibility_version[32];
-
     auto currentVersion = formatVersion(dylib.current_version);
-    auto compabilityVersion = formatVersion(dylib.compatibility_version);
+    auto compatibilityVersion = formatVersion(dylib.compatibility_version);
 
     printf("  timestamp            : %u\n", dylib.timestamp);
     printf("  current version      : %s\n", currentVersion.c_str());
-    printf("  compatibility version : %s\n", compabilityVersion.c_str());
+    printf("  compatibility version : %s\n", compatibilityVersion.c_str());
 }

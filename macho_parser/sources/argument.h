@@ -46,10 +46,6 @@ struct argument {
 // global variable that holds command line arguments
 extern struct argument args;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // parse the command line arguments and save the result to args
 void parseArguments(int argc, char **argv);
 
@@ -64,9 +60,5 @@ bool hasSectionSpecifed();
 bool showSection(int sectIndex, char *sectName);
 
 bool isSelectedArch(const char *arch);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* ARGUMENT_H */

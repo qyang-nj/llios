@@ -4,10 +4,6 @@
 #include <mach-o/loader.h>
 #include <stdbool.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void printSymbolTable(uint8_t *base, struct symtab_command *cmd);
 
 void printSymbol(int indent, uint8_t *base, struct symtab_command *symtabCmd, int offset);
@@ -15,9 +11,5 @@ void printSymbol(int indent, uint8_t *base, struct symtab_command *symtabCmd, in
 char *lookup_symbol_by_address(uint64_t address, uint8_t *base, struct symtab_command *symtabCmd);
 
 bool is_symtab_load_command(struct load_command *lcmd);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* SYMTAB_H */

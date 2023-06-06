@@ -5,7 +5,6 @@
 #include "load_command.h"
 #include "argument.h"
 #include "symtab.h"
-#include "dysymtab.h"
 
 static bool symtabLoadCommand(struct load_command *lcmd);
 static void printSymbols(uint8_t *base, struct symtab_command *symtabCmd, int offset, int num);

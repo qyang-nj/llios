@@ -2,7 +2,6 @@
 
 #include "utils/utils.h"
 #include "argument.h"
-#include "build_version.h"
 
 static std::string formatToolName(uint32_t tool) ;
 static std::string formatPlatformName(uint32_t platform);
