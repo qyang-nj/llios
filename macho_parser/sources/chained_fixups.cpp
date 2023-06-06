@@ -7,14 +7,8 @@
 #include <algorithm>
 #include <string>
 
-extern "C" {
 #include "argument.h"
-#include "util.h"
-}
-
 #include "macho_binary.h"
-
-#include "chained_fixups.h"
 
 static void printChainedFixupsHeader(struct dyld_chained_fixups_header *header);
 static void printImports(struct dyld_chained_fixups_header *header);

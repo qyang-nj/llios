@@ -9,21 +9,14 @@
 #include <mach-o/nlist.h>
 #include <vector>
 
-extern "C" {
 #include "argument.h"
-#include "util.h"
 #include "symtab.h"
-#include "dysymtab.h"
-}
 
 #include "macho_header.h"
 #include "macho_binary.h"
 #include "load_command.h"
-#include "dyld_info.h"
-#include "encryption_info.h"
 #include "small_cmds.h"
 #include "ar_parser.h"
-#include "build_version.h"
 
 // dylib.cpp
 void printDylib(const uint8_t *base, const struct dylib_command *cmd);
@@ -36,6 +29,16 @@ void printLinkEditData(uint8_t *base, struct linkedit_data_command *linkEditData
 
 // dysymtab.cpp
 void printDynamicSymbolTable(uint8_t *base, struct dysymtab_command *dysymtabCmd);
+
+// build_version.cpp
+void printBuildVersion(const uint8_t *base, const struct build_version_command *buildVersionCmd);
+void printVersionMin(const uint8_t *base, const struct version_min_command *versionMinCmd);
+
+// dyld_info.cpp
+void printDyldInfo(uint8_t *base, struct dyld_info_command *dyldInfoCmd);
+
+// encryption_info.cpp
+void printEncryptionInfo(uint8_t *base, struct encryption_info_command_64 *cmd);
 
 static void printMacho(uint8_t *machoBase);
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);

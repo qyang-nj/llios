@@ -3,10 +3,14 @@
 #include "utils/utils.h"
 #include "load_command.h"
 #include "argument.h"
-#include "chained_fixups.h"
 #include "exports_trie.h"
 #include "symtab.h"
-#include "code_signature.h"
+
+// code_signature.cpp
+void printCodeSignature(uint8_t *base, uint32_t dataoff, uint32_t datasize);
+
+// chained_fixups.cpp
+void printChainedFixups(uint8_t *base, uint32_t dataoff, uint32_t datasize);
 
 static std::string formatCommandName(uint32_t cmd);
 static void printFunctionStarts(uint8_t *base, uint32_t dataoff, uint32_t datasize);

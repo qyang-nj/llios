@@ -10,12 +10,8 @@
 #include <openssl/sha.h>
 #endif
 
-extern "C" {
 #include "argument.h"
-}
-
 #include "utils/utils.h"
-#include "code_signature.h"
 
 static void printCodeDirectory(CS_CodeDirectory *codeDirectory);
 static void printRequirement(unsigned char *data, int size);

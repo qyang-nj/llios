@@ -41,7 +41,7 @@ struct MachoBinary {
         } else if (ordinal == DYNAMIC_LOOKUP_ORDINAL) { // 254
             return "dynamic lookup";
         } else if (ordinal == EXECUTABLE_ORDINAL) { // 255
-            return "exectuable";
+            return "executable";
         }
         return "invalid ordinal";
     }

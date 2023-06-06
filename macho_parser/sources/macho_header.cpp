@@ -11,10 +11,7 @@
 #include <cmath>
 #include <cassert>
 
-extern "C" {
-#include "util.h"
 #include "argument.h"
-}
 
 #include "macho_header.h"
 
