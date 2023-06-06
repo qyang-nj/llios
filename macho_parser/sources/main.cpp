@@ -14,7 +14,6 @@ extern "C" {
 #include "util.h"
 #include "symtab.h"
 #include "dysymtab.h"
-#include "linkedit_data.h"
 }
 
 #include "macho_header.h"
@@ -31,6 +30,9 @@ void printDylib(const uint8_t *base, const struct dylib_command *cmd);
 
 // segment_64.cpp
 void printSegment(uint8_t *base, struct segment_command_64 *segCmd, int firstSectionIndex);
+
+// linkedit_data.cpp
+void printLinkEditData(uint8_t *base, struct linkedit_data_command *linkEditDataCmd);
 
 static void printMacho(uint8_t *machoBase);
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
@@ -152,7 +154,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
 #if __clang_major__ >= 15
             case LC_ATOM_INFO:
 #endif
-                parse_linkedit_data(base, (struct linkedit_data_command *)lcmd);
+                printLinkEditData(base, (struct linkedit_data_command *)lcmd);
                 break;
             case LC_BUILD_VERSION:
                 printBuildVersion(base, (struct build_version_command *)lcmd);
