@@ -37,8 +37,4 @@ for src in sources/**/*.cpp; do
     xcrun clang++ --std=c++17 -c -o "build/$(basename $src).o" $CFLAGS $src
 done
 
-for src in sources/*.c; do
-    xcrun clang -c -o "build/$(basename $src).o" $CFLAGS $src
-done
-
 xcrun clang++ --std=c++17 -o macho_parser -framework CoreFoundation -framework Security $LDFLAGS build/*.o

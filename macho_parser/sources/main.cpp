@@ -34,6 +34,9 @@ void printSegment(uint8_t *base, struct segment_command_64 *segCmd, int firstSec
 // linkedit_data.cpp
 void printLinkEditData(uint8_t *base, struct linkedit_data_command *linkEditDataCmd);
 
+// dysymtab.cpp
+void printDynamicSymbolTable(uint8_t *base, struct dysymtab_command *dysymtabCmd);
+
 static void printMacho(uint8_t *machoBase);
 static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> allLoadCommands);
 
@@ -113,7 +116,7 @@ static void printLoadCommands(uint8_t *base, std::vector<struct load_command *> 
                 printSymbolTable(base, (struct symtab_command *)lcmd);
                 break;
             case LC_DYSYMTAB:
-                parse_dynamic_symbol_table(base, (struct dysymtab_command *)lcmd);
+                printDynamicSymbolTable(base, (struct dysymtab_command *)lcmd);
                 break;
             case LC_LOAD_DYLINKER:
             case LC_ID_DYLINKER:
