@@ -30,6 +30,8 @@ void printLinkEditData(uint8_t *base, struct linkedit_data_command *linkEditData
         printExportTrie(base, linkEditDataCmd->dataoff, linkEditDataCmd->datasize);
     } else if (linkEditDataCmd->cmd == LC_CODE_SIGNATURE) {
         printCodeSignature(base, linkEditDataCmd->dataoff, linkEditDataCmd->datasize);
+    } else {
+        hexdump(linkEditDataCmd->dataoff, base + linkEditDataCmd->dataoff, linkEditDataCmd->datasize);
     }
 }
 

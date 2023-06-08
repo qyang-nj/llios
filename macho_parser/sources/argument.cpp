@@ -217,6 +217,9 @@ static uint8_t getCommandTypeFromString(char *commandString) {
         { "LC_DYLD_ENVIRONMENT",    LC_DYLD_ENVIRONMENT },
         { "LC_CODE_SIGNATURE",      LC_CODE_SIGNATURE },
         { "LC_ENCRYPTION_INFO_64",  LC_ENCRYPTION_INFO_64 },
+#if __clang_major__ >= 15
+        { "LC_ATOM_INFO",           LC_ATOM_INFO },
+#endif
     };
 
     std::string key = std::string(commandString);
