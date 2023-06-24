@@ -54,4 +54,4 @@ xcrun simctl launch --console-pty "iPhone 14 Pro" me.qyang.HostApp
 UI tests let us test our app like the end user. It can mimic the user behaviors, e.g. tapping a button. In this case, our app is a standalone application, called target app. There is a separate runner app that loads the test bundle to test against our application. I'll add more details for this one later.
 
 ## xcodebuild test-without-building
-A more common scenario is to use `xcodebuild test-without-build` to run `.xctest`. [Here](../testing/xcodebuild/) is a script to show how this works.
+A more common scenario is to use `xcodebuild test-without-build` to run `.xctest`. [Here](../testing/xcodebuild/run_test.py) is a script to show how this works.

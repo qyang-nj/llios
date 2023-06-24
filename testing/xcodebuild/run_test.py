@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+"""A script to demonstrate how to run tests with `xcodebuild test-without-building`"""
+
 import argparse
 import tempfile
 import shutil
@@ -25,7 +27,6 @@ test_root = tempfile.TemporaryDirectory()
 shutil.copytree(test_bundle_path, PurePath(test_root.name, test_bundle_name))
 
 test_host_path = "__PLATFORMS__/iPhoneSimulator.platform/Developer/Library/Xcode/Agents/xctest"
-
 
 if args.host_app is not None:
     host_app_path = Path(args.host_app)
