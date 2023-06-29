@@ -1,6 +1,4 @@
 # Build Swift Macros
-In WWDC 2023, Apple announced [Swift Macros](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/macros), which allow generating code at compile time. Swift Macros is beyond a regular programming language feature, it actually extends the Swift compiler. We will discuss in two parts, implement macro and use macro.
-
 In WWDC 2023, Apple announced [Swift Macros](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/macros), which enable code generation during compile time. Swift Macros go beyond being a regular programming language feature; they actually extend the functionality of the Swift compiler. In this discussion, we will cover two aspects, implementing macros and using macros, from the build perspective.
 
 ## Implement Macro
