@@ -44,9 +44,9 @@ Secondly, we just invocate the macro by `#FOO`.
 let foo = #FOO("bar")
 ```
 
-The declaration and invocation can be in the same file or even different modules. To compile, we need to pass **`-load-plugin-executable /path/to/FooPlugin#Foo`** to the compiler. (Please note it's a Swift frontend flag, `-Xfrondend` is needed if calling from Swift driver). The value format is "\<path-to-exectuable\>#\<module-name\>". **Wherever the macro is declared or invoked, this flag is required**.
+The declaration and invocation can be in the same file or even different modules. To compile, we need to pass **`-Xfrontend -load-plugin-executable -Xfrontend /path/to/FooPlugin#Foo`** to the compiler. The value format is "\<path-to-exectuable\>#\<module-name\>". Please note that wherever the macro is declared or invoked, this flag is required.
 
 There is another flag called `-load-plugin-library`, which accepts a dynamic library instead of an executable. The use case needs to be researched.
 
 ## Sample
-There is a sample [here](../building/swift_macros/). Use `swift build -v` to see how the building works.
+There is a sample [here](../building/swift_macros/). Use `swift build -v` to see how building macros works.
