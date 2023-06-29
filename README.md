@@ -1,8 +1,6 @@
 # Low Level iOS
 This repo is mostly my study notes about low level iOS.
 
-If you find anything in my notes is incorrect, please create an [issue](https://github.com/qyang-nj/llios/issues)! If you have any questions, feel free to use [Discussions](https://github.com/qyang-nj/llios/discussions) so that we can learn something together.
-
 ## Topics
 * [Mach-O Parser](./macho_parser) - writing a Mach-O format parser while learning it
     * [LC_SEGMENT_64](./macho_parser/docs/LC_SEGMENT_64.md) - segments and sections
@@ -21,6 +19,7 @@ If you find anything in my notes is incorrect, please create an [issue](https://
     * [LC_CODE_SIGNATURE](./macho_parser/docs/LC_CODE_SIGNATURE.md) - code signing and code signature format
 * Building
     * [Build iOS App](./build_ios_app) - build and debug an iOS app without an IDE
+    * [Build Swift Macros](./articles/BuildSwiftMacros.md)
     * [Mixed Language Compiling](./articles/MixedModuleCompiling.md)
     * [Module Map](./articles/ModuleMap.md) - common formats of `module.modulemap`
     * [Import Search Path](./import_search_path) - how import search path (`-I`) affects build time
