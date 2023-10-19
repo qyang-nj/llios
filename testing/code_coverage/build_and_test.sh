@@ -37,13 +37,17 @@ xcrun clang -bundle -o $TEST_BINARY build/Test.o \
 PROFRAW_FILE="/tmp/test.profraw"
 PROFDATA_FILE="/tmp/test.profdata"
 
-export SIMCTL_CHILD_LLVM_PROFILE_FILE="$PROFRAW_FILE"
+# %c enables a mode in which profile counter updates are continuously synced to a file
+export SIMCTL_CHILD_LLVM_PROFILE_FILE="$PROFRAW_FILE%c"
 
 rm -f $PROFRAW_FILE $PROFDATA_FILE
 
+# Don't exit if test fails
+set +e
 xcrun simctl spawn --arch=$ARCH --standalone "iPhone 14 Pro"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
     $PWD/build/Test.xctest
+set -e
 
 xcrun llvm-profdata merge -sparse "$PROFRAW_FILE" -o "$PROFDATA_FILE"
 
