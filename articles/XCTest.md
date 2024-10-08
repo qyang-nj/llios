@@ -1,5 +1,8 @@
 # XCTest
 
+> [!WARNING]
+> This note is deprecated. See [Behind the scenes: iOS Testing](../articles/iOSTesting.md)
+
 The word "xctest" is extensively used in the realm of iOS testing, the test bundle (`.xctest`), the test framework (`XCTest.framework`), and the test runner (`xctest`). This article along with a sample will dive into some details about iOS testing.
 
 ## Build and Run

@@ -36,7 +36,7 @@ This repo is mostly my study notes about low level iOS.
     * [Behind the scenes: iOS Testing](./articles/iOSTesting.md)
     * [Behind the scenes: Code Coverage](./articles/CodeCoverage.md)
     * [Code Coverage on Test Crash](./articles/CodeCoverageOnTestCrash.md)
-    * [Archived] [XCTest](./xctest)
+    * [Archived] [XCTest](./articles/XCTest.md)
 * Xcode
     * [Behind the scenes: SwiftUI Previews](./articles/SwiftUIPreview.md)
     * [Xcode.app Directory Structure](./articles/XcodeDirectoryStructure.md)

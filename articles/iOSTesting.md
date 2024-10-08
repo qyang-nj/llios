@@ -1,4 +1,7 @@
 # Behind the scenes: iOS Testing
+
+(Updated on 10/8/2024)
+
 This article uncovers what happens behind the scenes when building and running iOS tests. It explains what "xctest" can mean and three kinds of comment tests. To simplify the complexities, here we just talk about tests on iOS simulator. Other platforms are very similar.
 
 ## XCTest
@@ -55,3 +58,50 @@ UI tests let us test our app like the end user. It can mimic the user behaviors,
 
 ## xcodebuild test-without-building
 A more common scenario is to use `xcodebuild test-without-build` to run `.xctest`. [Here](../testing/xcodebuild/run_test.py) is a script to show how this works.
+
+## Swift Testing
+In Xcode 16, Apple introduced a new testing framework called [Swift Testing](https://developer.apple.com/documentation/testing/). From the building perspective, Swift Testing is fully compatible with XCTest. We can write both Swift Testing and XCTest cases within the same module, or even in the same file (see [sample](../testing/logic_test/test.swift)). The build product for Swift Testing remains a .xctest bundle, with a few key differences outlined below.
+
+|             |Swift Testing | XCTest | Notes   |
+|-------------|--------------| -------| ------- |
+|Build product|.xctest bundle|.xctest bundle|   |
+|Framework    |`Testing.framework`|`XCTest.framework`||
+|Compiling    |`-plugin-path $TOOL_CHAIN/usr/lib/swift/host/plugins/testing`| | In a small sample code, this plugin doesn’t seem to have any effect.
+|Linking      |`-lXCTestSwiftSupport`||Without this linker flag, linking can succeed but no tests can be found at runtime.
+
+
+The approach for running Swift Testings cases remains the same as with XCTest. However, the output format of Swift Testing has changed, which can cause issues with tools that parse the results. For example, [xcbeautify is affected by this](https://github.com/cpisciotta/xcbeautify/issues/313).
+
+<details>
+  <summary>Output from XCTest</summary>
+
+```
+Test Suite 'All tests' started at 2024-10-08 10:33:04.291.
+Test Suite 'Test.xctest' started at 2024-10-08 10:33:04.292.
+Test Suite 'XCTestDemo' started at 2024-10-08 10:33:04.292.
+Test Case '-[Test.XCTestDemo testMathOperations]' started.
+Test Case '-[Test.XCTestDemo testMathOperations]' passed (0.000 seconds).
+Test Suite 'XCTestDemo' passed at 2024-10-08 10:33:04.293.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'Test.xctest' passed at 2024-10-08 10:33:04.293.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'All tests' passed at 2024-10-08 10:33:04.293.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.002) seconds
+```
+</details>
+
+<details>
+  <summary>Output from Swift Testing</summary>
+
+```
+◇ Test run started.
+↳ Testing Library Version: 94 (arm64-apple-ios13.0-simulator)
+◇ Suite SwiftTestingDemo started.
+◇ Test verifyMathOperations() started.
+✔ Test verifyMathOperations() passed after 0.001 seconds.
+✔ Suite SwiftTestingDemo passed after 0.001 seconds.
+✔ Test run with 1 test passed after 0.001 seconds.
+```
+
+</details>
+
