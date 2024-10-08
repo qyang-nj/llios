@@ -1,7 +1,9 @@
 #!/bin/zsh
-# This script was tested on Xcode 14.0
+# This script was tested on Xcode 16.0
 
-TARGET="x86_64-apple-ios14.0-simulator"
+set -e
+
+TARGET="arm64-apple-ios16.0-simulator"
 SDKROOT=$(xcrun --show-sdk-path --sdk iphonesimulator)
 PLATFORM_DIR="$(xcode-select -p)/Platforms/iPhoneSimulator.platform"
 TOOLCHAIN_DIR="$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain"
@@ -12,11 +14,16 @@ mkdir -p build/HostApp.app
 
 # Building the host app
 xcrun swiftc AppDelegate.swift ViewController.swift \
-    -sdk "$SDKROOT" -target "$TARGET" \
+    -sdk "$SDKROOT" \
+    -target "$TARGET" \
     -emit-executable \
+    -Xlinker -rpath -Xlinker @executable_path/Frameworks \
     -o "build/HostApp.app/HostApp"
 
-cp App-Info.plist build/HostApp.app/Info.plist
+ditto App-Info.plist build/HostApp.app/Info.plist
+
+# For Swift Testing, Testing.framework needs to be bundled with the host app
+ditto "$PLATFORM_DIR/Developer/Library/Frameworks/Testing.framework" build/HostApp.app/Frameworks/Testing.framework
 
 # Building the test
 mkdir -p build/HostApp.app/PlugIns/HostedTests.xctest
@@ -38,7 +45,7 @@ xcrun ld -bundle -o build/HostApp.app/PlugIns/HostedTests.xctest/HostedTests bui
 
 # Install the app
 xcrun simctl shutdown all
-xcrun simctl boot "iPhone 14 Pro"
+xcrun simctl boot "iPhone 16"
 xcrun simctl install booted "$(realpath build/HostApp.app)"
 
 # Launch the app and run the tests
