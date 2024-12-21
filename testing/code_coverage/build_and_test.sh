@@ -2,7 +2,7 @@
 # This script was tested on Xcode 16.2
 set -e
 
-TARGET="$(uname -m)-apple-ios16.2-simulator"
+TARGET="$(uname -m)-apple-ios16.1-simulator"
 
 SDKROOT=$(xcrun --show-sdk-path --sdk iphonesimulator)
 PLATFORM_DIR="$(xcode-select -p)/Platforms/iPhoneSimulator.platform"
@@ -41,6 +41,8 @@ PROFDATA_FILE="/tmp/test.profdata"
 export SIMCTL_CHILD_LLVM_PROFILE_FILE="$PROFRAW_FILE%c"
 
 rm -f $PROFRAW_FILE $PROFDATA_FILE
+
+xcrun simctl list
 
 # Don't exit if test fails
 set +e
