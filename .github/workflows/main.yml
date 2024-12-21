@@ -15,7 +15,6 @@ concurrency:
 
 env:
   CI: 1
-  DEVELOPER_DIR: /Applications/Xcode_16.1.app/Contents/Developer
 
 jobs:
   macho-parser:
