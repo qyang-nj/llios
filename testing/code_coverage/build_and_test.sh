@@ -44,7 +44,7 @@ rm -f $PROFRAW_FILE $PROFDATA_FILE
 
 # Don't exit if test fails
 set +e
-xcrun simctl spawn --arch=$ARCH --standalone "iPhone 16 Pro"  \
+xcrun simctl spawn --arch=$ARCH --standalone "iPhone 16"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
     $PWD/build/Test.xctest
 set -e
