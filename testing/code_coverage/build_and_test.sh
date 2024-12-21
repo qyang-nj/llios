@@ -3,7 +3,7 @@
 set -e
 
 if [ -n "$CI" ]; then
-    xcode-select -s /Applications/Xcode_16.1.app
+    DEVELOPER_DIR="/Applications/Xcode_16.1.app/Contents/Developer"
 fi
 
 TARGET="$(uname -m)-apple-ios16.1-simulator"
