@@ -1,6 +1,10 @@
 #!/bin/zsh
-# This script was tested on Xcode 16.2
+# This script was tested on Xcode 16.1
 set -e
+
+if [ -n "$CI" ]; then
+    xcode-select -s /Applications/Xcode_16.1.app
+fi
 
 TARGET="$(uname -m)-apple-ios16.1-simulator"
 
