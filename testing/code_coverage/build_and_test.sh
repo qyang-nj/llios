@@ -2,10 +2,6 @@
 # This script was tested on Xcode 16.1
 set -e
 
-if [ -n "$CI" ]; then
-    DEVELOPER_DIR="/Applications/Xcode_16.1.app/Contents/Developer"
-fi
-
 TARGET="$(uname -m)-apple-ios16.1-simulator"
 
 SDKROOT=$(xcrun --show-sdk-path --sdk iphonesimulator)
@@ -46,11 +42,9 @@ export SIMCTL_CHILD_LLVM_PROFILE_FILE="$PROFRAW_FILE%c"
 
 rm -f $PROFRAW_FILE $PROFDATA_FILE
 
-xcrun simctl list
-
 # Don't exit if test fails
 set +e
-xcrun simctl spawn --arch=$ARCH --standalone "iPhone 16"  \
+xcrun simctl spawn --arch=$ARCH --standalone "iPhone 15"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
     $PWD/build/Test.xctest
 set -e
