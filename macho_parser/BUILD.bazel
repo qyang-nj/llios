@@ -39,7 +39,7 @@ cc_test(
         "sources",
     ],
     deps = [
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest_main",
         ":utils",
     ]
 )

@@ -1,8 +1,8 @@
 #!/bin/zsh
-# This script was tested on Xcode 14.3
+# This script was tested on Xcode 16.1
 set -e
 
-TARGET="$(uname -m)-apple-ios15.2-simulator"
+TARGET="$(uname -m)-apple-ios16.1-simulator"
 
 SDKROOT=$(xcrun --show-sdk-path --sdk iphonesimulator)
 PLATFORM_DIR="$(xcode-select -p)/Platforms/iPhoneSimulator.platform"
@@ -44,7 +44,7 @@ rm -f $PROFRAW_FILE $PROFDATA_FILE
 
 # Don't exit if test fails
 set +e
-xcrun simctl spawn --arch=$ARCH --standalone "iPhone 14 Pro"  \
+xcrun simctl spawn --arch=$ARCH --standalone "iPhone 15"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
     $PWD/build/Test.xctest
 set -e
