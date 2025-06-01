@@ -25,6 +25,7 @@ This repo is mostly my study notes about low level iOS.
     * [Import Search Path](./import_search_path) - how import search path (`-I`) affects build time
     * [Swift Generated ObjC Header](./building/swift_generated_objc_header/README.md)
     * [Dead Code Elimination](./dce)
+    * [Swift Module (`.swiftmodule`)](./articles/SwiftModule.md)
     * [Swift Source Info (`.swiftsourceinfo`)](./articles/SwiftSourceInfo.md)
 * Dynamic Linking
     * [How does dynamic linking works](./dynamic_linking)
