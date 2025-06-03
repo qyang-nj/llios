@@ -4,15 +4,15 @@
 
 set -e
 
-cat > lib.swift <<EOF
+cat >lib.swift <<EOF
 class Foo {
   init(privateLet: String) {
-    self.privateLet = privateLet
+    self.privateInitLet = privateLet
   }
 
-  private let privateLet: String
+  private let privateInitLet: String
 
-  private let privateLet2: String = "__private_Let2"
+  private let privateLet2: String = "__privateLet2"
 
   private var privateVar = "__privateVar"
 
@@ -31,10 +31,6 @@ class Foo {
   @inline(__always) func privateInlineFunc() -> String {
     return "__privateInlineFunc"
   }
-
-  public func publicFunc() -> String {
-    return "Public function"
-  }
 }
 
 // PublicClassPlaceholder
@@ -42,12 +38,12 @@ EOF
 
 change_private_let_name() {
   message="Changing a private let name"
-  sed -i '' 's/privateLet/newPrivateLet/g' lib.swift
+  sed -i '' 's/privateInitLet/newPrivateInitLet/g' lib.swift
 }
 
 change_private_let_value() {
   message="Changing a private let value"
-  sed -i '' 's/__private_Let2/newValue/g' lib.swift
+  sed -i '' 's/__privateLet2/newValue/g' lib.swift
 }
 
 change_private_var_value() {
@@ -82,6 +78,7 @@ add_public_class() {
 }
 
 changes=(
+  add_public_class
   change_private_let_name
   change_private_let_value
   change_private_var_value
@@ -89,23 +86,26 @@ changes=(
   change_private_computed_var
   change_private_func
   change_private_inline_func
-  add_public_class
 )
 
 build_swiftmodule() {
-    # The following flags have no effect on the .swiftmodule file for this example:
-    #   -Xfrontend -disable-reflection-metadata
-    #   -Xfrontend -no-serialize-debugging-options
-    #   -enable-library-evolution
-    extra_flags=()
-    xcrun swiftc -emit-module -parse-as-library -module-name=lib -o lib.swiftmodule $extra_flags lib.swift
-    checksum=$(sha256sum lib.swiftmodule | cut -d ' ' -f1)
+  # The following flags have no effect on the .swiftmodule file for this example:
+  #   -Xfrontend -disable-reflection-metadata
+  #   -Xfrontend -no-serialize-debugging-options
+  extra_flags=()
+  xcrun swiftc -enable-library-evolution -emit-module -emit-module-interface -parse-as-library -module-name=lib -o lib.swiftmodule $extra_flags lib.swift
+  swiftmodule_checksum=$(sha256sum lib.swiftmodule | cut -d ' ' -f1)
+  swiftinterface_checksum=$(sha256sum lib.swiftinterface | cut -d ' ' -f1)
 }
 
 # Initial compilation and hash calculation
 build_swiftmodule
-echo "Initial checksum: $checksum"
-previous_checksum=$checksum
+printf "%-42s.swiftmodule (${swiftmodule_checksum:0:16})       \t.swiftinterface (${swiftinterface_checksum:0:16})\n" "Initial:"
+previous_swiftmodule_checksum=$swiftmodule_checksum
+previous_swiftinterface_checksum=$swiftinterface_checksum
+
+readonly changed="\033[0;31mChanged\033[0m"
+readonly unchanged="\033[0;32mUnchanged\033[0m"
 
 # Execute them in order
 for change in "${changes[@]}"; do
@@ -113,14 +113,13 @@ for change in "${changes[@]}"; do
   printf "%-42s" "$message:"
 
   build_swiftmodule
-  current_checksum=$checksum
 
-  printf "${current_checksum:0:16} "
-  if [[ "$previous_checksum" == "$current_checksum" ]]; then
-    echo " \033[0;32mUnchanged\033[0m"
-  else
-    echo " \033[0;31mChanged\033[0m"
-  fi
+  [[ "$previous_swiftmodule_checksum" == "$swiftmodule_checksum" ]] && stat=$unchanged || stat=$changed
+  echo -n ".swiftmodule (${swiftmodule_checksum:0:16} $stat)"
 
-  previous_checksum=$current_checksum
+  [[ "$previous_swiftinterface_checksum" == "$swiftinterface_checksum" ]] && stat=$unchanged || stat=$changed
+  echo "\t.swiftinterface (${swiftinterface_checksum:0:16} $stat)"
+
+  previous_swiftmodule_checksum=$swiftmodule_checksum
+  previous_swiftinterface_checksum=$swiftinterface_checksum
 done
