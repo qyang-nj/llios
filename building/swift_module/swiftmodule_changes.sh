@@ -6,7 +6,14 @@ set -e
 
 cat > lib.swift <<EOF
 class Foo {
-  private let privateLet = "__privateLet"
+  init(privateLet: String) {
+    self.privateLet = privateLet
+  }
+
+  private let privateLet: String
+
+  private let privateLet2: String = "__private_Let2"
+
   private var privateVar = "__privateVar"
 
   lazy private var privateLazyVar = {
@@ -33,50 +40,56 @@ class Foo {
 // PublicClassPlaceholder
 EOF
 
-change_private_let() {
-  message="Changing a private let"
-  sed -i '' 's/__privateLet/newValue/' lib.swift
+change_private_let_name() {
+  message="Changing a private let name"
+  sed -i '' 's/privateLet/newPrivateLet/g' lib.swift
 }
 
-change_private_var() {
-  message="Changing a private var"
-  sed -i '' 's/__privateVar/newValue/' lib.swift
+change_private_let_value() {
+  message="Changing a private let value"
+  sed -i '' 's/__private_Let2/newValue/g' lib.swift
+}
+
+change_private_var_value() {
+  message="Changing a private var value"
+  sed -i '' 's/__privateVar/newValue/g' lib.swift
 }
 
 change_private_lazy_var() {
   message="Changing a private lazy var"
-  sed -i '' 's/__privateLazyVar/newValue/' lib.swift
+  sed -i '' 's/__privateLazyVar/newValue/g' lib.swift
 }
 
 change_private_computed_var() {
   message="Changing a private computed var"
-  sed -i '' 's/__privateComputedVar/newValue/' lib.swift
+  sed -i '' 's/__privateComputedVar/newValue/g' lib.swift
 }
 
 change_private_func() {
   message="Changing a private func body"
-  sed -i '' 's/__privateFunc/newValue/' lib.swift
+  sed -i '' 's/__privateFunc/newValue/g' lib.swift
 }
 
 change_private_inline_func() {
   message="Changing a private inline func body"
-  sed -i '' 's/__privateInlineFunc/newValue/' lib.swift
+  sed -i '' 's/__privateInlineFunc/newValue/g' lib.swift
 }
 
 add_public_class() {
   # This change should make .swiftmodule change
   message="Adding a public class"
-  sed -i '' 's/\/\/ PublicClassPlaceholder/public class Foo2 {}/' lib.swift
+  sed -i '' 's/\/\/ PublicClassPlaceholder/public class Foo2 {}/g' lib.swift
 }
 
 changes=(
-    change_private_let
-    change_private_var
-    change_private_lazy_var
-    change_private_computed_var
-    change_private_func
-    change_private_inline_func
-    add_public_class
+  change_private_let_name
+  change_private_let_value
+  change_private_var_value
+  change_private_lazy_var
+  change_private_computed_var
+  change_private_func
+  change_private_inline_func
+  add_public_class
 )
 
 build_swiftmodule() {
