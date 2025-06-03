@@ -6,9 +6,9 @@ A `.swiftmodule` file is a binary representation of a Swift module's interface, 
 
 The `.swiftmodule` file is encoded in the [LLVM Bitstream](https://llvm.org/docs/BitCodeFormat.html) format, a compact and efficient binary format extensively used by the Swift compiler. [The Swift Serialization documentation](https://github.com/swiftlang/swift/blob/main/docs/Serialization.md) in the Swift repository provides a high-level overview of the file format and its contents.
 
-While tools like `llvm-bcanalyzer` can parse general Bitstream structures, and `sil-opt` can print the SIL section, there’s no fully supported tool that can decode the full contents of `.swiftmodule` files in a human-readable way.
+While tools like `llvm-bcanalyzer` can parse general Bitstream structures, and `sil-opt` can print the SIL section, AFAIK there’s no tool that can decode the full contents of `.swiftmodule` files in a human-readable way.
 
-* Print out general Bitstream block information
+* Print out general Bitstream block and record information
 ```bash
 llvm-bcanalyzer Foo.swiftmodule
 ```
@@ -30,7 +30,7 @@ swift-ide-test -print-module -source-filename=Foo.swift -module-to-print=Foo -I 
 
 When a module imports another module—for example, `import Foo`—it depends on `Foo.swiftmodule` to build. If `Foo.swiftmodule` changes, all modules that depend on it must be rebuilt. Understanding what kinds of source changes cause `.swiftmodule` to change is therefore critical for optimizing build performance, especially in large codebases.
 
-To explore this, we can make a variety of source modifications, build the module using `swiftc`, and compare the resulting `.swiftmodule` checksums. The screenshot below is the result and you can find the full script [here](../building/swift_module/swiftmodule_changes.sh).
+To explore this, I made a variety of source modifications, build the module using `swiftc -emit-module`, and compare the resulting `.swiftmodule` checksums. The screenshot below is the result and you can find the full script [here](../building/swift_module/swiftmodule_changes.sh).
 
 ![swiftmodule changes](./images/swiftmodule_changes.png)
 
