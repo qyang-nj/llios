@@ -103,14 +103,14 @@ This section stores function records, which contains the region-to-counter mappi
 ```
 
 ## Source Path Mapping
-As shown above, `__llvm_covmap` contains absolute source paths by default. This is problematic for remotely cacheable builds, such as those using Bazel. Therefore, we need to map absolute paths to relative paths using `-coverage-prefix-map` or `-file-prefix-map`. If both are provided, `-file-prefix-map` takes precedence. Please note that `-file-prefix-map` will map more paths than coverage related ones.
+As shown above, `__llvm_covmap` contains absolute source paths by default. This is problematic for remotely cacheable builds, such as those using Bazel. Therefore, we need to map absolute paths to relative paths using `-coverage-prefix-map` or `-file-prefix-map`. If both are provided, `-file-prefix-map` takes precedence. Note that `-file-prefix-map` applies more broadly and will map paths beyond coverage-related ones.
 
-We can inspect __llvm_covmap to confirm the embedded source paths.
+We can inspect `__llvm_covmap` section to confirm the embedded source paths.
 
 ## Conclusion
-Overall, LLVM code coverage operates by instrumenting the code, collecting execution data, mapping it back to the original source code, and generating reports to provide insights into the coverage achieved during testing.
+Overall, LLVM code coverage works by instrumenting the code, collecting execution data, mapping it back to the original source, and generating reports that show the coverage achieved during execution.
 
-One thing to note, code coverage isn't limit to tests. Any executable code can have coverage.
+One thing to note: code coverage isn’t limited to tests. Any executable code can produce coverage data.
 
 ## References
 * [Source-based Code Coverage](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html)
