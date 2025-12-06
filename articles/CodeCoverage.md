@@ -1,7 +1,7 @@
-# Behind the scenes: Code Coverage
-Code coverage is a software testing metric that measures the extent to which the source code of a program is executed during the testing process. It provides insights into the effectiveness of the testing efforts by indicating which parts of the code have been tested and which parts have not. (*written by ChatGPT*)
+# Behind the Scenes: Code Coverage
+Code coverage measures how much of your module’s code is executed when you run your unit and UI tests. It helps you spot untested areas so you can add tests for critical logic.
 
-In this article we will deep dive the code coverage in Swift/LLVM.
+In this article we will deep dive how code coverage works in Swift/LLVM.
 
 ## Build and Run
 To get code coverage, we need a binary with instrument code, which requires extra flags to the compiler and linker.
@@ -9,11 +9,11 @@ To get code coverage, we need a binary with instrument code, which requires extr
 * swiftc: `-profile-coverage-mapping -profile-generate`
 * ld: `-fprofile-instr-generate`
 
-When running the binary, wet set `LLVM_PROFILE_FILE` environment variable to specify where we want the instrument data to be. After running, we will get `.profraw` files, which can be processed by [`llvm-profdata`](https://llvm.org/docs/CommandGuide/llvm-profdata.html) and [`llvm-cov`](https://llvm.org/docs/CommandGuide/llvm-cov.html) to generate the coverage report.
+When running the binary, we set `LLVM_PROFILE_FILE` environment variable to specify where we want the instrument data to be. After running, we will get `.profraw` files, which can be processed by [`llvm-profdata`](https://llvm.org/docs/CommandGuide/llvm-profdata.html) and [`llvm-cov`](https://llvm.org/docs/CommandGuide/llvm-cov.html) to generate the coverage report.
 
 I have sample code [here](../testing/code_coverage) to demonstrate the entire process of building, running and showing the coverage.
 
-## Behind the scenes
+## Behind the Scenes
 A good way to understand how coverage works is to learn how those extra compiler flags affect the binary. It's very hard to examine the binary directly, but we can build the a sample code to SIL (Swift Intermediate Language, which is much more human readable), and see the differences before and after adding those flags.
 
 ```swift
@@ -78,16 +78,17 @@ This section has a list a of mangled function names. The parsing logic can be fo
 ```
 
 #### __llvm_covmap
-In the modern version, this section just stores a list of filenames. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp). The actual mapping is stored in `__llvm_covfun`.
+In the modern version, this section stores a list of records, each of which contains a list of filenames. Each compilation unit has its own record. Within a record, the first item is the CWD (current working directory), and the remaining items are source paths relative to the CWD. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp). The actual mapping is stored in `__llvm_covfun`.
 ```
-  CovMap Header: (NRecords: 0, FilenamesSize: 31, CoverageSize: 0, Version: 5)
-  Filenames: (NFilenames: 2, UncompressedLen: 25, CompressedLen: 28)
-     0: ./Test.swift
-     1: ./Lib.swift
+  CovMap Header: (NRecords: 0, FilenamesSize: 79, CoverageSize: 0, Version: 7)
+  Filenames: (NFilenames: 3, UncompressedLen: 75, CompressedLen: 76)
+     0: /path/to/cwd
+     1: Test.swift
+     2: Lib.swift
 ```
 
 #### __llvm_covfun
-This section restores function records, which contains the region-to-counter mapping mentioned above. There is one record per function. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp).
+This section stores function records, which contains the region-to-counter mapping mentioned above. There is one record per function. The parsing logic can be found [here](../macho_parser/sources/llvm_cov.cpp).
 ```
 0: FuncNameHash: 0x8793d595ad4c2cdb, DataLen: 36, FuncHash: 0x0, FileNameHash: 0xbcb137dd4d3ff841
     FileIDMapping: (NFiles: 1)
@@ -101,8 +102,13 @@ This section restores function records, which contains the region-to-counter map
          4: 5:16 => 7:10 : (0 - 1)
 ```
 
+## Source Path Mapping
+As shown above, `__llvm_covmap` contains absolute source paths by default. This is problematic for remotely cacheable builds, such as those using Bazel. Therefore, we need to map absolute paths to relative paths using `-coverage-prefix-map` or `-file-prefix-map`. If both are provided, `-file-prefix-map` takes precedence. Please note that `-file-prefix-map` will map more paths than coverage related ones.
+
+We can inspect __llvm_covmap to confirm the embedded source paths.
+
 ## Conclusion
-Overall, LLVM code coverage operates by instrumenting the code, collecting execution data, mapping it back to the original source code, and generating reports to provide insights into the coverage achieved during testing. (*written by ChatGPT*)
+Overall, LLVM code coverage operates by instrumenting the code, collecting execution data, mapping it back to the original source code, and generating reports to provide insights into the coverage achieved during testing.
 
 One thing to note, code coverage isn't limit to tests. Any executable code can have coverage.
 

@@ -1,5 +1,5 @@
 #!/bin/zsh
-# This script was tested on Xcode 16.1
+# This script was tested on Xcode 26.1
 set -e
 
 TARGET="$(uname -m)-apple-ios16.1-simulator"
@@ -31,7 +31,6 @@ xcrun clang -bundle -o $TEST_BINARY build/Test.o \
     -L "$PLATFORM_DIR/Developer/usr/lib" \
     -F "$PLATFORM_DIR/Developer/Library/Frameworks" \
     -F "$SDKROOT/System/Library/Frameworks" \
-    -lSystem \
     -fprofile-instr-generate
 
 PROFRAW_FILE="/tmp/test.profraw"
@@ -44,7 +43,7 @@ rm -f $PROFRAW_FILE $PROFDATA_FILE
 
 # Don't exit if test fails
 set +e
-xcrun simctl spawn --arch=$ARCH --standalone "iPhone 15"  \
+xcrun simctl spawn --arch=$ARCH --standalone "iPhone 17"  \
     "$PLATFORM_DIR/Developer/Library/Xcode/Agents/xctest" \
     $PWD/build/Test.xctest
 set -e
