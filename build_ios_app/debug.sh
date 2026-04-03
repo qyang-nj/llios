@@ -3,7 +3,7 @@ set -e
 
 # Modify these variables for any other apps.
 APP_BUNDLE="Build/SampleApp.app"
-SIM_NAME="iPhone 12 Pro"
+SIM_NAME="iPhone 17 Pro"
 
 function error() {
     echo "Error: $1" >&2

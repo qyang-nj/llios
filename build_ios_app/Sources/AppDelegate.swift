@@ -15,20 +15,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
 
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    let window = UIWindow(frame: UIScreen.main.bounds)
-
-    if #available(iOS 13.0, *) {
-      window.rootViewController = UIHostingController(rootView: SwiftUIView())
-    } else {
-      window.rootViewController = ViewController()
-    }
-    // Show the window
-    window.makeKeyAndVisible()
-    self.window = window
-
     callMethods()
-
     return true
+  }
+
+  func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+    let config = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+    config.delegateClass = SceneDelegate.self
+    return config
   }
 
   func callMethods() {
