@@ -6,7 +6,7 @@ set -e
 # --minos: set minimum os version
 OPT_DEVICE=0
 OPT_RELEASE=0
-OPT_MINOS="14.0"
+OPT_MINOS="26.0"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -d|--device)
@@ -33,13 +33,15 @@ done
 APP_NAME="SampleApp"
 
 if [[ $OPT_DEVICE == 1 ]]; then
-    SDK_PATH=$(xcrun --show-sdk-path --sdk iphoneos)
+    SDK=iphoneos
+    SDK_PATH=$(xcrun --show-sdk-path --sdk $SDK)
     SWIFT_FLAGS+=(-sdk $SDK_PATH -target arm64-apple-ios${OPT_MINOS})
     CFLAGS+=(-isysroot $SDK_PATH -arch arm64 -miphoneos-version-min=${OPT_MINOS})
 else
-    SDK_PATH=$(xcrun --show-sdk-path --sdk iphonesimulator)
-    SWIFT_FLAGS+=(-sdk $(xcrun --show-sdk-path --sdk $SDK_PATH) -target x86_64-apple-ios${OPT_MINOS}-simulator)
-    CFLAGS+=(-isysroot $SDK_PATH -arch x86_64 -mios-simulator-version-min=${OPT_MINOS})
+    SDK=iphonesimulator
+    SDK_PATH=$(xcrun --show-sdk-path --sdk $SDK)
+    SWIFT_FLAGS+=(-sdk $SDK_PATH -target arm64-apple-ios${OPT_MINOS}-simulator)
+    CFLAGS+=(-isysroot $SDK_PATH -arch arm64 -mios-simulator-version-min=${OPT_MINOS})
 fi
 
 if [[ "$OPT_RELEASE" == 1 ]]; then
@@ -139,7 +141,7 @@ function build_swift_dylib() {
         -Xlinker @rpath/Frameworks/SwiftDylib.dylib
         Sources/SwiftDylib/SwiftDylib.swift
     )
-    xcrun swiftc ${SWIFT_FLAGS[@]} ${PARAMS[@]}
+    xcrun --sdk $SDK swiftc ${SWIFT_FLAGS[@]} ${PARAMS[@]}
 }
 
 function build_objc_dylib() {
@@ -152,7 +154,7 @@ function build_objc_dylib() {
         -o Build/ObjcDylib.dylib
         Sources/ObjcDylib/LLIOSObjcDylib.m
     )
-    xcrun clang ${CFLAGS[@]} ${PARAMS[@]}
+    xcrun --sdk $SDK clang ${CFLAGS[@]} ${PARAMS[@]}
 }
 
 function build_executable() {
@@ -169,9 +171,9 @@ function build_executable() {
         BUild/MixedModule/MixedModule.a
         Build/SwiftDylib.dylib
         Build/ObjcDylib.dylib
-        Sources/AppDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
+        Sources/AppDelegate.swift Sources/SceneDelegate.swift Sources/ViewController.swift Sources/SwiftUIView.swift
     )
-    xcrun swiftc ${SWIFT_FLAGS[@]} ${PARAMS[@]}
+    xcrun --sdk $SDK swiftc ${SWIFT_FLAGS[@]} ${PARAMS[@]}
 }
 
 function process_info_plist() {
@@ -199,7 +201,8 @@ function package_app_bundle() {
 # Note: You need to replace the signing identity with your one.
 # Find a valid signing identity by `security find-identity -v -p codesigning`.
 # You also need to change the app id and modify Entitlements.plist.
-# (It doesn't seem to be necessary to copy the provisioning profile. Idk why.)
+# (It doesn't seem to be necessary to copy the provisioning profile. Idk why.
+# Updated on April 2026: at least for Xcode 26, the provisioning profile is needed.)
 function sign_app() {
     echo ">>> Sign the app"
     identity=$(security find-identity -v -p codesigning | grep "Apple Development" | head -1 | awk '{print $2}')

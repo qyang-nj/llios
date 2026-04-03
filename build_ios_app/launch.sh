@@ -2,7 +2,7 @@
 set -e
 
 APP_BUNDLE="Build/SampleApp.app"
-SIM_NAME="iPhone 12 Pro"
+SIM_NAME="iPhone 17 Pro"
 
 function error() {
     echo "Error: $1" >&2
@@ -37,11 +37,13 @@ if [[ "$platform" == 7 ]]; then
 
 elif [[ "$platform" == 2 ]]; then
     echo "Launching on device ..."
-    if ! command -v ios-deploy &> /dev/null
-    then
-        error "'ios-deploy' is needed to launch the app on device. \nCheck out this awesome tool (https://github.com/ios-control/ios-deploy)."
+    DEVICE_ID=$(xcrun devicectl list devices 2>&1 | grep 'connected' | awk '{print $3}')
+    if [[ -z "$DEVICE_ID" ]]; then
+        error "No connected device found."
     fi
-    ios-deploy --debug --bundle "Build/SampleApp.app"
+    xcrun devicectl device install app --device "$DEVICE_ID" "$APP_BUNDLE"
+    APP_BUNDLE_ID=$(defaults read "$(realpath $APP_BUNDLE/Info.plist)" CFBundleIdentifier)
+    xcrun devicectl device process launch --device "$DEVICE_ID" "$APP_BUNDLE_ID"
 else
     error "The target platform of the binary is neither iOS simulator nor device."
 fi
