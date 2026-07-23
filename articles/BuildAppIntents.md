@@ -1,6 +1,6 @@
 # Build App Intents
 
-App Intents are declared in Swift, but compiling the Swift source is only the first part of the build. Xcode also extracts the declarations into metadata and generates natural-language assets for App Shortcuts. The final app bundle contains these generated files in [`Metadata.appintents`](../building/app_intents/Metadata.appintents/).
+App Intents are declared in Swift, but compiling the Swift source is only the first part of the build. Xcode also extracts the declarations into metadata and generates natural-language assets for App Shortcuts. The final app bundle contains these generated files in `Metadata.appintents`.
 
 This article describes the build pipeline used by Xcode 26.6, which is useful when reproducing Xcode's behavior in another build system. The captured commands use tool build `17F113` and the iPhone Simulator 26.5 SDK. These tools, flags, and output formats are Xcode implementation details and may change between releases.
 
@@ -57,7 +57,7 @@ Xcode runs `appintentsmetadataprocessor` in the `ExtractAppIntentsMetadata` buil
   --no-app-shortcuts-localization
 ```
 
-The extractor combines the target's constant values with metadata from its dependencies. It writes `Metadata.appintents` into the app bundle. In the sample, [`extract.actionsdata`](../building/app_intents/Metadata.appintents/extract.actionsdata) contains the serialized definitions for both intents and their shortcuts, while [`version.json`](../building/app_intents/Metadata.appintents/version.json) identifies the format and tool version.
+The extractor combines the target's constant values with metadata from its dependencies. It writes [`Metadata.appintents`](../building/app_intents/Metadata.appintents/) into the app bundle. In the sample, [`extract.actionsdata`](../building/app_intents/Metadata.appintents/extract.actionsdata) contains the serialized definitions for both intents and their shortcuts, while [`version.json`](../building/app_intents/Metadata.appintents/version.json) identifies the format and tool version.
 
 ## 3. Generate App Shortcuts assets
 
