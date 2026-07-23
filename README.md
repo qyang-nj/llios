@@ -19,6 +19,7 @@ This repo is mostly my study notes about low level iOS.
     * [LC_CODE_SIGNATURE](./macho_parser/docs/LC_CODE_SIGNATURE.md) - code signing and code signature format
 * Building
     * [Build iOS App](./build_ios_app) - build and debug an iOS app without an IDE
+    * [Build App Intents](./articles/BuildAppIntents.md)
     * [Build Swift Macros](./articles/BuildSwiftMacros.md)
     * [Mixed Language Compiling](./articles/MixedModuleCompiling.md)
     * [Module Map](./articles/ModuleMap.md) - common formats of `module.modulemap`
