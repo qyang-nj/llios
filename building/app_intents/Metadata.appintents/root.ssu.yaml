@@ -1,0 +1,49 @@
+apiVersion: ssu/v1
+nlu:
+  shortcuts:
+    bundleIdentifier: com.example.AppDemo
+    intents:
+    - metadata:
+        name: SayHelloIntent_0
+        title: Say Hello
+      corpuses:
+        training:
+        - locale: en
+          utterances:
+          - '{${+prefix} }Say hello with ${+applicationName}'
+          - '{${+prefix} }Get a greeting from ${+applicationName}'
+    - metadata:
+        name: FlipCoinIntent_1
+        title: Flip a Coin
+      corpuses:
+        training:
+        - locale: en
+          utterances:
+          - '{${+prefix} }Flip a coin with ${+applicationName}'
+          - '{${+prefix} }Ask ${+applicationName} to flip a coin'
+    - metadata:
+        name: +negative
+      corpuses:
+        training:
+        - locale: en
+          utterances:
+          - '{${+prefix} }${+standardAppShortcutNegatives}'
+variables:
+- name: +applicationName
+  type: ssu/expansion
+  definitions:
+  - locale: en
+    synomyms:
+    - AppDemo
+- name: +prefix
+  type: ssu/expansion
+  definitions:
+  - locale: en
+    synomyms:
+      $ref: ssu://Resources/prefix/en.yaml
+- name: +standardAppShortcutNegatives
+  type: ssu/expansion
+  definitions:
+  - locale: en
+    synomyms:
+      $ref: ssu://Resources/standardAppShortcutNegatives/en.yaml

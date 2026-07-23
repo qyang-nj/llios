@@ -1,0 +1,218 @@
+{
+    "actions": {
+        "FlipCoinIntent": {
+            "assistantDefinedSchemaTraits": [],
+            "assistantDefinedSchemas": [],
+            "authenticationPolicy": 0,
+            "availabilityAnnotations": {
+                "LNPlatformNameWildcard": {
+                    "introducedVersion": "*"
+                }
+            },
+            "descriptionMetadata": {
+                "descriptionText": {
+                    "alternatives": [],
+                    "key": "Flip a virtual coin in AppDemo."
+                },
+                "searchKeywords": []
+            },
+            "effectiveBundleIdentifiers": [],
+            "fullyQualifiedTypeName": "AppDemo.FlipCoinIntent",
+            "identifier": "FlipCoinIntent",
+            "isAuthPolExplicit": false,
+            "isDiscoverable": true,
+            "mangledTypeName": "7AppDemo14FlipCoinIntentV",
+            "mangledTypeNameByBundleIdentifier": {},
+            "mangledTypeNameByBundleIdentifierV2": {},
+            "mangledTypeNameV2": "7AppDemo14FlipCoinIntentV",
+            "openAppWhenRun": false,
+            "outputFlags": 4,
+            "parameters": [],
+            "presentationStyle": 0,
+            "requiredCapabilities": [],
+            "supportedModes": 1,
+            "systemProtocolMetadata": [],
+            "systemProtocolMetadataV2": [],
+            "systemProtocols": [],
+            "title": {
+                "alternatives": [],
+                "key": "Flip a Coin"
+            },
+            "typeSpecificMetadata": [],
+            "visibilityMetadata": {
+                "assistantOnly": false,
+                "isDiscoverable": true
+            }
+        },
+        "SayHelloIntent": {
+            "assistantDefinedSchemaTraits": [],
+            "assistantDefinedSchemas": [],
+            "authenticationPolicy": 0,
+            "availabilityAnnotations": {
+                "LNPlatformNameWildcard": {
+                    "introducedVersion": "*"
+                }
+            },
+            "descriptionMetadata": {
+                "descriptionText": {
+                    "alternatives": [],
+                    "key": "Get a friendly greeting from AppDemo."
+                },
+                "searchKeywords": []
+            },
+            "effectiveBundleIdentifiers": [],
+            "fullyQualifiedTypeName": "AppDemo.SayHelloIntent",
+            "identifier": "SayHelloIntent",
+            "isAuthPolExplicit": false,
+            "isDiscoverable": true,
+            "mangledTypeName": "7AppDemo14SayHelloIntentV",
+            "mangledTypeNameByBundleIdentifier": {},
+            "mangledTypeNameByBundleIdentifierV2": {},
+            "mangledTypeNameV2": "7AppDemo14SayHelloIntentV",
+            "openAppWhenRun": false,
+            "outputFlags": 4,
+            "parameters": [
+                {
+                    "capabilities": 0,
+                    "dynamicOptionsSupport": 0,
+                    "inputConnectionBehavior": 0,
+                    "isInput": false,
+                    "isOptional": true,
+                    "name": "name",
+                    "parameterDescription": {
+                        "alternatives": [],
+                        "key": "The name to include in the greeting."
+                    },
+                    "resolvableInputTypes": [
+                        {
+                            "kindValue": 0,
+                            "valueType": {
+                                "primitive": {
+                                    "wrapper": {
+                                        "typeIdentifier": 0
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "kindValue": 0,
+                            "valueType": {
+                                "primitive": {
+                                    "wrapper": {
+                                        "typeIdentifier": 2
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "kindValue": 0,
+                            "valueType": {
+                                "array": {
+                                    "wrapper": {
+                                        "capabilities": 3,
+                                        "memberValueType": {
+                                            "primitive": {
+                                                "wrapper": {
+                                                    "typeIdentifier": 2
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "title": {
+                        "alternatives": [],
+                        "key": "Name"
+                    },
+                    "typeSpecificMetadata": [],
+                    "valueType": {
+                        "primitive": {
+                            "wrapper": {
+                                "typeIdentifier": 0
+                            }
+                        }
+                    }
+                }
+            ],
+            "presentationStyle": 0,
+            "requiredCapabilities": [],
+            "supportedModes": 1,
+            "systemProtocolMetadata": [],
+            "systemProtocolMetadataV2": [],
+            "systemProtocols": [],
+            "title": {
+                "alternatives": [],
+                "key": "Say Hello"
+            },
+            "typeSpecificMetadata": [],
+            "visibilityMetadata": {
+                "assistantOnly": false,
+                "isDiscoverable": true
+            }
+        }
+    },
+    "assistantEntities": [],
+    "assistantIntentNegativePhrases": [],
+    "assistantIntents": [],
+    "autoShortcutProviderMangledName": "7AppDemo0aB9ShortcutsV",
+    "autoShortcuts": [
+        {
+            "actionIdentifier": "SayHelloIntent",
+            "availabilityAnnotations": {
+                "LNPlatformNameWildcard": {
+                    "introducedVersion": "*"
+                }
+            },
+            "phraseTemplates": [
+                {
+                    "alternatives": [],
+                    "key": "Say hello with ${applicationName}"
+                },
+                {
+                    "alternatives": [],
+                    "key": "Get a greeting from ${applicationName}"
+                }
+            ],
+            "shortTitle": {
+                "alternatives": [],
+                "key": "Say Hello"
+            },
+            "systemImageName": "hand.wave"
+        },
+        {
+            "actionIdentifier": "FlipCoinIntent",
+            "availabilityAnnotations": {
+                "LNPlatformNameWildcard": {
+                    "introducedVersion": "*"
+                }
+            },
+            "phraseTemplates": [
+                {
+                    "alternatives": [],
+                    "key": "Flip a coin with ${applicationName}"
+                },
+                {
+                    "alternatives": [],
+                    "key": "Ask ${applicationName} to flip a coin"
+                }
+            ],
+            "shortTitle": {
+                "alternatives": [],
+                "key": "Flip a Coin"
+            },
+            "systemImageName": "circle.lefthalf.filled"
+        }
+    ],
+    "entities": {},
+    "enums": [],
+    "generator": {
+        "name": "xcode-tools",
+        "version": "17F113"
+    },
+    "negativePhrases": [],
+    "queries": {},
+    "shortcutTileColor": 14,
+    "version": 1
+}
